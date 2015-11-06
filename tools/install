@@ -6,10 +6,13 @@ readonly PROTOC=$HOME/broc/protobuf/bin/protoc
 help()
 {
     echo "-- Deploy broc command"
-    echo "-- Usage: $0 [deploy|help]"
+    echo "-- Usage: $0 [deploy|protobuf|proto|help]"
+    echo "     deploy : deploy borc "
+    echo '     protobuf : install protobuf in $HOME'
+    echo '     proto : compile proto files'
 }
 
-deploy()
+deploy_protobuf()
 {
     # to install protobuf
     if [ ! -e $PROTOC ]; then
@@ -21,13 +24,33 @@ deploy()
         (cd protobuf-2.6.1/python && python setup.py build && python setup.py install)
         [ $? -ne 0 ] && echo "-- install protobuf failed" && return 1
         echo "-- installing protobuf success"
+        rm -rf protobuf-2.6.1
+    else
+        echo "-- protobuf has been installed"
     fi
+    return 0
+}
+
+deploy_proto()
+{
     # compile proto file
     echo "-- compile broc proto files ..."
     $PROTOC -I=../proto --python_out=../dependency ../proto/*.proto
-    [ $? -ne 0 ] && echo "-- compile broc proto files failed" && return 1
-    echo "-- compile broc proto files success"
-    #TODO
+    if [ $? -ne 0 ]; then
+        echo "-- compile broc proto files failed"
+        return 1
+    else
+        echo "-- compile broc proto files success"
+        return 0
+    fi
+}
+
+deploy()
+{
+    deploy_protobuf
+    [ $? -ne 0 ] && return 1
+    deploy_proto
+    [ $? -ne 0 ] && return 1
     return 0
 }
 
@@ -35,6 +58,12 @@ case "$1" in
         deploy)
                 deploy
                 ;;
+        protobuf)
+                deploy_protobuf
+                ;;     
+        proto)
+                deploy_proto
+                ;;     
              *)
                 help
                 ;;
