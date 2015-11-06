@@ -1,0 +1,326 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-  
+
+################################################################################
+#
+# Copyright (c) 2015 Baidu.com, Inc. All Rights Reserved
+#
+################################################################################
+"""
+broc command
+
+Authors: zhousongsong(zhousongsong@baidu.com)
+Date:    2015/09/22 17:23:06
+"""
+
+import os
+import sys
+import traceback
+import Queue
+
+import Options
+import BrocConfig
+import Scratch
+import TaskMaster
+broc_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+sys.path.insert(0, broc_dir)
+
+from util import Log
+from util import RepoUtil
+from util import Function
+from dependency import PlanishUtil
+from dependency import Planish
+from dependency import BrocModule_pb2
+from dependency import Syntax
+from dependency import BrocObjectMaster
+
+
+def _load_config(logger):
+    """
+    load config file of broc, the default config is located at ~/.broc.rc
+    Args:
+        logger : the Log.Log object
+    Returns:
+        return BrocConfig object if load conifg file ok,
+        return None if failed to load config file
+    """
+    # load config of broc
+    broc_config = BrocConfig.BrocConfig()
+    (ret, msg) = broc_config.load()
+    if not ret:
+        logger.LevPrint("ERROR", "load config failed(%s)" % msg)
+        return None
+    else:
+        return broc_config
+
+
+def _init_repo(broc_config, pathname, logger):
+    """
+    to get repo infos of pathname
+    Args:
+        broc_config : the BrocConfig object
+        pathname : the root directory of main module
+    Returns:
+        return (True, repo) if init ok
+        return (False, None) if failed to init
+    """
+    repo = dict()
+    repo['type'] = ''
+    repo['domain'] = ''
+
+    if RepoUtil.IsUnderSvnControl(pathname):
+        repo['type'] = BrocModule_pb2.Module.SVN
+    elif RepoUtil.IsUnderGitControl(pathname):
+        repo['type'] = BrocModule_pb2.Module.GIT
+    else:
+        logger.LevPrint("ERROR", "%s is not under contorl of git or svn" % pathname)
+        return (False, None)
+
+    # construct main BrocModule_pb2.Module object
+    repo['domain'] = broc_config.RepoDomain(repo['type'])
+    return (True, repo)
+
+
+def _init_root_node(pathname, broc_config, domain, logger):
+    """
+    to init root node
+    Args:
+        pathname : the root directory of main module
+        broc_config : the BrocConfig object
+        domain : the domain name of repo
+        logger : the Log.Log() object
+    Returns:
+        return a BrocNode object if init ok;
+        return None if failed to init 
+    """
+    root_node = None
+    try:
+        root_node = PlanishUtil.CreateBrocModuleFromDir(pathname, 
+                                                        domain,
+                                                        broc_config.SVNPostfixTrunk(),
+                                                        broc_config.SVNPostfixBranch(),
+                                                        broc_config.SVNPostfixTag(),
+                                                        logger)
+        root_node.dep_level = 0
+    except PlanishUtil.PlanishError as err:
+        logger.LevPrint("ERROR", str(err))
+        return None
+
+    return root_node
+
+
+def _build(options):
+    """
+    build function
+    Args:
+        options: a dict object containing compile arguments
+                 options = dict()
+                 options["target"] = ""
+                 options["path"] = "."
+                 options["mode"] = "debug"
+                 options["job"] = 4
+    """
+    # load broc config 
+    logger = Log.Log()
+    broc_config  = _load_config(logger)
+    if not broc_config:
+        return -1
+
+    # init repo infos
+    ret, repo = _init_repo(broc_config, options['path'], logger)
+    if not ret:
+        return -1
+
+    # init root node
+    root_node = _init_root_node(options['path'], broc_config, repo['domain'], logger)
+    if not root_node:
+        return -1
+
+    # change working directory
+    os.chdir(root_node.workspace)
+
+    # planish modules
+    postfix = [broc_config.SVNPostfixTrunk(), 
+                broc_config.SVNPostfixBranch(), 
+                broc_config.SVNPostfixTag()]
+    planish = Planish.Planish(root_node, repo['domain'], logger, postfix)
+    if not planish.DoPlanish():
+        logger.LevPrint("ERROR", "Analyzing dependency failed")
+        return -1
+
+    # load build cache
+    cache_file = os.path.join(root_node.workspace, 
+                              "broc_out", 
+                              "broc_cache", 
+                              root_node.module_cvspath.replace("/", "_"),
+                              "broc.cache")
+    cache_master = BrocObjectMaster.BrocObjectMaster(cache_file, root_node.root_path, logger)
+    cache_master.LoadCache()
+    # start cache master
+    cache_master.start()
+
+    # load the code of all module, and create a environment object for each module
+    nodes = planish.PlanishedNodes()
+    queue = Queue.Queue()
+    queue.put(root_node)
+    for node in nodes:
+        queue.put(node.module) 
+    loader = Syntax.Loader(queue, logger, options['mode'], 4)
+    loader.LoadBroc()
+
+    # to find all of targets needed to be built
+    envs = loader.Envs()
+    for env in envs:
+        for target in env.Targets():
+            cache_master.CheckCache(target)
+    cache_master.WaitCheckDone()
+    # save the dependency relation of targets into file
+    cache_master.Dump()
+
+    # to get all of targets needed to be built
+    modified_targets = cache_master.GetChangedCache()
+    # if no targets need to build, exit
+    if not modified_targets:
+        logger.LevPrint("MSG", "all targets have been built, no more need to build")
+        return 0
+    task_master = TaskMaster.TaskMaster(options['jobs'], 
+                                        cache_master,
+                                        modified_targets,
+                                        logger)
+    # run build thread to build
+    task_master.Start()
+    task_master.Wait()
+    return 0
+
+
+def _test(options):
+    """
+    test function
+    after build, run ut test
+    Args:
+        options: a dict object containing compile arguments
+                 options = dict()
+                 options["target"] = ""
+                 options["path"] = "."
+                 options["mode"] = "debug"
+    """
+    pass
+
+
+def _show_deps(options):
+    """
+    to caculate the dependent relation of modules and print in termial
+    Args:
+        options: a dict object containing compile arguments
+                 options = dict()
+                 options["target"] = ""
+                 options["path"] = "."
+                 options["mode"] = "debug"
+    """
+    logger = Log.Log()
+    # load config
+    broc_config = _load_config(logger)
+    if not broc_config:
+        return -1
+
+    # init repo infos
+    ret, repo = _init_repo(broc_config, options['path'], logger)
+    if not ret:
+        return -1
+
+    #init root node
+    root_node = _init_root_node(options['path'], broc_config, repo['domain'], logger)
+    if not root_node:
+        return -1
+
+    # planish modules
+    postfix = [broc_config.SVNPostfixTrunk(), 
+                broc_config.SVNPostfixBranch(), 
+                broc_config.SVNPostfixTag()]
+    planish = Planish.Planish(root_node, repo['domain'], logger, postfix)
+    if not planish.DoPlanish(False):
+        logger.LevPrint("ERROR", "Analyzing dependency failed")
+        return -1
+    deps_module = planish.PlanishedNodes()
+    logger.LevPrint("MSG", "======================dependency infos======================", False)
+    for x in deps_module:
+        module_infos = x.module.module_cvspath + '@'
+        #br_kind is 4 means tags
+        if x.module.br_kind == 4:
+            module_infos += x.module.tag_name
+        else:
+            module_infos += x.module.br_name
+        logger.LevPrint("MSG", module_infos, False)
+    return 0
+
+
+def _clean(pathname):
+    """
+    clean all object files
+    pathname : the root path of code directory
+    """
+    # find ./ -name *.[o,a]
+    # load broc config 
+    logger = Log.Log()
+    broc_config  = _load_config(logger)
+    if not broc_config:
+        return -1
+
+    # init repo infos
+    ret, repo = _init_repo(broc_config, pathname, logger)
+    if not ret:
+        return -1
+
+    # init root node
+    root_node = _init_root_node(pathname, broc_config, repo['domain'], logger)
+    if not root_node:
+        return -1
+    Function.DelFiles(os.path.join(root_node.workspace, 'broc_out'))
+    return 0
+    
+
+def main():
+    """
+    main function
+    """
+    if len(sys.argv) <= 1:
+        return Options.Help('broc')
+
+    options = Options.OptionBuild(sys.argv[2:])
+    if sys.argv[1] == "build":
+        return _build(options)
+
+    if sys.argv[1] == "test":
+        pass
+
+    if sys.argv[1] == "show-deps":
+        return _show_deps(options)
+
+    if sys.argv[1] == "clean":
+        return _clean(options['path'])
+
+    if sys.argv[1] == "scratch":
+        return Scratch.scratch(options['path'])
+
+    if sys.argv[1] == "version":
+        print("broc version 1.0.0")
+        return 0
+
+    if sys.argv[1] == "help" or sys.argv[1]:
+        if sys.argv[1] == "help" and len(sys.argv) >= 3:
+            return Options.Help('Broc', sys.argv[2])
+        else:
+            return Options.Help('Broc')
+
+    return -1
+
+
+if __name__ == '__main__':
+    ret = -1
+    try:
+        ret = main()
+    except BaseException:
+        traceback.print_exc()
+        os._exit(-1)
+    
+    os._exit(ret)

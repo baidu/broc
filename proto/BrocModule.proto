@@ -1,0 +1,36 @@
+// Copyright 2015 Baidu Inc. ALL rights reserved
+
+message Module
+{
+    enum EnumRepo
+    {
+        SVN = 1;
+        GIT = 2;
+    }
+
+    enum EnumBR
+    {
+        BRANCH = 3;  // branch in svn and git
+        TAG = 4;     // tag in svn and git
+    }
+
+    required string name = 1;                 // module name
+    required string module_cvspath = 2;       // cvs path of module
+    required string broc_cvspath = 3;
+    required bool is_main = 4;                // whether is main module
+    required EnumRepo repo_kind = 5;
+    required int32 dep_level = 6;
+    optional string workspace = 7;            // abs path of workspace
+    optional string root_path = 8; 
+    optional string url = 9;
+    optional EnumBR br_kind = 10;
+    optional string br_name = 11;
+    optional string tag_name = 12;
+    optional string commit_id = 13;          // just for git
+    optional string revision = 14;           // just for svn
+    optional string last_changed_rev = 15;   // just for svn
+    optional string origin_config = 16;
+    optional string highest_version = 17;
+    optional string lowest_version = 18;
+}
+
