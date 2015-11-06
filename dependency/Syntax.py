@@ -335,14 +335,15 @@ def GLOB(*ss):
     env = Environment.GetCurrent()
     dir_path = env.ModulePath()
     strs=[]
-    len_workspace = len(os.path.normpath(env.BrocDir()))
     for s in ss:
         ps = string.split(s)
         for p in ps:
             if p.startswith(os.path.join("broc_out", env.ModuleCVSPath())):
                 norm_path = os.path.normpath(os.path.join(env.Workspace(), p))
+                len_abandon = len(os.path.normpath(env.Workspace()))
             else:
                 norm_path = os.path.normpath(os.path.join(env.BrocDir(), p))
+                len_abandon = len(os.path.normpath(env.BrocDir()))
             if env.ModuleCVSPath() not in norm_path:
                 raise NotInSelfModuleError(norm_path, env.ModuleCVSPath())
             else:
@@ -351,7 +352,7 @@ def GLOB(*ss):
                 file_list = list()
                 for file_name in gs:
                     # remove workspace path from file path
-                    file_list.append(file_name[len_workspace + 1:])
+                    file_list.append(file_name[len_abandon + 1:])
                 strs.extend(file_list)
     if not strs:
         raise BrocArgumentIllegalError("GLOB(%s) is empty" % str(ss))
