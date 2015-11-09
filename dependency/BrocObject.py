@@ -227,7 +227,7 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
-            Log.Log().LevPrint("MSG", "%s build status is Ture, changed" % self.pathname)
+            # Log.Log().LevPrint("MSG", "%s build status is Ture, changed" % self.pathname)
             return True
         # check mtime
         modify_time = None
@@ -237,7 +237,7 @@ class BrocObject(object):
         except BaseException as err:
             self.build = True
             self.modify_time = 0
-            Log.Log().LevPrint("MSG", "get %s mtime failed, changed" % self.pathname)
+            # Log.Log().LevPrint("MSG", "get %s mtime failed, changed" % self.pathname)
             return True
 
         if modify_time == self.modify_time:
@@ -258,13 +258,21 @@ class BrocObject(object):
         Update modify time and hash value
         """
         # update modify time
+        modify_time = None
         try:
-            self.modify_time = os.stat(self.pathname).st_mtime
-        except BaseException:
-            pass
+            modify_time = os.stat(self.pathname).st_mtime
+        except BaseException as err:
+            Log.Log().LevPrint("ERROR", "update cache(%s) failed: %s" % (self.pathname, err))
+            return 
+
+        if self.modify_time == modify_time:
+            self.build = False
+            return 
+        
+        self.modify_time = modify_time
         # update hash
         _hash = Function.GetFileMd5(self.pathname)
-        Log.Log().LevPrint("MSG", "update %s hash %s --> %s" % (self.pathname, self.hash, _hash))
+        # Log.Log().LevPrint("MSG", "update %s hash id(%s) %s --> %s" % (self.pathname, id(self), self.hash, _hash))
         self.hash = _hash 
         self.build = False
 
@@ -287,16 +295,15 @@ class SourceCache(BrocObject):
     .cpp .c cache
     """
     TYPE = BrocObjectType.BROC_SOURCE
-    def __init__(self, pathname, source):
+    def __init__(self, source):
         """
         Args:
-            pathname : the pathname of source file 
             source  : the Souce.Source object
         """
-        BrocObject.__init__(self, pathname)
+        BrocObject.__init__(self, source.OutFile(), False)
         # take build cmd as build option
         self.build_cmd = source.__str__()
-        self._obj = BrocObject(source.OutFile())
+        self.src_obj = BrocObject(source.InFile())
             
     def IsChanged(self, target):
         """"
@@ -308,6 +315,13 @@ class SourceCache(BrocObject):
             if file is modified, return True
             if file is not modified, return False
         """
+        # to check source file 
+        if self.src_obj.IsChanged(None):
+            Log.Log().LevPrint('MSG', "%s object changed" % self.pathname)
+            self.build_cmd = target.__str__()
+            self.build = True
+            return True
+
         # to check build option
         if self.build_cmd != target.__str__():
             Log.Log().LevPrint('MSG', "%s -- > %s" % (self.build_cmd, target.__str__()))
@@ -315,13 +329,9 @@ class SourceCache(BrocObject):
             self.build = True
             return True
 
-        ret = BrocObject.IsChanged(self, target.InFile())
-        if ret:
-            return True
-
-        # to check object file 
-        if self._obj.IsChanged(None):
-            Log.Log().LevPrint('MSG', "%s object changed" % self.pathname)
+        # to check obj file
+        if BrocObject.IsChanged(self, target.InFile()):
+            self.build_cmd = target.__str__()
             self.build = True
             return True
 
@@ -334,9 +344,9 @@ class SourceCache(BrocObject):
         """
         for head_cache in self.deps:
             head_cache.DisableBuild()
-        # update object file
-        # print("update object file %s" % self._obj.Pathname())
-        self._obj.Update() 
+        self.src_obj.Update() 
+        BrocObject.Update(self)
+        
 
         
 class LibCache(BrocObject):
@@ -344,14 +354,13 @@ class LibCache(BrocObject):
     .a cache
     """
     TYPE = BrocObjectType.BROC_LIB
-    def __init__(self, pathname, target, initialized=True):
+    def __init__(self, target, initialized=True):
         """
         Args:
-            pathname : the pathname of .a file
             target : the Target.Target object
             initialized : whether initialize LibCache object
         """
-        BrocObject.__init__(self, pathname, initialized)
+        BrocObject.__init__(self, target.OutFile(), initialized)
         if initialized:
             self.build_cmd = target.__str__()
         else:
@@ -397,12 +406,11 @@ class AppCache(BrocObject):
     bin file cache
     """
     TYPE = BrocObjectType.BROC_APP
-    def __init__(self, pathname, target):
+    def __init__(self, target):
         """
-            pathname : the pathname of .a file
             target : the Target.Target object
         """
-        BrocObject.__init__(self, pathname)
+        BrocObject.__init__(self, target.OutFile())
         self.build_cmd = target.__str__()
 
     def IsChanged(self, target):
@@ -414,16 +422,16 @@ class AppCache(BrocObject):
             if file is modified, return True
             if file is not modified, return False
         """
-        ret = BrocObject.IsChanged(self, target)
-        if ret:
-            return True
-
         # to check build option
         if self.build_cmd != target.__str__():
             self.build_cmd = target.__str__()
             self.build = True
             return True
+        elif BrocObject.IsChanged(self, target):
+            self.build_cmd = target.__str__()
+            self.build = True
+            return True
         else:
-            return BrocObject.IsChanged(self, target)
+            return False
 
 

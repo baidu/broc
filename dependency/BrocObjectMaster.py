@@ -158,23 +158,22 @@ class BrocObjectMaster(threading.Thread):
         """
         ret = False
         # self._logger.LevPrint("MSG", "check target %s" % target.OutFile())
-        #1. check whether target cache exists
+        # 1. check whether target cache exists
         if target.OutFile() not in self._cache:
             self._add_target_cache(target)
             return True
-        #2. check whether target cache is a empty cache, empty cache was created by target depended on it
+        # 2. check whether target cache is a empty cache, empty cache was created by target depended on it
         target_cache = self._cache[target.OutFile()]
         if not target_cache.initialized:
             #self._logger.LevPrint("MSG", "Initialize target %s" % target.OutFile())
             target_cache.Initialize(target)
             target_cache.EnableBuild()
 
-        #3. check all source object, remove uesless source cache
+        # 3. check all source object, remove uesless source cache
         last_sources = set()
         for x in target_cache.Deps():
             if x.TYPE is BrocObject.BrocObjectType.BROC_SOURCE:
                 last_sources.add(x.Pathname())
-        #now_sources = target.InFiles()
         now_sources = target.Objects()
         missing_sources = last_sources - now_sources
         for missing in missing_sources:
@@ -185,7 +184,7 @@ class BrocObjectMaster(threading.Thread):
             if self._check_source_cache(source, self._cache[target.OutFile()]):
                 ret = True
 
-        #4. check all .a files, remove useless .a cache first
+        # 4. check all .a files, remove useless .a cache first
         last_libs = set()
         for x in target_cache.Deps():
             if x.TYPE is BrocObject.BrocObjectType.BROC_LIB:
@@ -206,7 +205,7 @@ class BrocObjectMaster(threading.Thread):
             target_cache.EnableBuild()
             return True
 
-        #5. check target file itself
+        # 5. check target file itself
         if self._cache[target.OutFile()].IsChanged(target):
             self._cache[target.OutFile()].EnableBuild()
             return True
@@ -238,7 +237,7 @@ class BrocObjectMaster(threading.Thread):
             source : the Source.Source object
             target_cache : the BrocObject object that depended on source cache
         """
-        source_cache = BrocObject.SourceCache(source.OutFile(), source)
+        source_cache = BrocObject.SourceCache(source)
         self._cache[source.OutFile()] = source_cache
         source_cache.AddReverseDep(target_cache)
         target_cache.AddDep(source_cache)
@@ -261,12 +260,11 @@ class BrocObjectMaster(threading.Thread):
         # self._logger.LevPrint("MSG", "add target cache(%s)" % target.OutFile())
         target_cache = None
         if isinstance(target, Target.StaticLibrary):
-            target_cache = BrocObject.LibCache(target.OutFile(), target)
+            target_cache = BrocObject.LibCache(target)
         elif isinstance(target, Target.Application):
-            target_cache = BrocObject.AppCache(target.OutFile(), target)
+            target_cache = BrocObject.AppCache(target)
         elif isinstance(target, Target.ProtoLibrary):
-            target_cache = BrocObject.LibCache(target.OutFile(), target)
-
+            target_cache = BrocObject.LibCache(target)
         self._cache[target.OutFile()] = target_cache
         # handle source object
         for source in target.Sources():
@@ -351,10 +349,10 @@ class BrocObjectMaster(threading.Thread):
         cache.DisableBuild()
         if cache.TYPE == BrocObject.BrocObjectType.BROC_HEADER:
             return
-        #self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
+        # self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
         cache.Update()
         # save cache into file 
-        #self._logger.LevPrint("MSG", "save cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
+        # self._logger.LevPrint("MSG", "save cache %s, id(%s), hash is %s" % (cache.Pathname(), id(cache), cache.Hash()))
         self._save_cache()
 
     def GetChangedCache(self):
@@ -383,7 +381,7 @@ class BrocObjectMaster(threading.Thread):
                 else:
                     for cache in caches[1:]:
                         self._cache[cache.Pathname()] = cache
-                        #self._logger.LevPrint("MSG", 'cache %s hash is %s' % (cache.Pathname(), cache.Hash()))
+                        # self._logger.LevPrint("MSG", 'cache %s , %d hash is %s' % (cache.Pathname(), id(cache), cache.Hash()))
         except BaseException as err:
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
