@@ -121,16 +121,20 @@ class Source(object):
         """
         return self.outfile
 
-    def CalObjectPrefix(self):
+    def CalcObjectName(self):
         """
-        caculate the prefix of result file
+        caculate the cvs path of result file
+        cvs path = 'broc_out' + '/' + cvs path of infile + '/' + '%s_%s_%s.o' % (self.target.TYPE, self.target.name, file name)
         """
-        # TODO fix me :)
-        # self._object_prefix = self.env.BrocCVSPath().replace("/", "_") + "_"
-        #self._object_prefix += self.target.BaseName() + '_' 
-        #self._object_prefix += self.target.TYPE + "_" 
-        pass
-                                             
+        cvs_dir = os.path.dirname(self.infile)
+        root, _ = os.path.splitext(os.path.basename(self.infile))
+        obj_file = os.path.join(cvs_dir,
+                                "%s_%s_%s.o" % (self.target.TYPE, self.target.Name(), root))
+        if not obj_file.startswith('broc_out'):
+            self.outfile = os.path.join("broc_out", obj_file)
+        else:
+            self.outfile = obj_file
+
     def Action(self):
         """
         parser compile flags including include path, preprocess flags, 
@@ -190,13 +194,7 @@ class CSource(Source):
         parse compile options, and join all options as a string object       
         """
         Source.Action(self)
-        # cvs path of out file
-        root, _ = os.path.splitext(self.infile)
-        obj_file = "%s%s" % (root, '.o')
-        if not obj_file.startswith('broc_out'):
-            self.outfile = os.path.join("broc_out", obj_file)
-        else:
-            self.outfile = obj_file
+        self.CalcObjectName()
         options = ['-DZUES']
         options.extend(self.cppflags + self.cflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
@@ -226,13 +224,7 @@ class CXXSource(Source):
         init builder
         """
         Source.Action(self)
-        # cvs path of source file
-        root, _ = os.path.splitext(self.infile)
-        obj_file = "%s%s" % (root, '.o')
-        if not obj_file.startswith('broc_out'):
-            self.outfile = os.path.join("broc_out", obj_file)
-        else:
-            self.outfile = obj_file
+        self.CalcObjectName()
         options = ['-DZUES']
         options.extend(self.cppflags + self.cxxflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 

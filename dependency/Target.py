@@ -80,7 +80,7 @@ class Target(object):
                            map(lambda x: os.path.normpath(x.InFile()), self.tag_sources.V())))
         else:
             self.infiles = set()
-
+        self.objects = None             # set of all .o file
         # all cvs path of .a files
         if tag_libs:
             self.libs = set(sorted(map(lambda x: x, self.tag_libs.V())))
@@ -151,7 +151,7 @@ class Target(object):
             if source.TYPE == Source.SourceType.CXX:
                 self.compiler = self.env.CXX()
         
-        self.objects = sorted(objects)
+        self.objects = set(sorted(objects))
 
         
 class Application(Target):

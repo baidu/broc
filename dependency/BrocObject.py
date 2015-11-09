@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-  
 
 ################################################################################
 #
@@ -14,10 +12,10 @@ Date:    2015/10/13 14:50:06
 import os
 import sys
 
-
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)
 from util import Function
+from util import Log
         
 class BrocObjectType(object):
     """
@@ -90,6 +88,12 @@ class BrocObject(object):
         return build cmd
         """
         return self.build_cmd
+
+    def Hash(self):
+        """
+        return the hash value
+        """
+        return self.hash
 
     def Deps(self):
         """
@@ -208,6 +212,7 @@ class BrocObject(object):
         BrocObject changed, notify all reversed dependent BrocObject objects
         """
         for obj in self.reverse_deps:
+            # Log.Log().LevPrint("MSG", "%s nofity reverse dep(%s) build " % (self.pathname, obj.Pathname()))
             obj.EnableBuild()
 
     def IsChanged(self, target=None):
@@ -222,7 +227,7 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
-            #print("%s build status is Ture, changed" % self.pathname)
+            Log.Log().LevPrint("MSG", "%s build status is Ture, changed" % self.pathname)
             return True
         # check mtime
         modify_time = None
@@ -232,7 +237,7 @@ class BrocObject(object):
         except BaseException as err:
             self.build = True
             self.modify_time = 0
-            #print("get %s mtime failed, changed" % self.pathname)
+            Log.Log().LevPrint("MSG", "get %s mtime failed, changed" % self.pathname)
             return True
 
         if modify_time == self.modify_time:
@@ -241,7 +246,7 @@ class BrocObject(object):
         # check hash
         _hash = Function.GetFileMd5(self.pathname)
         if _hash != self.hash:
-            #print("%s hash changed" % self.pathname)
+            # Log.Log().LevPrint("MSG", "%s hash changed, %s --> %s" % (self.pathname, self.hash, _hash))
             self.hash = _hash
             self.build = True
             return True
@@ -258,7 +263,9 @@ class BrocObject(object):
         except BaseException:
             pass
         # update hash
-        self.hash = Function.GetFileMd5(self.pathname)
+        _hash = Function.GetFileMd5(self.pathname)
+        Log.Log().LevPrint("MSG", "update %s hash %s --> %s" % (self.pathname, self.hash, _hash))
+        self.hash = _hash 
         self.build = False
 
     def DisableBuild(self):
@@ -303,8 +310,8 @@ class SourceCache(BrocObject):
         """
         # to check build option
         if self.build_cmd != target.__str__():
+            Log.Log().LevPrint('MSG', "%s -- > %s" % (self.build_cmd, target.__str__()))
             self.build_cmd = target.__str__()
-            #print('build cmd changed')
             self.build = True
             return True
 
@@ -314,6 +321,7 @@ class SourceCache(BrocObject):
 
         # to check object file 
         if self._obj.IsChanged(None):
+            Log.Log().LevPrint('MSG', "%s object changed" % self.pathname)
             self.build = True
             return True
 
@@ -326,6 +334,8 @@ class SourceCache(BrocObject):
         """
         for head_cache in self.deps:
             head_cache.DisableBuild()
+        # update object file
+        # print("update object file %s" % self._obj.Pathname())
         self._obj.Update() 
 
         

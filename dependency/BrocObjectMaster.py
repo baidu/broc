@@ -119,13 +119,13 @@ class BrocObjectMaster(threading.Thread):
             target_cache : the BrocObject.TargetCache object
         """
         # source infile no exists in cache
-        if source.InFile() not in self._cache:
+        if source.OutFile() not in self._cache:
             self._add_source_cache(source, target_cache)
             return True
 
         # check header files
         # remove useless dependent cache
-        source_cache = self._cache[source.InFile()]
+        source_cache = self._cache[source.OutFile()]
         last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
         now_headers = source.builder.GetHeaderFiles()
         missing_headers = last_headers - now_headers
@@ -140,12 +140,12 @@ class BrocObjectMaster(threading.Thread):
 
         # head files changed
         if ret:
-            self._cache[source.InFile()].EnableBuild()
+            self._cache[source.OutFile()].EnableBuild()
             return ret
 
         # head files no changed, check itself
-        if self._cache[source.InFile()].IsChanged(source):
-            self._cache[source.InFile()].EnableBuild()
+        if self._cache[source.OutFile()].IsChanged(source):
+            self._cache[source.OutFile()].EnableBuild()
             return True
 
         return False
@@ -174,7 +174,8 @@ class BrocObjectMaster(threading.Thread):
         for x in target_cache.Deps():
             if x.TYPE is BrocObject.BrocObjectType.BROC_SOURCE:
                 last_sources.add(x.Pathname())
-        now_sources = target.InFiles()
+        #now_sources = target.InFiles()
+        now_sources = target.Objects()
         missing_sources = last_sources - now_sources
         for missing in missing_sources:
             target_cache.DelDep(missing)
@@ -237,8 +238,8 @@ class BrocObjectMaster(threading.Thread):
             source : the Source.Source object
             target_cache : the BrocObject object that depended on source cache
         """
-        source_cache = BrocObject.SourceCache(source.InFile(), source)
-        self._cache[source.InFile()] = source_cache
+        source_cache = BrocObject.SourceCache(source.OutFile(), source)
+        self._cache[source.OutFile()] = source_cache
         source_cache.AddReverseDep(target_cache)
         target_cache.AddDep(source_cache)
 
@@ -269,9 +270,9 @@ class BrocObjectMaster(threading.Thread):
         self._cache[target.OutFile()] = target_cache
         # handle source object
         for source in target.Sources():
-            if source.InFile() in self._cache:
-                self._cache[source.InFile()].AddReverseDep(target_cache)
-                target_cache.AddDep(self._cache[source.InFile()])
+            if source.OutFile() in self._cache:
+                self._cache[source.OutFile()].AddReverseDep(target_cache)
+                target_cache.AddDep(self._cache[source.OutFile()])
             else:
                 self._add_source_cache(source, target_cache)
 
@@ -350,8 +351,10 @@ class BrocObjectMaster(threading.Thread):
         cache.DisableBuild()
         if cache.TYPE == BrocObject.BrocObjectType.BROC_HEADER:
             return
+        #self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
         cache.Update()
         # save cache into file 
+        #self._logger.LevPrint("MSG", "save cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
         self._save_cache()
 
     def GetChangedCache(self):
@@ -380,7 +383,7 @@ class BrocObjectMaster(threading.Thread):
                 else:
                     for cache in caches[1:]:
                         self._cache[cache.Pathname()] = cache
-                        #self._logger.LevPrint("MSG", 'cache %s build is %s' % (cache.Pathname(), cache.build))
+                        #self._logger.LevPrint("MSG", 'cache %s hash is %s' % (cache.Pathname(), cache.Hash()))
         except BaseException as err:
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
