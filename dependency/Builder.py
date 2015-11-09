@@ -70,32 +70,25 @@ class ObjBuilder(Builder):
         """ 
         Builder.__init__(self, obj, compiler, workspace)
         self.workspace = workspace
-        self._includes = ""
+        self._includes = "-I. "
         self._opts = None
         self._infile = infile
         self._header_cmd = None
         self._header_files = set()
         if includes:
             #self._includes = "\t" + "\n\t".join(map(lambda x: "-I%s \ " % x, includes))
-            self._includes = " ".join(map(lambda x: "-I%s" % x, includes))
+            self._includes += " ".join(map(lambda x: "-I%s" % x, includes))
         if opts: 
             #self._opts = "\t" + "\n\t".join(map(lambda x: "%s \\" % x, opts))
             self._opts = " ".join(map(lambda x: x, opts))
-        if self._includes:
-            #self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n%s\n%s\n\t-o \\\n\t%s \\\n\t%s\n" % \
-            #        (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
-            self.build_cmd = "mkdir -p %s && %s -c %s %s -o %s %s" % \
-                    (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
-        else:
-            #self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n%s\n\t-o \\\n\t%s \\\n\t%s\n" % \
-            #        (self.obj_dir, self.compiler, self._opts, self.obj, infile)
-            self.build_cmd = "mkdir -p %s && %s -c %s -o %s %s" % \
-                    (self.obj_dir, self.compiler, self._opts, self.obj, infile)
-        include_paths = ""
-        if self._includes:
-            include_paths = self._includes[:-1]
+
+        #self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n%s\n%s\n\t-o \\\n\t%s \\\n\t%s\n" % \
+        #        (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
+        self.build_cmd = "mkdir -p %s && %s -c %s %s -o %s %s" % \
+                         (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
+
         self._header_cmd = "%s \\\n\t-MM \\\n\t%s\n %s" % \
-                            (self.compiler, self._infile, include_paths)
+                            (self.compiler, self._infile, self._includes)
 
     def CalcHeaderFiles(self):
         """
@@ -113,9 +106,6 @@ class ObjBuilder(Builder):
             return result
 
         files = msg.split()
-        # file[0] : .o, file[1] : .cpp|.c
-        #for f in files[2:]:
-        #    if f and f not in ['\\\n', '\\', self._infile, files[:2]]:
         for f in files:
             if f.endswith(".h"):
                 if self.workspace in f:

@@ -286,12 +286,18 @@ def Libs(*ss):
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagLibs()
     for s in ss:
+        if not isinstance(s, str):
+            raise BrocArgumentIllegalError("argument %s is illegal in tag Libs" % s)
+
         if os.path.isabs(s):
             tag.AddSV(s)
-        elif not s.startswith("$OUT_ROOT"):
-            raise BrocArgumentIllegalError("argument %s should startswith $OUT_ROOT in tag Libs")
+            continue
+
+        if not s.startswith("$OUT_ROOT"):
+            raise BrocArgumentIllegalError("args %s should startswith $OUT_ROOT in tag Libs" % s)
         else:
             tag.AddSV(os.path.normpath(s.replace("$OUT_ROOT", "broc_out")))
+
     return tag
 
 
@@ -484,7 +490,7 @@ def STATIC_LIBRARY(name, *args):
             tag_libs.AddSVs(arg.V())
         else:
             raise BrocArgumentIllegalError("arguments (%s) in STATIC_LIBRARY is illegal" % \
-                                          str(args))
+                                          type(arg))
     env = Environment.GetCurrent()
     lib = Target.StaticLibrary(name, env, tag_sources, tag_libs)
     if len(tag_sources.V()):
@@ -535,7 +541,7 @@ def PROTO_LIBRARY(name, files, *args):
     """
     # check validity of name
     if not Function.CheckName(name):
-        raise BrocArgumentIllegalError("name(%s) PROTO_LIBRARY is illegal")
+        raise BrocArgumentIllegalError("name(%s) PROTO_LIBRARY is illegal" % name)
 
     # check proto file whether belongs to  module
     proto_files = files.split()
@@ -575,15 +581,13 @@ def PROTO_LIBRARY(name, files, *args):
         include.add(os.path.dirname(result_file))
         source.add(result_file)
 
-    tag_include.AddSVs(include)
-    # add default protobuf include path
-    tag_include.AddV(os.path.join(os.environ['HOME'], "broc/protobuf/include"))
-    # add the directory of reslt of proto file
-    tag_include.AddV(os.path.join("broc_out", env.BrocCVSDir()))
-    protolib = Target.ProtoLibrary(env, files, tag_protoflags)
+    protolib = Target.ProtoLibrary(env, files, tag_include, tag_protoflags)
     ret, msg = protolib.PreAction()
     if not ret:
         raise BrocProtoError(msg)
+
+    tag_include.AddSVs(include)
+    tag_include.AddV(os.path.join("broc_out", env.BrocCVSDir()))
     tag_sources = Sources(" ".join(list(source)), tag_include, tag_cppflags, tag_cxxflags)
     env.AppendTarget(Target.StaticLibrary(name, env, tag_sources, tag_libs))
     

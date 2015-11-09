@@ -284,16 +284,18 @@ class ProtoLibrary(object):
     for tag PROTO_LIBRARY
     """
     TYPE = TargetType.PROTO_LIB
-    def __init__(self, env, protos, protoflags):
+    def __init__(self, env, protos, tag_include, protoflags):
         """
         Args:
             env : the Environment objet
             protos : a string spereated by blank character, representing the relative path of a group of proto files
+            tag_includes: SyntaxTag.TagInclude object
             protoflags : SyntaxTag.TagProtoFlags object
             tag_libs : the SyntaxTag.Tag
         """
         self.env = env
         self._protos = protos
+        self._tag_include = tag_include
         self._tag_protoflags = protoflags
         self._proto_cmds = set()
 
@@ -308,13 +310,10 @@ class ProtoLibrary(object):
         for proto in self._protos.split():
             proto_dirs.add(os.path.join(self.env.BrocCVSDir(), os.path.dirname(proto)))
         proto_flags = " ".join(self._tag_protoflags.V())
-        # cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, proto_dirs))
-        # add protobuf include 
-        cvs_dirs = "-I=%s " % os.path.join(os.environ['HOME'], 'broc/protobuf/include')
+        # add protobuf include set from PROTO_LIBRARY
+        cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, self._tag_include.V()))
         # add cvs path of directory of BROC
         cvs_dirs += "-I=%s " % self.env.BrocCVSDir()
-        # cvs_dirs += " ".join(map(lambda x: "-I=%s " % x, proto_dirs))
-
         protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
         for _dir in proto_dirs:
             # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))

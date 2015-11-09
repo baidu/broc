@@ -1,7 +1,7 @@
 #!/bin/bash
 # broc shell srcipt
 
-readonly PROTOC=$HOME/broc/protobuf/bin/protoc
+readonly PROTOC=/opt/protobuf/bin/protoc
 
 help()
 {
@@ -20,7 +20,7 @@ deploy_protobuf()
         echo "-- installing protobuf ..."
         tar -xzvf ./protobuf-2.6.1.tar.gz
         [ $? -ne 0 ] && echo "-- unpack protobuf failed" && return 1
-        (cd protobuf-2.6.1 && ./configure --prefix=$HOME/broc/protobuf && make -j12 && make install)
+        (cd protobuf-2.6.1 && ./configure --prefix=/opt/protobuf && make -j12 && make install)
         [ $? -ne 0 ] && echo "-- compile protobuf failed" && return 1
         (cd protobuf-2.6.1/python && python setup.py build && python setup.py install)
         [ $? -ne 0 ] && echo "-- install protobuf failed" && return 1

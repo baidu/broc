@@ -194,7 +194,7 @@ def _build(options):
     # to mkdir link directory
     output = os.path.join(root_node.workspace, "broc_out", root_node.module_cvspath, 'output')
     link = os.path.join(root_node.module_cvspath, 'output')
-    cmd = 'ln -sf %s %s' % (output, link)
+    cmd = 'rm -rf %s && ln -sf %s %s' % (link, output, link)
     ret, msg = Function.RunCommand(cmd)
     if ret != 0:
         logger.LevPring("ERROR", "Fail to mkdir output %s" % msg)
