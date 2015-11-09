@@ -354,13 +354,14 @@ class LibCache(BrocObject):
     .a cache
     """
     TYPE = BrocObjectType.BROC_LIB
-    def __init__(self, target, initialized=True):
+    def __init__(self, pathname, target, initialized=True):
         """
         Args:
+            pathname : the cvs path of lib file
             target : the Target.Target object
             initialized : whether initialize LibCache object
         """
-        BrocObject.__init__(self, target.OutFile(), initialized)
+        BrocObject.__init__(self, pathname, initialized)
         if initialized:
             self.build_cmd = target.__str__()
         else:

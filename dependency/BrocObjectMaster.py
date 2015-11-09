@@ -260,11 +260,11 @@ class BrocObjectMaster(threading.Thread):
         # self._logger.LevPrint("MSG", "add target cache(%s)" % target.OutFile())
         target_cache = None
         if isinstance(target, Target.StaticLibrary):
-            target_cache = BrocObject.LibCache(target)
+            target_cache = BrocObject.LibCache(target.OutFile(), target)
         elif isinstance(target, Target.Application):
             target_cache = BrocObject.AppCache(target)
         elif isinstance(target, Target.ProtoLibrary):
-            target_cache = BrocObject.LibCache(target)
+            target_cache = BrocObject.LibCache(target.OutFile(), target)
         self._cache[target.OutFile()] = target_cache
         # handle source object
         for source in target.Sources():
