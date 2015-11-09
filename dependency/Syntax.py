@@ -286,7 +286,9 @@ def Libs(*ss):
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagLibs()
     for s in ss:
-        if not s.startswith("$OUT_ROOT"):
+        if os.path.isabs(s):
+            tag.AddSV(s)
+        elif not s.startswith("$OUT_ROOT"):
             raise BrocArgumentIllegalError("argument %s should startswith $OUT_ROOT in tag Libs")
         else:
             tag.AddSV(os.path.normpath(s.replace("$OUT_ROOT", "broc_out")))

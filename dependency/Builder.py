@@ -183,6 +183,7 @@ class BinBuilder(Builder):
         objs = ""
         links = ""
         libs = ""
+        # mkdir -p broc_out/et/tools/app/output/bin && g++ -DBROC -o broc_out/et/tools/app/output/bin/hello broc_out/et/tools/app/2_hello_hello.o -Xlinker "-(" broc_out/et/tools/app/output/lib/libperson.a /home/zss/zeus/protobuf/lib/libprotobuf.a  -Xlinker "-)"
         self.build_cmd = "mkdir -p %s && %s -DBROC -o %s" % (self.obj_dir, self.compiler, self.obj)
         if dep_objs:
             objs = " ".join(map(lambda x: x.strip(), sorted(dep_objs)))
@@ -191,8 +192,9 @@ class BinBuilder(Builder):
             links = " ".join(map(lambda x: x.strip(), sorted(dep_links)))
             self.build_cmd += " %s" % links
         if dep_libs:
-            self.build_cmd += " -Xlinker \"-(\""
-            libs = "" + "".join(map(lambda x: x.strip(), sorted(dep_libs)))
+            self.build_cmd += " -Xlinker \"-(\" "
+            libs = "" + " ".join(map(lambda x: x.strip(), sorted(dep_libs)))
             self.build_cmd += libs
-            self.build_cmd += " -Xlinker\"-)\""
+            self.build_cmd += " -Xlinker \"-)\""
+        # print(self.build_cmd)
         #TODO Add WholeArchive 

@@ -60,6 +60,7 @@ class TaskWorker(threading.Thread):
                 result = dict()
                 result['ret'] = True
             else:
+                # Log.Log().LevPrint("INFO", "%s" % task.BuildCmd())
                 result = task.DoBuild() 
             self._master.TaskDone()
             response = dict()

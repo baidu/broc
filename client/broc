@@ -190,6 +190,16 @@ def _build(options):
     # run build thread to build
     task_master.Start()
     task_master.Wait()
+
+    # to mkdir link directory
+    output = os.path.join(root_node.workspace, "broc_out", root_node.module_cvspath, 'output')
+    link = os.path.join(root_node.module_cvspath, 'output')
+    cmd = 'ln -sf %s %s' % (output, link)
+    ret, msg = Function.RunCommand(cmd)
+    if ret != 0:
+        logger.LevPring("ERROR", "Fail to mkdir output %s" % msg)
+        retur -1
+    
     return 0
 
 
