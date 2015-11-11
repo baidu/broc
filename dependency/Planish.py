@@ -208,18 +208,26 @@ class Planish(object):
         # branches
         if reserved.module.br_kind == BrocModule_pb2.Module.BRANCH:
             # different branches confict
-            if reserved.br_name != coming.br_name:
+            if reserved.module.br_name != coming.module.br_name:
                 return -1
-            if reserved.version == 0 or reserved.version > coming.version:
+            if int(reserved.module.revision) > int(coming.module.revision):
                 return 0
             else:
                 return 1
         # tags
         if reserved.module.br_kind == BrocModule_pb2.Module.TAG:
-            if reserved.module.tag_name > coming.module.tag_name:
-                return 0
-            else:
-                return 1
+            #module.tag_name is like "ub_1-0-0-1_PD_BL"
+            #TODO change other ways to get version
+            reserved_version = reserved.module.tag_name.split('_')[1].split('-')
+            coming_version = coming.module.tag_name.split('_')[1].split('-')
+            for index in range(0, len(reserved_version)):
+                if int(reserved_version[index]) > int(coming_version[index]):
+                    return 0
+                elif int(reserved_version[index]) < int(coming_version[index]):
+                    return 1
+                else:
+                    continue
+            return 0
 
     def Dump(self):
         """
