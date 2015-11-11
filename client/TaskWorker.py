@@ -56,23 +56,27 @@ class TaskWorker(threading.Thread):
             if not task:
                 #TODO no task to deal, sleep for a while
                 continue
-            if task.build_cmd is None:
-                result = dict()
-                result['ret'] = True
-            else:
-                # Log.Log().LevPrint("INFO", "%s" % task.BuildCmd())
-                result = task.DoBuild() 
-            self._master.TaskDone()
+
             response = dict()
-            response['result'] = False
+            response['result'] = True
             response['object'] = task
+            # task whose type is LibCache and build cmd is empty, the lib is specified in Libs
+            if task.TYPE == BrocObject.BrocObjectType.BROC_LIB and task.BuildCmd() is None:
+                self._master.UpdateCache(task.Pathname())
+                self._master.AddResponse(response)
+                self._master.TaskDone()
+                continue
+            else:
+                result = task.DoBuild() 
+
+            self._master.TaskDone()
             if not result['ret']:
+                response['result'] = False
                 self._master.AddResponse(response)
                 self._logger.LevPrint("ERROR", "%s" % result['msg'])
                 self._master.Stop()
                 break
             else:
-                response['result'] = True
                 self._logger.LevPrint("MSG", "[OK] %s" % task.BuildCmd())
                 self._master.UpdateCache(task.Pathname())
                 self._master.AddResponse(response)

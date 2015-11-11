@@ -314,7 +314,13 @@ class Environment(object):
         """
         add target object
         """
+        # to avoid targets with same name and same type
+        for t in self._targets:
+            if t.Name() == v.Name() and t.TYPE == v.TYPE:
+                return False
+
         self._targets.append(v)
+        return True
 
     def Action(self):
         """
