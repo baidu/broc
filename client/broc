@@ -167,6 +167,8 @@ def _build(options):
         queue.put(node.module) 
     loader = Syntax.Loader(queue, logger, options['mode'], 4)
     loader.LoadBroc()
+    if not loader.LoadOK():
+        return -1
 
     # to find all of targets needed to be built
     envs = loader.Envs()

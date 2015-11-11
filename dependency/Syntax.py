@@ -467,7 +467,8 @@ def APPLICATION(name, sources, *args):
         
     env = Environment.GetCurrent()
     app = Target.Application(name, env, sources, tag_links, tag_libs)
-    env.AppendTarget(app) 
+    if not env.AppendTarget(app):
+        raise BrocArgumentIllegalError("APPLICATION(%s) exists already" % name)
 
 
 def STATIC_LIBRARY(name, *args):
@@ -494,7 +495,8 @@ def STATIC_LIBRARY(name, *args):
     env = Environment.GetCurrent()
     lib = Target.StaticLibrary(name, env, tag_sources, tag_libs)
     if len(tag_sources.V()):
-        env.AppendTarget(lib) 
+        if not env.AppendTarget(lib):
+            raise BrocArgumentIllegalError("STATIC_LIBRARY(%s) exists already" % name)
     else:
         # .a file has been built already, just copy it from code directory to output directory
         lib.DoCopy()
@@ -527,7 +529,8 @@ def UT_APPLICATION(name, sources, *args):
 
     env = Environment.GetCurrent()
     app = Target.UTApplication(name, sources, env, tag_links, tag_libs, tag_utargs)
-    env.AppendTarget(app)
+    if not env.AppendTarget(app):
+        raise BrocArgumentIllegalError("UT_APPLICATION(%s) exists already" % name)
 
 
 def PROTO_LIBRARY(name, files, *args):
@@ -589,7 +592,8 @@ def PROTO_LIBRARY(name, files, *args):
     tag_include.AddSVs(include)
     tag_include.AddV(os.path.join("broc_out", env.BrocCVSDir()))
     tag_sources = Sources(" ".join(list(source)), tag_include, tag_cppflags, tag_cxxflags)
-    env.AppendTarget(Target.StaticLibrary(name, env, tag_sources, tag_libs))
+    if not env.AppendTarget(Target.StaticLibrary(name, env, tag_sources, tag_libs)):
+        raise BrocArgumentIllegalError("PROTO_LIBRARY(%s) name exists already" % name)
     
 
 def UTArgs(v):
@@ -722,6 +726,7 @@ class Loader(object):
         self._lock_env_cache = threading.Lock()
         self._env_cache = dict() # { module cvs path : Environment }
         self._load_done = False
+        self._load_ok = True
 
     def LoadBroc(self):
         """
@@ -734,6 +739,12 @@ class Loader(object):
         # waiting for all BROC files have been deal
         self._queue.join()
         self._load_done = True
+
+    def LoadOK(self):
+        """
+        whether load all modules ok
+        """
+        return self._load_ok
 
     def _add_env(self, module_cvspath, env):
         """
@@ -770,8 +781,13 @@ class Loader(object):
             except BaseException as ex:
                 self._queue.task_done()
                 self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' % (module.broc_cvspath, ex))
-                # need to handle all BROC file because main thread is blocked at join()
-                continue
+                self._load_done = True
+                self._load_ok = False
+                # discard all BROC in queue
+                while not self._queue.empty():
+                    self._queue.get()
+                    self._queue.task_done()
+                break
 
             env.Action()
             self._add_env(module.module_cvspath, env)
