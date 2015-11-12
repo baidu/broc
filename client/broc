@@ -299,6 +299,8 @@ def main():
         return Options.Help('broc')
 
     options = Options.OptionBuild(sys.argv[2:])
+    if options is None:
+        return -1
     if sys.argv[1] == "build":
         return _build(options)
 
