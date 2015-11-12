@@ -32,7 +32,9 @@ from dependency import PlanishUtil
 from dependency import Planish
 from dependency import BrocModule_pb2
 from dependency import Syntax
+from dependency import Target
 from dependency import BrocObjectMaster
+from dependency import UTMaster
 
 
 def _load_config(logger):
@@ -109,7 +111,71 @@ def _init_root_node(pathname, broc_config, domain, logger):
     return root_node
 
 
-def _build(options):
+def _mkdir_output(root_node, logger):
+    """
+    create output link
+    Args:
+        root_node : the root BrocNode object
+        logger: Log.Log object
+    """
+    # to mkdir output link directory
+    output = os.path.join(root_node.workspace, "broc_out", root_node.module_cvspath, 'output')
+    link = os.path.join(root_node.module_cvspath, 'output')
+    if os.path.exists(link) and not os.path.islink(link):
+        logger.LevPrint("WARNING", "check result in %s" % output)
+    else:
+        cmd = 'rm -rf %s && ln -sf %s %s' % (link, output, link)
+        ret, msg = Function.RunCommand(cmd)
+        if ret != 0:
+            logger.LevPring("WARNING", "check result in %s" % (msg, output))
+            return -1
+
+
+def _do_publish(envs, logger):
+    """
+    handle tag PUBLISH of all envrionment objects
+    Args:
+        envs : the list of environment object
+        logger : Log.Log
+    Return:
+        return True if publish ok
+        retrurn False if publish bad
+    """
+    for env in envs:
+        ret, msg = env.DoPublish()
+        if not ret:  
+            logger.LevPrint("ERROR", "fail to handle %s's tag PUBLISH %s" \
+                            % (env.BrocCVSPath(), msg))
+            return False
+
+    return True
+
+def _do_ut(env, logger):
+    """
+    run ut
+    Args:
+        env : the Environment object
+        logger : the Log.Log object
+    Returns:
+        return True if all ut cases go right
+        return False if exists one ut case goes wrong
+    """
+    queue = Queue.Queue()
+    for target in env.Targets():
+        if isinstance(target, Target.UTApplication):
+            queue.put(target.UT_CMD()) 
+
+    if queue.empty():
+        return True
+
+    ut_master = UTMaster.UTMaster(queue, logger)
+    ut_master.Start()
+    if len(ut_master.Errors()) > 0:
+        return False
+    else:
+        return True
+
+def _build(options, do_ut=False):
     """
     build function
     Args:
@@ -119,6 +185,7 @@ def _build(options):
                  options["path"] = "."
                  options["mode"] = "debug"
                  options["job"] = 4
+        do_ut : whether do ut test after build
     """
     # load broc config 
     logger = Log.Log()
@@ -184,7 +251,22 @@ def _build(options):
     # if no targets need to build, exit
     if not modified_targets:
         logger.LevPrint("MSG", "all targets have been built, no more need to build")
-        return 0
+        # to create output link
+        _mkdir_output(root_node, logger)
+        # Handle TAG PUBLISH
+        if not _do_publish(envs, logger):
+            return -1
+
+        # no ut to handle
+        if not do_ut:
+            return 0
+
+        # to handle ut
+        if _do_ut(loader.MainEnv(), logger):
+            return 0
+        else:
+            return -1
+
     task_master = TaskMaster.TaskMaster(options['jobs'], 
                                         cache_master,
                                         modified_targets,
@@ -192,17 +274,24 @@ def _build(options):
     # run build thread to build
     task_master.Start()
     task_master.Wait()
-
-    # to mkdir link directory
-    output = os.path.join(root_node.workspace, "broc_out", root_node.module_cvspath, 'output')
-    link = os.path.join(root_node.module_cvspath, 'output')
-    cmd = 'rm -rf %s && ln -sf %s %s' % (link, output, link)
-    ret, msg = Function.RunCommand(cmd)
-    if ret != 0:
-        logger.LevPring("ERROR", "Fail to mkdir output %s" % msg)
-        retur -1
     
-    return 0
+    # create output link
+    _mkdir_output(root_node, logger)
+
+    # to handle PUBLISH
+    if not _do_publish(envs, logger):
+        return -1
+
+    logger.LevPrint("MSG", "build ok")
+    # no ut to handle 
+    if not do_ut:
+        return 0
+
+    # to handle ut
+    if _do_ut(loader.MainEnv(), logger):
+        return 0
+    else:
+        return -1
 
 
 def _test(options):
@@ -216,7 +305,7 @@ def _test(options):
                  options["path"] = "."
                  options["mode"] = "debug"
     """
-    pass
+    return _build(options, True) 
 
 
 def _show_deps(options):
@@ -305,7 +394,7 @@ def main():
         return _build(options)
 
     if sys.argv[1] == "test":
-        pass
+        return _test(options)
 
     if sys.argv[1] == "show-deps":
         return _show_deps(options)
@@ -318,6 +407,11 @@ def main():
 
     if sys.argv[1] == "version":
         print("broc version 1.0.0")
+        return 0
+
+    if sys.argv[1] == "config":
+        config = _load_config(Log.Log())
+        config.Dump()
         return 0
 
     if sys.argv[1] == "help" or sys.argv[1]:

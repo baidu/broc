@@ -70,25 +70,20 @@ class ObjBuilder(Builder):
         """ 
         Builder.__init__(self, obj, compiler, workspace)
         self.workspace = workspace
-        self._includes = "-I. "
+        self._includes = "-I."
         self._opts = None
         self._infile = infile
         self._header_cmd = None
         self._header_files = set()
         if includes:
-            #self._includes = "\t" + "\n\t".join(map(lambda x: "-I%s \ " % x, includes))
-            self._includes += " ".join(map(lambda x: "-I%s" % x, includes))
+            self._includes += " \\\n\t" + "\t".join(map(lambda x: "-I%s \\\n" % x, includes))
         if opts: 
-            #self._opts = "\t" + "\n\t".join(map(lambda x: "%s \\" % x, opts))
-            self._opts = " ".join(map(lambda x: x, opts))
+            self._opts = " \\\n\t".join(map(lambda x: x, opts))
 
-        #self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n%s\n%s\n\t-o \\\n\t%s \\\n\t%s\n" % \
-        #        (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
-        self.build_cmd = "mkdir -p %s && %s -c %s %s -o %s %s" % \
+        self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n\t%s \\\n\t%s\t-o \\\n\t%s \\\n\t%s" % \
                          (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
-
-        self._header_cmd = "%s \\\n\t-MM \\\n\t%s\n %s" % \
-                            (self.compiler, self._infile, self._includes)
+        self._header_cmd = "%s \\\n\t-MM \\\n\t%s\t%s" % \
+                            (self.compiler, self._includes, self._infile)
 
     def CalcHeaderFiles(self):
         """
@@ -143,18 +138,12 @@ class LibBuilder(Builder):
             compiler : the abs path of compiler
         """
         Builder.__init__(self, obj, compiler, workspace)
-        libs = ""
-        objs = ""
+        self.build_cmd = "mkdir -p %s && %s \\\n\trcs \\\n\t%s" \
+                         % (self.obj_dir, self.compiler, self.obj)
         if dep_objs:
-            #objs = "\n\t" + "\n\t".join(map(lambda x: "%s/%s" % (self.workspace, x.strip()) + " \ ", sorted(dep_objs)))
-            objs = " ".join(sorted(dep_objs))
+            self.build_cmd += " \\\n\t" + " \\\n\t".join(sorted(dep_objs))
         if dep_libs:
-            #libs = "\n\t" + "\n\t".join(map(lambda x: "%s/%s" % (self.workspace, x.strip()) + " \ ", sorted(dep_libs)))
-            libs = " ".join(sorted(dep_libs))
-        #self.build_cmd = "mkdir -p %s && %s \\\n\trcs \\\n\t%s \\%s%s\n" % \
-        #                 (self.obj_dir, self.compiler, self.obj, objs[:-2], libs[:-2])
-        self.build_cmd = "mkdir -p %s && %s rcs %s %s %s" \
-                         % (self.obj_dir, self.compiler, self.obj, objs, libs)
+            self.build_cmd += " \\\n\t" + " \\\n\t".join(sorted(dep_libs))
 
 class BinBuilder(Builder):
     """
@@ -174,17 +163,15 @@ class BinBuilder(Builder):
         links = ""
         libs = ""
         # mkdir -p broc_out/et/tools/app/output/bin && g++ -DBROC -o broc_out/et/tools/app/output/bin/hello broc_out/et/tools/app/2_hello_hello.o -Xlinker "-(" broc_out/et/tools/app/output/lib/libperson.a /home/zss/zeus/protobuf/lib/libprotobuf.a  -Xlinker "-)"
-        self.build_cmd = "mkdir -p %s && %s -DBROC -o %s" % (self.obj_dir, self.compiler, self.obj)
+        self.build_cmd = "mkdir -p %s && %s \\\n\t-DBROC \\\n\t-o \\\n\t%s \\\n\t" \
+                         % (self.obj_dir, self.compiler, self.obj)
         if dep_objs:
-            objs = " ".join(map(lambda x: x.strip(), sorted(dep_objs)))
-            self.build_cmd += " %s" % objs 
+            self.build_cmd += " \\\n\t".join(map(lambda x: x.strip(), sorted(dep_objs)))
         if dep_links:
-            links = " ".join(map(lambda x: x.strip(), sorted(dep_links)))
-            self.build_cmd += " %s" % links
+            self.build_cmd += " \\\n\t"
+            self.build_cmd += " \\\n\t".join(map(lambda x: x.strip(), sorted(dep_links)))
         if dep_libs:
-            self.build_cmd += " -Xlinker \"-(\" "
-            libs = "" + " ".join(map(lambda x: x.strip(), sorted(dep_libs)))
-            self.build_cmd += libs
-            self.build_cmd += " -Xlinker \"-)\""
-        # print(self.build_cmd)
+            self.build_cmd += " \\\n\t-Xlinker \\\n\t\"-(\" \\\n\t\t"
+            self.build_cmd += " \\\n\t\t".join(map(lambda x: x.strip(), sorted(dep_libs)))
+            self.build_cmd += " \\\n\t-Xlinker \\\n\t\"-)\""
         #TODO Add WholeArchive 

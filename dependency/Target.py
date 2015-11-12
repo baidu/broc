@@ -54,7 +54,7 @@ class Target(object):
         """
         """
         if self.builder:
-            return self.builder.__str__() 
+            return self.builder.GetBuildCmd() 
         else:
             return ""
 
@@ -74,12 +74,14 @@ class Target(object):
         self.compiler = env.CC()        # default compiler is gcc, if there is one source whose TYPE is Source.SourceType.CXX,
                                         # in self._tag_srouces, the compiler will become g++
         self.outfile = ''               # the cvspath of output file  "$OUT" + "/" + [bin|lib|test] + "/" + [prefix] + self.name + [postfix]
+
         # all infile of Source objects 
         if self.tag_sources:
             self.infiles = set(sorted(
                            map(lambda x: os.path.normpath(x.InFile()), self.tag_sources.V())))
         else:
             self.infiles = set()
+
         self.objects = None             # set of all .o file
         # all cvs path of .a files
         if tag_libs:
@@ -136,6 +138,12 @@ class Target(object):
         return the set of .a files
         """
         return self.libs
+
+    def GetBuildCmd(self):
+        """
+        return build cmd
+        """
+        return self.builder.GetBuildCmd()
 
     def Action(self):
         """
@@ -216,12 +224,27 @@ class UTApplication(Application):
                                                       self.env.ModuleCVSPath(), 
                                                       'output/test',
                                                       self.name))
+        self.tag_ut_args = ut_args
+        self.ut_cmd = None   # ut command
+
+    def __str__(self):
+        """
+        """
+        cmd = "%s\n" % self.builder.GetBuildCmd()
+        cmd += "ut cmd: %s" % self.ut_cmd
+        return cmd
 
     def Action(self):
         """
         """
         Application.Action(self)
-        #TODO ug_args
+        self.ut_cmd = "%s %s" % (self.outfile, " ".join(self.tag_ut_args.V()))
+
+    def UT_CMD(self):
+        """
+        return ut command
+        """
+        return self.ut_cmd
 
 
 class StaticLibrary(Target):
@@ -298,6 +321,16 @@ class ProtoLibrary(object):
         self._tag_include = tag_include
         self._tag_protoflags = protoflags
         self._proto_cmds = set()
+
+    def __str__(self):
+        """
+        print protoc command
+        """
+        cmd = ""
+        for c in self._proto_cmd:
+            cmd += "%s\n" % c
+
+        return cmd 
 
     def PreAction(self):
         """

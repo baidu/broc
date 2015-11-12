@@ -85,6 +85,12 @@ class Source(object):
         """
         return self.infile == v._infile
 
+    def GetBuildCmd(self):
+        """
+        return build cmd
+        """
+        return self.builder.GetBuildCmd()
+
     def Compiler(self):
         """
         return the compiler cmd
@@ -208,10 +214,10 @@ class CXXSource(Source):
     """
     TYPE = SourceType.CXX
     EXTS = ('.cpp', '.cc', '.cxx')
-    def __init__(self, infile, evn, args):
+    def __init__(self, infile, env, args):
         """
         """
-        Source.__init__(self, infile, evn, args)
+        Source.__init__(self, infile, env, args)
 
     def Compiler(self):
         """

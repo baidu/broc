@@ -45,6 +45,7 @@ def Help(bin_name, subcommand=None):
         Log.colorprint("DEFAULT", "    clean      : Remove output files", False)
         Log.colorprint("DEFAULT", "    scratch    : Create a BCLOUD template", False)
         Log.colorprint("DEFAULT", "    version    : Display the version", False)
+        Log.colorprint("DEFAULT", "    config     : Display broc's config items", False)
         Log.colorprint("DEFAULT", "    help       : Print the help commands", False)
         return 0
 
@@ -57,10 +58,10 @@ def Help(bin_name, subcommand=None):
         Log.colorprint("DEFAULT", "Valid options:", False)
         if subcommand == "build":
             Log.colorprint("DEFAULT", 
-            "\t--target=ARG\t\t: Build specified targets,default build all targets", False)
+            "\t--target=ARG\t\t: Build specified targets, default build all targets", False)
         else:
             Log.colorprint("DEFAULT",
-            "\t--target=ARG\t\t: Build and run specified targets,default run all targets",
+            "\t--target=ARG\t\t: Build and run specified targets, default run all targets",
             False)
         Log.colorprint("DEFAULT",
             "\t--mode=[release|debug]  : Set build mode, default mode is debug",

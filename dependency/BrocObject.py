@@ -204,7 +204,7 @@ class BrocObject(object):
         else:
             self.build = False
             result['ret'] = True
-            result['msg'] = ""
+            result['msg'] = msg
         return result
 
     def NotifyReverseDeps(self):
@@ -302,7 +302,7 @@ class SourceCache(BrocObject):
         """
         BrocObject.__init__(self, source.OutFile(), False)
         # take build cmd as build option
-        self.build_cmd = source.__str__()
+        self.build_cmd = source.GetBuildCmd()
         self.src_obj = BrocObject(source.InFile())
             
     def IsChanged(self, target):
@@ -317,21 +317,22 @@ class SourceCache(BrocObject):
         """
         # to check source file 
         if self.src_obj.IsChanged(None):
-            Log.Log().LevPrint('MSG', "%s object changed" % self.pathname)
-            self.build_cmd = target.__str__()
+            Log.Log().LevPrint('MSG', "%s changed" % self.pathname)
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
 
         # to check build option
-        if self.build_cmd != target.__str__():
-            Log.Log().LevPrint('MSG', "%s -- > %s" % (self.build_cmd, target.__str__()))
-            self.build_cmd = target.__str__()
+        if self.build_cmd != target.GetBuildCmd():
+            #Log.Log().LevPrint('INFO', "cache(%s, type:%s) build cmd changed" % (self.pathname, self.TYPE))
+            #Log.Log().LevPrint('MSG', "%s -- > %s" % (self.build_cmd, target.GetBuildCmd()))
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
 
         # to check obj file
         if BrocObject.IsChanged(self, target.InFile()):
-            self.build_cmd = target.__str__()
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
 
@@ -363,7 +364,7 @@ class LibCache(BrocObject):
         """
         BrocObject.__init__(self, pathname, initialized)
         if initialized:
-            self.build_cmd = target.__str__()
+            self.build_cmd = target.GetBuildCmd()
         else:
             self.build_cmd = None
 
@@ -380,7 +381,7 @@ class LibCache(BrocObject):
                     self.modify_time = os.stat(self.pathname.st_mtime) 
             except BaseException:
                 pass
-            self.build_cmd = target.__str__()
+            self.build_cmd = target.GetBuildCmd()
             self.initialized = True
 
     def IsChanged(self, target):
@@ -394,8 +395,8 @@ class LibCache(BrocObject):
             if file is not modified, return False
         """
         # to check build option
-        if self.build_cmd != target.__str__():
-            self.build_cmd = target.__str__()
+        if self.build_cmd != target.GetBuildCmd():
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
         else:
@@ -412,7 +413,7 @@ class AppCache(BrocObject):
             target : the Target.Target object
         """
         BrocObject.__init__(self, target.OutFile())
-        self.build_cmd = target.__str__()
+        self.build_cmd = target.GetBuildCmd()
 
     def IsChanged(self, target):
         """
@@ -424,12 +425,12 @@ class AppCache(BrocObject):
             if file is not modified, return False
         """
         # to check build option
-        if self.build_cmd != target.__str__():
-            self.build_cmd = target.__str__()
+        if self.build_cmd != target.GetBuildCmd():
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
         elif BrocObject.IsChanged(self, target):
-            self.build_cmd = target.__str__()
+            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
         else:

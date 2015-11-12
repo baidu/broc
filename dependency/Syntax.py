@@ -526,9 +526,8 @@ def UT_APPLICATION(name, sources, *args):
             tag_utargs.AddSVs(arg.V())
         else:
             raise BrocArgumentIllegalError("In UT_APPLICATION(%s) don't support %s" % (name, arg))
-
     env = Environment.GetCurrent()
-    app = Target.UTApplication(name, sources, env, tag_links, tag_libs, tag_utargs)
+    app = Target.UTApplication(name, env, sources, tag_links, tag_libs, tag_utargs)
     if not env.AppendTarget(app):
         raise BrocArgumentIllegalError("UT_APPLICATION(%s) exists already" % name)
 
@@ -627,12 +626,13 @@ def PUBLISH(srcs, out_dir):
     if not out_dir.strip().startswith('$OUT'):
         raise BrocArgumentIllegalError("PUBLISH argument dst(%s) must start with $OUT \
                                          in %s " % (out_dir, env.BrocPath()))
-    src_lists = string.split(srcs)
+    src_lists = srcs.split()
     for s in src_lists:
         abs_s = os.path.normpath(os.path.join(env.BrocDir(), s))
         if env.ModulePath() not in abs_s:
             raise NotInSelfModuleError(abs_s, env.ModulePath())
-        env.AddPublish(s.strip(), out_dir.strip())
+
+    env.AddPublish(srcs, out_dir)
 
 
 def SVN_PATH():
@@ -725,6 +725,7 @@ class Loader(object):
         self._workers = wokers
         self._lock_env_cache = threading.Lock()
         self._env_cache = dict() # { module cvs path : Environment }
+        self._main_env = None
         self._load_done = False
         self._load_ok = True
 
@@ -739,6 +740,12 @@ class Loader(object):
         # waiting for all BROC files have been deal
         self._queue.join()
         self._load_done = True
+
+    def MainEnv(self):
+        """
+        return main envirionment object
+        """
+        return self._main_env
 
     def LoadOK(self):
         """
@@ -791,6 +798,8 @@ class Loader(object):
 
             env.Action()
             self._add_env(module.module_cvspath, env)
+            if module.is_main:
+                self._main_env = env
             self._queue.task_done()
 
     def Envs(self):

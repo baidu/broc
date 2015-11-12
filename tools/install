@@ -1,29 +1,43 @@
 #!/bin/bash
-# broc shell srcipt
+#
+# Copyright (C) 2015 Baidu.com, Inc. All Rights Reserverd
+# Author: zhousongsong
+# Date: 2015/11/12
+# Brief:
+#   install and deploy broc
 
-readonly PROTOC=/opt/protobuf/bin/protoc
+set -x
+set -e
+set -u
 
-help()
+declare -r PROTOC=/opt/protobuf/bin/protoc
+
+# print help information
+function help() 
 {
-    echo "-- Deploy broc command"
-    echo "-- Usage: $0 [deploy|protobuf|proto|help]"
-    echo "     deploy : deploy borc "
-    echo '     protobuf : install protobuf in $HOME'
-    echo '     proto : compile proto files'
-    echo '     broc: compile proto files'
+    echo "Usage: broc options ..."
+    echo "  deploy   : deploy borc "
+    echo "  protobuf : install protobuf in /opt"
+    echo "  proto    : compile proto files"
+    echo "  broc     : compile proto files"
 }
 
-deploy_protobuf()
+function err() 
+{
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+}
+
+function deploy_protobuf() 
 {
     # to install protobuf
-    if [ ! -e $PROTOC ]; then
+    if [[ ! -e $PROTOC ]]; then
         echo "-- installing protobuf ..."
         tar -xzvf ./protobuf-2.6.1.tar.gz
-        [ $? -ne 0 ] && echo "-- unpack protobuf failed" && return 1
+        [[ $? -ne 0 ]] && err "-- unpack protobuf failed" && return 1
         (cd protobuf-2.6.1 && ./configure --prefix=/opt/protobuf && make -j12 && make install)
-        [ $? -ne 0 ] && echo "-- compile protobuf failed" && return 1
+        [[ $? -ne 0 ]] && err "-- compile protobuf failed" && return 1
         (cd protobuf-2.6.1/python && python setup.py build && python setup.py install)
-        [ $? -ne 0 ] && echo "-- install protobuf failed" && return 1
+        [[ $? -ne 0 ]] && err "-- install protobuf failed" && return 1
         echo "-- installing protobuf success"
         rm -rf protobuf-2.6.1
     else
@@ -32,55 +46,57 @@ deploy_protobuf()
     return 0
 }
 
-deploy_proto()
+function deploy_proto() 
 {
     # compile proto file
     echo "-- compile broc proto files ..."
     $PROTOC -I=../proto --python_out=../dependency ../proto/*.proto
-    if [ $? -ne 0 ]; then
-    [ $? -ne 0 ] && echo "-- compile broc proto files failed" && return 1
+    [[ $? -ne 0 ]] && err "-- compile broc proto files failed" && return 1
     echo "-- compile broc proto files success" && return 0
 }
 
-deploy_broc()
+function deploy_broc() 
 {
     mkdir -p /opt/broc
-    [ $? -ne 0 ] && echo "-- fail to mkdir /opt/broc" && return 1
+    [[ $? -ne 0 ]] && err "-- fail to mkdir /opt/broc" && return 1
     cp -rf ../* /opt/broc
-    [ $? -ne 0 ] && echo "-- install broc failed" && return 1
+    [[ $? -ne 0 ]] && err "-- install broc failed" && return 1
     grep 'PATH=/opt/broc/bin' ~/.bash_profile
-    if [ $? -ne 0 ]:
-        echo 'PATH=/opt/broc/client:$PATH'  >> ~/.bash_profile
+    [[ $? -ne 0 ]] && echo 'PATH=/opt/broc/client:$PATH'  >> ~/.bash_profile
     echo "-- install broc OK, and run: source ~/.bash_profile" && return 0
 }
 
 deploy()
 {
     deploy_protobuf
-    [ $? -ne 0 ] && return 1
+    [[ $? -ne 0 ]] && return 1
     deploy_proto
-    [ $? -ne 0 ] && return 1
+    [[ $? -ne 0 ]] && return 1
     deploy_broc
-    [ $? -ne 0 ] && return 1
+    [[ $? -ne 0 ]] && return 1
     return 0
 }
 
-case "$1" in
-        deploy)
-                deploy
-                ;;
-        protobuf)
-                deploy_protobuf
-                ;;     
-        proto)
-                deploy_proto
-                ;;     
-        broc)
-                deploy_broc
-                ;;
-             *)
-                help
-                ;;
-esac
+function main() 
+{
+    [[ $# -lt 1 ]] && help && return 1
+    case "$1" in
+            deploy)
+                    deploy
+                    ;;
+            protobuf)
+                    deploy_protobuf
+                    ;;     
+            proto)
+                    deploy_proto
+                    ;;     
+            broc)
+                    deploy_broc
+                    ;;
+                 *)
+                    help
+                    ;;
+    esac
+}
 
-exit $?
+main $@

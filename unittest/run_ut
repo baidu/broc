@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Copyright (C) 2015 Baidu.com, Inc. All Rights Reserverd
+# Author: zhousongsong
+# Date: 2015/11/12
+# Brief:
+#   run broc unit test case
+
+#set -x
+set -e
+set -u
+
+
+function err() {
+    echo "[$(date +'%Y-%m-%D %H:%M:%S')]: $@" >&2
+}
+
+
+function run_ut(){
+    for ut in $(ls *.py); do
+        python $ut
+        if [[ $? -ne 0 ]]; then
+            err "run $ut  failed" 
+        fi
+    done
+}
+
+run_ut $@
+
+exit $?
+

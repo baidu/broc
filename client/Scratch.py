@@ -91,8 +91,6 @@ BROC_TEMPLATE="""#edit-mode: -*- python -*-
 #              CxxFlags("debug falgs","release flas"), 
 #              Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))
 
-#sub directory
-#Directory('demo')
 """
 
 def scratch(target_dir):

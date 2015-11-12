@@ -108,3 +108,14 @@ svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
         return postfix of svn tag
         """
         return self._svn_postfix_tag
+
+    def Dump(self):
+        """
+        dump broc config  
+        """
+        print("-- svn domain : %s" % self._svn_repo_domain)
+        print("-- git domain : %s" % self._git_repo_domain)
+        print("-- svn trunk postfix : %s" % self._svn_postfix_trunk)
+        print("-- svn branch posfix : %s" % self._svn_postfix_branch)
+        print("-- svn tag postfix   : %s" % self._svn_postfix_tag)
+        

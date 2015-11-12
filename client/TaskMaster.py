@@ -76,7 +76,7 @@ class TaskMaster(object):
 
         while add_tasks < all_tasks:
             response = self.FetchResponse()
-            if not response['result']:
+            if response == -1 or not response['result']:
                 break
             now = response['object']
             for redeps in now.reverse_deps:

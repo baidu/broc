@@ -23,6 +23,7 @@ sys.path.insert(0, broc_dir)
 
 from dependency import SyntaxTag
 from dependency import BrocModule_pb2
+from util import Function
 
 
 class Environment(object):    
@@ -289,12 +290,12 @@ class Environment(object):
             src : source files
             dst : the destination starting with $OUT
         """
-        _dst = dst.replace("$OUT", self.OutputPath())
-        _srcs = ""
-        for s in src:
-            _srcs += ' ' + s
-        cmd = "mkdir -p %s && cp -rf %s %s" % (_dst, _srcs, _dst)
-        self._publish_cmd.append(cmd)
+        _dst = os.path.normpath(dst.replace("$OUT", self.OutputPath()))
+        srcs = src.split()
+        for s in srcs:
+            _src = os.path.normpath(os.path.join(self.BrocCVSDir(), s))
+            cmd = "mkdir -p %s && cp -rf %s %s" % (_dst, _src, _dst)
+            self._publish_cmd.append(cmd)
 
     def AppendSubDirectory(self, v):
         """
@@ -328,6 +329,17 @@ class Environment(object):
         """
         for target in self._targets:
             target.Action()
+
+    def DoPublish(self):
+        """
+        do publish cmd
+        """
+        for cmd in self._publish_cmd:
+            ret, msg = Function.RunCommand(cmd)
+            if ret != 0:
+                return (False, msg)
+
+        return (True, '')
         
 
 

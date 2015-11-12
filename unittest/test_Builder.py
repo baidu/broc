@@ -42,8 +42,12 @@ class TestBuilder(unittest.TestCase):
         dep_libs = ['broc_out/a/b/d/output/lib/libfun.a', 'broc_out/a/b/d/output/lib/libutil.a']
         dep_links = ['-DBROC', '-Werror', '-Wpublick=private']
         compiler = '/usr/bin/g++'
-        builder = Builder.BinBuilder(obj, dep_objs, dep_libs, dep_links, compiler)          
-        print('\n%s' % builder.GetBuildCmd()) 
+        right_cmd = "mkdir -p broc_out/a/b/c && /usr/bin/g++ \\\n\t-DBROC \\\n\t-o \
+\\\n\tbroc_out/a/b/c/test \\\n\ta/b/c/fun.o \\\n\ta/b/c/util.o \\\n\t-DBROC \\\n\t-Werror \
+\\\n\t-Wpublick=private \\\n\t-Xlinker \\\n\t\"-(\" \\\n\t\tbroc_out/a/b/d/output/lib/libfun.a \
+\\\n\t\tbroc_out/a/b/d/output/lib/libutil.a \\\n\t-Xlinker \\\n\t\"-)\""
+        builder = Builder.BinBuilder(obj, dep_objs, dep_libs, dep_links, compiler, '.')          
+        self.assertEqual(right_cmd, builder.GetBuildCmd()) 
 
     def test_LibBiilder(self):
         """
@@ -52,10 +56,13 @@ class TestBuilder(unittest.TestCase):
         obj = 'broc_out/a/b/c/test'
         dep_objs = ['a/b/c/fun.o', 'a/b/c/util.o']
         dep_libs = ['broc_out/a/b/d/output/lib/libfun.a', 'broc_out/a/b/d/output/lib/libutil.a']
-        compiler = '/usr/bin/g++'
-        builder = Builder.LibBuilder(obj, dep_objs, dep_libs, compiler)          
-        print('\n%s' % builder.GetBuildCmd()) 
+        compiler = 'ar'
+        right_cmd = "mkdir -p broc_out/a/b/c && ar \\\n\trcs \\\n\tbroc_out/a/b/c/test \
+\\\n\ta/b/c/fun.o \\\n\ta/b/c/util.o \\\n\tbroc_out/a/b/d/output/lib/libfun.a \
+\\\n\tbroc_out/a/b/d/output/lib/libutil.a"
+        builder = Builder.LibBuilder(obj, dep_objs, dep_libs, compiler, '.')          
 
+        self.assertEqual(right_cmd, builder.GetBuildCmd()) 
     def test_ObjBuilder(self):
         """
         test ObjBuilder
@@ -67,7 +74,10 @@ class TestBuilder(unittest.TestCase):
         opts = ['-DBROC', '-DVERSION=1.0.0']
         compiler = '/usr/bin/g++'
         builder = Builder.ObjBuilder(obj, infile, includes, opts, compiler, now_dir)
-        print('\n%s' % builder.GetBuildCmd()) 
+        right_cmd = "mkdir -p broc_out/a/b/c && /usr/bin/g++ \\\n\t-c \
+\\\n\t-DBROC \\\n\t-DVERSION=1.0.0 \\\n\t-I. \\\n\t-I/usr/include \\\n\t-I/usr/local/include \
+\\\n\t-Ia/b/c \\\n\t-o \\\n\tbroc_out/a/b/c/test.o \\\n\ta/b/c/test.cpp"
+        self.assertEqual(right_cmd, builder.GetBuildCmd())
         builder.CalcHeaderFiles()
 
     def test_GetHeaderFiles(self):
@@ -77,24 +87,42 @@ class TestBuilder(unittest.TestCase):
         now_dir = os.getcwd()
         obj = 'get_header_files.o'
         infile = 'get_header_files.cpp'
+        include = ['/usr/include', '/usr/local/include']
         compiler = '/usr/bin/g++'
-        builder = Builder.ObjBuilder(obj, infile, None, None, compiler, now_dir)
+        builder = Builder.ObjBuilder(obj, infile, include, None, compiler, now_dir)
+        right_header_cmd = "/usr/bin/g++ \\\n\t-MM \\\n\t-I. \\\n\t-I/usr/include \
+\\\n\t-I/usr/local/include \\\n\tget_header_files.cpp"
+        self.assertEqual(right_header_cmd, builder.GetHeaderCmd())
+        with open('hello.h', 'wb') as f:
+            f.write("#include <stdio.h>\n\
+void hello()\n\
+{\n\
+    print(\"hello - hello\");\n\
+}\n")
+        with open('world.h', 'wb') as f:
+            f.write("#include <stdio.h>\n\
+void world()\n\
+{\n\
+    print(\"hello - world\");\n\
+}\n")
         with open('get_header_files.cpp', 'wb') as f:
             f.write("#include <stdio.h>\n\
 #include <pthread.h>\n\
+#include \"hello.h\"\n\
+#include \"world.h\"\n\
 int main()\n\
 {\n\
-    print(\"hello world\");\n\
+    hello();\n\
+    world();\n\
     return 0;\n\
 }\n")
-        print(builder.GetHeaderCmd())
         ret = builder.CalcHeaderFiles()
-        if not ret['ret']:
-            print('get header failed(%s)' % ret['msg'])
-        else:
-            print(builder.GetHeaderFiles())
+        self.assertEqual(True, ret['ret'])
+        self.assertEqual(sorted(["hello.h", 'world.h']), sorted(builder.GetHeaderFiles()))
 
         Function.DelFiles('get_header_files.cpp')
+        Function.DelFiles('hello.h')
+        Function.DelFiles('world.h')
         
 
 if __name__ == "__main__":

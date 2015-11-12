@@ -56,7 +56,6 @@ class TaskWorker(threading.Thread):
             if not task:
                 #TODO no task to deal, sleep for a while
                 continue
-
             response = dict()
             response['result'] = True
             response['object'] = task
