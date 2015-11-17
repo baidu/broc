@@ -134,6 +134,7 @@ class BrocTree(object):
         self._broc_dir = tempfile.mkdtemp()
         self._done_broc = dict()       # module url --> [BrocNode...]
         self._checked_node = list()    #list to save the node which has been traversed.
+        self._need_broc_list = list()  #list of no BROC modules
 
     def __del__(self):
         """
@@ -161,6 +162,12 @@ class BrocTree(object):
         while not self._node_queue.empty():
             node = self._node_queue.get()
             self._handle_node(node)
+
+        if len(self._need_broc_list) > 0:
+            module_list = "There is no BROC in these modules:\n"
+            for module_name in self._need_broc_list:
+                module_list += module_name + '\n'
+            raise BrocTreeError(module_list)
 
     def _handle_node(self, node):
         """
@@ -197,6 +204,8 @@ class BrocTree(object):
             else:
                 try:
                     broc_file = self._download_broc(node)
+                    if broc_file is -1:
+                        return
                     configs = PlanishUtil.GetConfigsFromBroc(broc_file)
                 except BaseException as err:
                     raise BrocTreeError(str(err))
@@ -260,8 +269,8 @@ class BrocTree(object):
         # self._logger.LevPrint("MSG", "run command %s" % cmd)
         (ret, msg) = Function.RunCommand(cmd) 
         if ret != 0:
-            raise BrocTreeError(msg)
-
+            self._need_broc_list.append(node.module.url)
+            return -1
         return tmp_file
 
     def _is_same_node(self, node):
