@@ -17,7 +17,6 @@ import re
 import xml.dom.minidom
 
 import Function
-import Log
 
 def GetSvnRoot(target_dir, logger):
     """
@@ -265,7 +264,7 @@ def GetSvnLastChangeRev(target_dir, logger):
         version = svn_dom.getElementsByTagName('commit')[0].getAttribute('revision')
         if version is None:
             logger.LevPrint('ERROR',
-                    'svn info of %s doesn\'t contains last changed rev!' % target_path, False)
+                    'svn info of %s doesn\'t contains last changed rev!' % target_dir, False)
         return version
 
     return None
@@ -284,7 +283,7 @@ def GetSvnUrl(target_dir, logger):
     if svn_dom is not None:
         url = svn_dom.getElementsByTagName('url')[0].lastChild.data
         if url is None:
-            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contain url!' % target_path, False)
+            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contain url!' % target_dir, False)
         return url
 
     return None
@@ -311,7 +310,7 @@ def GetGitUrl(target_dir, logger):
     return url
 
 
-def GetSvnRevision(target_dir, logger):
+def GetSvnRevisionFromDir(target_dir, logger):
     """
     get svn revision of module
     Args :
@@ -324,10 +323,40 @@ def GetSvnRevision(target_dir, logger):
     if svn_dom is not None:
         revision = svn_dom.getElementsByTagName('entry')[0].getAttribute('revision')
         if revision is None:
-            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contains revision!' % target_path,
+            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contains revision!' % target_dir,
                     False)
         return revision
     return None
+
+
+def GetSvnRevisionFromUrl(url, logger):
+    """
+    get revision from svn url
+    Args :
+        url : svn url
+        logger : the object of Log.Log
+    Returns :
+        return svn revision of module,if enconters some errors return None
+    """
+    command = "svn info --xml %s" % url
+    (status, stdout) = Function.RunCommand(command)
+    if status != 0:
+        logger.LevPrint("ERROR", "Get svn info failed: %s" % stdout, False)
+        return None
+
+    dom = None
+    try: 
+        dom = xml.dom.minidom.parseString(stdout)
+    except BaseException as err:
+        logger.LevPrint("ERROR", "Get svn info failed: %s" % err, False)
+        return None
+
+    revision = dom.getElementsByTagName('entry')[0].getAttribute('revision')
+    if revision is None:
+        logger.LevPrint('ERROR', 'svn info of %s doesn\'t contains revision!' % url, False)
+        return None
+
+    return revision
 
 
 def GetSvnUrlRevision(target_dir, logger):
@@ -345,11 +374,11 @@ def GetSvnUrlRevision(target_dir, logger):
     if svn_dom is not None:
         url = svn_dom.getElementsByTagName('url')[0].lastChild.data
         if url is None:
-            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contain url!' % target_path, False)
+            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contain url!' % target_dir, False)
             return None
         revision = svn_dom.getElementsByTagName('entry')[0].getAttribute('revision')
         if revision is None:
-            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contains revision!' % target_path,
+            logger.LevPrint('ERROR', 'svn info of %s doesn\'t contains revision!' % target_dir,
                             False)
             return None
 
@@ -561,7 +590,7 @@ def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
     if result['br_kind'] is None:
         return result
 
-    result['revision'] = GetSvnRevision(target_dir, logger)
+    result['revision'] = GetSvnRevisionFromDir(target_dir, logger)
     if result['revision'] is None:
         return result
     
@@ -730,7 +759,7 @@ def GetGitUrlInfos(target_dir, git_domain, logger):
     result['name'] = GetModuleName(result['module_cvspath'])
     result['broc_cvspath'] = GetBrocCvspath(result['module_cvspath'])
 
-    result['workspace'] = GetWorkSpace(target_dir, result['module_cvspath'])
+    result['workspace'] = GetWorkSpace(target_dir, result['module_cvspath'], logger)
     if result['workspace'] is None:
         return result
 

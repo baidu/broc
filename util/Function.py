@@ -59,6 +59,24 @@ def DelFiles(path):
         pass
 
 
+def MoveFiles(src, dst):
+    """
+    move file or directory src to dst
+    Args:
+        src : the source files or directory
+        dst : the destination
+    Returns:
+        return (True, '') if move successfully
+        return (False, error msg) if move failed
+    """
+    try:
+        shutil.move(src, dst)
+    except BaseException as err:
+        return (False, err)
+
+    return (True, '')
+
+
 def Mkdir(target_dir):
     """
     try to create a directory

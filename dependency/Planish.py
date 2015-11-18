@@ -64,6 +64,7 @@
 """
 import os
 import sys
+import time
 
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)
@@ -160,20 +161,26 @@ class Planish(object):
                 continue
             if os.path.exists(node.module.root_path):
                 # FIX ME, replace delete with remove
+                dst = "%s-%f" % (node.module.root_path, time.time())
                 self.logger.LevPrint("WARNING", "local code doesn't match BROC, reload it(%s)"% \
                                     (node.module.origin_config))
-                Function.DelFiles(node.module.root_path)
+                Function.MoveFiles(node.module.root_path, dst)
+                
+
+            # generate command donwloading code from repository
             cmd = None
             url = node.module.url
-            if node.module.revision:
-                url = "%s -r %s" % (url, node.module.revision)
-
             if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+                if node.module.revision:
+                    url = "%s -r %s --force" % (url, node.module.revision)
+                else:
+                    url = "%s --force" % url
                 cmd = "svn checkout %s %s" % (url, node.module.root_path)
             else:
                 _dir = os.path.dirname(node.module.root_path)
                 cmd = "mkdir -p %s && cd %s && git clone %s" % (_dir, _dir, node.module.url)
-            # self.logger.LevPrint("MSG", "run cmd(%s)" % cmd)
+
+            self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)
             if ret != 0:
                 self.logger.LevPrint("ERROR", "%s failed(%s)" % (cmd, msg))

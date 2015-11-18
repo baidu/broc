@@ -47,11 +47,10 @@ def GetConfigsFromBroc(_file):
         with open(_file, 'r') as f:
             for line in f.readlines():
                 _line = line.strip()
-                if _line.startswith("CONFIGS"):
+                if _line.strip().startswith("CONFIGS"):
                     configs.add(_line[9:-2])
     except IOError as e:
         raise PlanishError(e)
-
     return configs
 
 

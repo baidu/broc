@@ -199,7 +199,6 @@ class BrocTree(object):
                     broc_file = self._download_broc(node)
                     configs = PlanishUtil.GetConfigsFromBroc(broc_file)
                 except BaseException as err:
-                    
                     raise BrocTreeError(str(err))
         # to handle dependent modules
         try:
@@ -286,13 +285,24 @@ class BrocTree(object):
 
         if infos is None:
             raise BrocTreeError("parse module(%s) failed" % node.module.url)
-      
-        # to check local code's revision equals revision specified in BROC 
-        if node.module.revision: 
-            return True if infos[0] == node.module.url and \
-                   infos[1] == node.module.revision else False
+
+        # check url
+        if infos[0] != node.module.url:
+            return False
+        if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+            # check version
+            if not node.module.revision: 
+                # TODO fetch the newest version of module from svn url
+                last_version = RepoUtil.GetSvnRevisionFromUrl(node.module.url, self._logger)
+                if last_version and infos[1] == last_version:
+                    return True
+                else:
+                    return False
+            else:
+                return True if infos[1] == node.module.revision else False
         else:
-            return True if infos[0] == node.module.url else False
+            #TODO to check git tag name
+            return True
 
     def _dump(self, node, config_list):
         config_list.append(node.Dump())
