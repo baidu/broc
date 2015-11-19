@@ -6,7 +6,7 @@
 #
 ################################################################################
 """
-util file for planish dependent module
+utility function for planishing dependent modules
 """
 import os
 import sys
@@ -33,24 +33,25 @@ class PlanishError(Exception):
         return self._msg
 
     
-def GetConfigsFromBroc(_file):
+def GetConfigsFromBroc(pathname):
     """
     get all config tags from BROC file
     Args:
-        _file : the abs path of BROC file
+        pathname : the abs path of BROC file
     Returns:
         set["xx@xx", "xx@xx@xx", "xx@xx@xx",...] 
-        if _file doesn't exist, raise PlanishError 
+        if pathname doesn't exist, raise PlanishError 
     """
     configs = set()
     try:
-        with open(_file, 'r') as f:
+        with open(pathname, 'r') as f:
             for line in f.readlines():
-                _line = line.strip()
-                if _line.strip().startswith("CONFIGS"):
-                    configs.add(_line[9:-2])
+                if line.strip().startswith("CONFIGS"):
+                    # remove "CONFIGS(" and ")" in line
+                    configs.add(line.strip()[9:-2])
     except IOError as e:
         raise PlanishError(e)
+
     return configs
 
 
@@ -67,9 +68,9 @@ def ParseConfigs(configs,
     Args:
         configs : set([xx@xx, xx@xx@xx, xx@xx@xx, ...])
         workspace : the abs path of worksapce, ie $WORKSPACE
-        repo_kind : BrocModuel_pb2.Module.EnumRepo
-        dep_level : int value
-        repo_domain : the domain name of repository server
+        repo_kind : a enum value in BrocModuel_pb2.Module.EnumRepo
+        dep_level : int value presenting dependent level
+        repo_domain : the domain name of repository
         postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
@@ -103,8 +104,8 @@ def ParseConfig(config,
     Args:
         config : the dependent module's info whose format can be xx@xx, xx@xx@xx
         workspace : the abs path of worksapce, ie $WORKSPACE
-        dep_level : int value
-        repo_kind : BrocModuel_pb2.Module.EnumRepo
+        dep_level : int value representing dependent level
+        repo_kind : a enum value in BrocModuel_pb2.Module.EnumRepo
         repo_domain : the domain name of repository server
         postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
