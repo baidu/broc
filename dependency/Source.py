@@ -81,7 +81,7 @@ class Source(object):
 
     def __eq__(self, v):
         """
-        call when compare tow Source objects
+        call when compare two Source objects
         """
         return self.infile == v._infile
 
