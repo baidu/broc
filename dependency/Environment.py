@@ -46,8 +46,6 @@ class Environment(object):
         """
         line = ''
         line += '******************************************\n'
-        line += 'subdirs: %s\n' % self._subdirs
-        line += '\n'
         line += "compiler dir: %s\n" % self._compiler_dir
         line += 'cc: %s\n' % self._cc
         line += 'cxx: %s\n' % self._cxx
@@ -87,7 +85,6 @@ class Environment(object):
 
         self._sources = []
         self._targets = []
-        self._subdirs = []
 
     def DisableDebug(self):
         """
@@ -115,7 +112,7 @@ class Environment(object):
 
     def ModuleCVSPath(self):
         """
-        return module's cvs path
+        return the cvs path of module
         """
         return self._module.module_cvspath
 
@@ -279,7 +276,7 @@ class Environment(object):
 
     def Targets(self):
         """
-        return all target objects
+        return the list of all target objects
         """
         return self._targets
 
@@ -296,14 +293,6 @@ class Environment(object):
             _src = os.path.normpath(os.path.join(self.BrocCVSDir(), s))
             cmd = "mkdir -p %s && cp -rf %s %s" % (_dst, _src, _dst)
             self._publish_cmd.append(cmd)
-
-    def AppendSubDirectory(self, v):
-        """
-        add sub directory
-        Args:
-            v : the sub directory
-        """
-        self._subdirs.append(v)
 
     def AppendSource(self, v):
         """

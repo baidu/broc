@@ -71,8 +71,7 @@ class Target(object):
         self.tag_sources = tag_sources  # TagSource object
         self.tag_libs = tag_libs        # TagLbs object
 
-        self.compiler = env.CC()        # default compiler is gcc, if there is one source whose TYPE is Source.SourceType.CXX,
-                                        # in self._tag_srouces, the compiler will become g++
+        self.compiler = env.CC()        # default compiler is gcc, if there is one source whose TYPE is Source.SourceType.CXX the compiler will become g++
         self.outfile = ''               # the cvspath of output file  "$OUT" + "/" + [bin|lib|test] + "/" + [prefix] + self.name + [postfix]
 
         # all infile of Source objects 
@@ -279,7 +278,7 @@ class StaticLibrary(Target):
 
     def DoCopy(self):
         """
-        if lib files are built already, just copy it from code directory to output directory
+        if .a file has been built already before compile action, just copy it from code directory to output directory
         Returns:
             return True if copy success
             return False if fail to copy

@@ -19,7 +19,7 @@ from util import Log
         
 class BrocObjectType(object):
     """
-    cache enum
+    cache type enum
     """
     BROC_UNKNOW = 0
     BROC_HEADER = 1 # head file
@@ -37,16 +37,16 @@ class BrocObject(object):
         """
         Args:
             pathname : the cvs path of object file
-            initialized : to mark whether ZuesOject need initialized, default is True,
-                          if initialized is False, create a empty BrocObject
+            initialized : to mark whether BrocObject need initialized, default is True,
+                          if initialized is False, create a empty BrocObject object
         """
         self.pathname = pathname
         self.initialized = initialized # initialized flag
         self.deps = set()              # dependent BrocObject
         self.reverse_deps = set()      # reversed dependent BrocObject
-        self.hash = None               # hash value of pathname
-        self.modify_time = 0           # the last modify time of pathname
-        self.build_cmd = ""
+        self.hash = None               # hash value of content
+        self.modify_time = 0           # the last modify time of BrocObject file
+        self.build_cmd = ""            # the commond of BrocObject to build
         if self.initialized:
             try:
                 self.hash = Function.GetFileMd5(pathname)
@@ -72,8 +72,7 @@ class BrocObject(object):
         
     def Initialize(self, target):
         """
-        initialize BrocObject
-        overwited by child class
+        initialize BrocObject with target, overwited by child class
         """
         pass
 
@@ -109,7 +108,7 @@ class BrocObject(object):
 
     def AddReverseDep(self, obj):
         """
-        add reverse dep file
+        add reverse dependent BrocObject
         Args:
             obj : the BrocObject object
         """
@@ -122,9 +121,9 @@ class BrocObject(object):
 
     def DelReverseDep(self, pathname):
         """
-        delelte reversed dependent cache
+        delete reversed dependent cache
         Args:
-            pathname : the pathname of reversed dependent cache 
+            pathname : the name of reversed dependent cache 
         """
         for item in self.reverse_deps:
             if item.Pathname() == pathname:
@@ -145,9 +144,9 @@ class BrocObject(object):
 
     def DelDep(self, pathname):
         """
-        delelte dependent cache
+        delete dependent cache
         Args:
-            pathname : the pathname of dependent cache 
+            pathname : the name of dependent cache 
         """
         for item in self.deps:
             if item.Pathname() == pathname:
@@ -159,12 +158,12 @@ class BrocObject(object):
         eaable build flag
         """
         self.build = True
-        # notify all reversed dependent BrocObject
+        # set all reversed dependent BrocObject to build
         self.NotifyReverseDeps()
 
     def IsBuilt(self):
         """
-        check wether BrocObject has been built
+        check whether BrocObject has been built already
         Returns:
             return True if BrocObject has been built,
             return False if BrocObject has not been built
@@ -173,12 +172,12 @@ class BrocObject(object):
 
     def IsReady(self):
         """
-        to check wether BrocObject can be built 
-        if all dependent caches is built, the BrocObject can be built 
+        to check whether BrocObject can be built 
+        if all dependent caches is built, the BrocObject object can be built 
         Returns:
-            return 1 if all dependent caches have been built and itself is not been built
-            return 0 there is one dependent cache has not been build
-            return -1 if all dependent caches have been build and itself has been built already
+            return 1 if all dependent caches have been built and it is still not been built
+            return 0 if there is one dependent cache has not been build
+            return -1 if all dependent caches have been build and it has been built already
         """
         if not self.build:
             return -1
@@ -191,7 +190,7 @@ class BrocObject(object):
 
     def DoBuild(self):
         """
-        run build cmd
+        to run build cmd
         Returns:
             return (True, '') if build successfully
             return (False, 'error msg') if fail to build   
@@ -209,7 +208,7 @@ class BrocObject(object):
 
     def NotifyReverseDeps(self):
         """
-        BrocObject changed, notify all reversed dependent BrocObject objects
+        to notify all reversed dependent BrocObject objects to build
         """
         for obj in self.reverse_deps:
             # Log.Log().LevPrint("MSG", "%s nofity reverse dep(%s) build " % (self.pathname, obj.Pathname()))
@@ -217,8 +216,7 @@ class BrocObject(object):
 
     def IsChanged(self, target=None):
         """
-        to check whether file changed
-        to keep 
+        to check whether cache is changed
         Args:
             target : the target that compared to 
         Returns:
@@ -255,7 +253,7 @@ class BrocObject(object):
 
     def Update(self):
         """
-        Update modify time and hash value
+        Update modify time and hash value of cache object
         """
         # update modify time
         modify_time = None
@@ -301,7 +299,6 @@ class SourceCache(BrocObject):
             source  : the Souce.Source object
         """
         BrocObject.__init__(self, source.OutFile(), False)
-        # take build cmd as build option
         self.build_cmd = source.GetBuildCmd()
         self.src_obj = BrocObject(source.InFile())
             
@@ -343,8 +340,10 @@ class SourceCache(BrocObject):
         update source cache, this function update object file's cache
         source file's modify time and hash value are updated in IsChanged()
         """
+        # update head files
         for head_cache in self.deps:
             head_cache.DisableBuild()
+        # update source file
         self.src_obj.Update() 
         BrocObject.Update(self)
         
@@ -359,7 +358,7 @@ class LibCache(BrocObject):
         """
         Args:
             pathname : the cvs path of lib file
-            target : the Target.Target object
+            target : the Target.STATIC_LIBRARY object
             initialized : whether initialize LibCache object
         """
         BrocObject.__init__(self, pathname, initialized)
@@ -430,7 +429,6 @@ class AppCache(BrocObject):
             self.build = True
             return True
         elif BrocObject.IsChanged(self, target):
-            self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
         else:

@@ -44,7 +44,7 @@ class BrocObjectMaster(threading.Thread):
         self._logger = logger
         self._queue = Queue.Queue()  # request queue
         self._version = 0.1
-        self._cache = dict()     # {cvs path : BrocObject} 
+        self._cache = dict()        # {cvs path : BrocObject} 
         self._changed_cache = set() # set(BrocObject)
         self._event = threading.Event()
         self._dumped_str = ""
@@ -54,6 +54,7 @@ class BrocObjectMaster(threading.Thread):
         wait all cache has been check
         """
         self._queue.put(('check_done', None))
+        # wait all target has been checked
         self._event.wait()
         self._event.clear()
 
@@ -84,7 +85,7 @@ class BrocObjectMaster(threading.Thread):
     def _handle_check(self, obj):
         """
         used by BrocObjectMaster thread
-        to check whether cache(cvspath) is changed
+        to check whether cache is changed
         Args:
             obj : target.Target object
         """
@@ -214,19 +215,20 @@ class BrocObjectMaster(threading.Thread):
 
     def _check_lib_cache(self, pathname, target_cache):
         """
-        check lib cache, target(.exe, .a) can depend on .a
-        when add target object's cache, there is just the cvs path of .a file,
-        so here just creates a empty target cache and save the dependent relation,
-        and when handle the true dependent object will initiailze it 
+        check lib cache
+        a target(.exe, .a) can depend on static library(.a) files
+        when add cache object for the target, we need to create the cache object for all dependent .a files at same time.
+        In the condition, the informatin of dependent file(.a) we have is just the cvs path, so creates a empty target cache
+        and the dependent relation firstly, and then initiailze it when it comes to check the true dependengt object
         Args:
             pathname: the cvs path of .a file
-            target_cache : the target object's reversed dependent target cache 
+            target_cache : the reversed dependent target cache of lib file
         """
         if pathname not in self._cache:
             self._add_lib_cache(pathname, target_cache)
             return True
         # BrocObject object will check whether dep or reverse dep existed already,
-        # there is no need to check, just add it, it will ok
+        # there is no need to check, it doesn't matter, just add it
         self._cache[pathname].AddReverseDep(target_cache)
         target_cache.AddDep(self._cache[pathname]) 
 
@@ -235,7 +237,7 @@ class BrocObjectMaster(threading.Thread):
         add a new source cache, and create header cache
         Args:
             source : the Source.Source object
-            target_cache : the BrocObject object that depended on source cache
+            target_cache : the BrocObject object that dependeds on the source file
         """
         source_cache = BrocObject.SourceCache(source)
         self._cache[source.OutFile()] = source_cache
@@ -322,7 +324,7 @@ class BrocObjectMaster(threading.Thread):
 
     def _handle_check_done(self):
         """
-        filter all changed files
+        find all changed cache whose type in [BROC_SOURCE, BROC_LIB, BROC_APP]
         """
         for k, cache in self._cache.iteritems():
             if not cache.IsBuilt() and cache.TYPE in [BrocObject.BrocObjectType.BROC_SOURCE,
@@ -351,6 +353,7 @@ class BrocObjectMaster(threading.Thread):
             return 
         cache = self._cache[pathname]
         cache.DisableBuild()
+        # head file information has been updated in check stage, so no need to update
         if cache.TYPE == BrocObject.BrocObjectType.BROC_HEADER:
             return
         # self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
@@ -392,7 +395,9 @@ class BrocObjectMaster(threading.Thread):
 
     def _save_cache(self):
         """
-        save cache
+        save cache objects into file
+        and content of file is a list and its format is [ version, cache, cache, ...].
+        the first item is cache version, and the 2th, 3th ... item is cache object
         """
         dir_name = os.path.dirname(self._cache_file)
         Function.Mkdir(dir_name)
@@ -407,7 +412,7 @@ class BrocObjectMaster(threading.Thread):
 
     def _dump(self, pathname, level):
         """
-        dump dependecy, DFS
+        dump dependecy relationship into file, DFS
         """
         if self._cache[pathname].build is True:
             infos = "\t" * level + "[" + pathname + "]\n"          #need to build
@@ -419,7 +424,7 @@ class BrocObjectMaster(threading.Thread):
 
     def Dump(self):
         """
-        dump dependency relation of files
+        save dependency relation of files
         """
         dumped_file = os.path.join(self._root, ".BROC.FILE.DEPS")
         for pathname in self._cache:

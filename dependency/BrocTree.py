@@ -50,10 +50,10 @@ class BrocNode(object):
         Args:
             module : the BrocModule_pb2.Module object
             parent : the BrocNode object representing the parent node
-            is_local : module code exists or not in local
+            is_local : whether module code exists in local system
         """
         self.module = module
-        self._children = []
+        self._children = []    # the list of kid nodes
         self._parent = parent
         self._is_local = is_local
 
@@ -91,12 +91,11 @@ class BrocNode(object):
         """
         return self._is_local
 
-    def SetLocal(self, local):
+    def EnableLocal(self):
         """
-        Args:
-            local : bool value, set the local flag
+        mark the code of module exists in local system
         """
-        self._is_local = local
+        self._is_local = True
  
     def Dump(self):
         """
@@ -113,16 +112,15 @@ class BrocNode(object):
        
 class BrocTree(object):
     """
-    class for planishing dependent modules
-    # FIX ME how to avoid the circle dependency
+    the dependent tree of all modules
     """
     def __init__(self, root, repo_domain, logger, postfix):
         """
         Args:
             root : the BrocModule_pb2.Moduel object, the root of BrocTree
             repo_domain : the damain of repository 
-            logger : the log facility object
-            postfix : the list of postfix, [postfix_trunk, postfix_branche, postfix_tag]
+            logger : Log.Log object, the log facility object
+            postfix : the list of postfix like [postfix_trunk, postfix_branche, postfix_tag]
         """
         self._root = BrocNode(root, None, True) 
         self._repo_domain = repo_domain
@@ -130,11 +128,11 @@ class BrocTree(object):
         self._postfix = postfix
         self._node_queue = Queue.Queue() # the queue of BrocModule
         self._node_queue.put(self._root)
-        self._all_nodes = dict()       # module cvspath ---> [BrocNode...], storing all of gathered modules
-        self._broc_dir = tempfile.mkdtemp()
+        self._all_nodes = dict()       # { module cvspath : [BrocNode...] }  storing all of gathered modules
+        self._broc_dir = tempfile.mkdtemp() # the temporary directory storing all BROC files 
         self._done_broc = dict()       # module url --> [BrocNode...]
-        self._checked_node = list()    #list to save the node which has been traversed.
-        self._need_broc_list = list()  #list of no BROC modules
+        self._checked_node = list()    # list to save the node which has been traversed.
+        self._need_broc_list = list()  # list of no BROC modules
 
     def __del__(self):
         """
@@ -155,7 +153,7 @@ class BrocTree(object):
 
     def ConstructTree(self):
         """
-        to construct the broc tree 
+        to construct the denpendent tree 
         Raises:
             raise BrocTreeError
         """
@@ -184,23 +182,25 @@ class BrocTree(object):
 
         configs = None
         broc_file = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
-        # node of main module
+        #  main module node
         if node.module.is_main:
             if not os.path.exists(broc_file):
                 raise BrocTreeError('no BROC file in main moudle(%s)' % node.module.module_cvspath) 
             else:
-                configs = PlanishUtil.GetConfigsFromBroc(broc_file)
-
-        # nodes of dependent modules
+                try:
+                    configs = PlanishUtil.GetConfigsFromBroc(broc_file)
+                except PlanishUtil.PlanishError as err:
+                    raise BrocTreeError(str(err))
+        # dependent module node
         else:
             # to check whether the version of local BROC file equals Node's 
             if os.path.exists(broc_file) and self._is_same_node(node):
                 try:
-                    node.SetLocal(True)
+                    node.EnableLocal()
                     configs = PlanishUtil.GetConfigsFromBroc(broc_file)
                 except PlanishUtil.PlanishError as err:
                     raise BrocTreeError(str(err))
-            # download from repository to temporary file
+            # download BROC from repository
             else:
                 try:
                     broc_file = self._download_broc(node)
@@ -209,7 +209,8 @@ class BrocTree(object):
                     configs = PlanishUtil.GetConfigsFromBroc(broc_file)
                 except BaseException as err:
                     raise BrocTreeError(str(err))
-        # to handle dependent modules
+
+        # to parse CONFIGS infos in BROC file
         try:
             kids = PlanishUtil.ParseConfigs(configs,
                                             node.module.workspace,
@@ -255,8 +256,7 @@ class BrocTree(object):
             raise BrocTree.Error
         """
         _file = Function.CalcMd5(node.module.url)
-        tmp_file = os.path.join(self._broc_dir, 
-                                _file + '_' + 'BROC')
+        tmp_file = os.path.join(self._broc_dir, "%s_BROC" % _file)
         cmd = None
         url = os.path.join(node.module.url, 'BROC')
         if node.module.revision:
@@ -336,8 +336,8 @@ class BrocTree(object):
 
     def _has_circle(self, node):
         """
-        Depth-First Traverse dependency graph.self._checked_node is the list of traversed nodes.
-        if there is a node which appears twice in the list, the graph must have a circle.
+        depth-First traverse dependency graph. self._checked_node is the list of traversed nodes.
+        if there is a node which appears twice in the list, the graph must have a dependent circle.
         Args :
             node : Broc Tree Node
         Returns :
@@ -345,22 +345,23 @@ class BrocTree(object):
             False : dependency graph doesn't have circles
         """
         for kid in node.Children():
-            #check is there a node which appears twice
+            # check is there a node which appears twice
             if kid.module.module_cvspath in self._checked_node:
-                #store the node which appears twice, then we can get a path with circle in it.
+                # store the node which appears twice, then we can get a path with circle in it.
                 self._checked_node.append(kid.module.module_cvspath)
                 return True
-            #store the node which has been traversed.
+            # store the node which has been traversed.
             self._checked_node.append(kid.module.module_cvspath)
             ret = self._has_circle(kid)
             if ret:
                 return True
             self._checked_node.pop()
+
         return False
 
     def HasCircle(self):
         """
-        check the dependency graph has circles or not
+        check whether the dependency graph has circles 
         Returns :
             True : dependency graph has circles
             False : dependency graph doesn't has circles

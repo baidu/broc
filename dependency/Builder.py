@@ -89,8 +89,8 @@ class ObjBuilder(Builder):
         """
         calculate the header files that source file dependends
         Returns:
-            {ret : True | False, msg : 'error message' }
-            calculate successfully ret is True; otherwise ret is False and msg contains failed reason   
+            { ret : True | False, msg : 'error message' }
+            calculate successfully ret is True; otherwise ret is False and msg contains error message
         """
         result = dict()
         result['ret'] = False

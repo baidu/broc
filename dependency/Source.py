@@ -64,7 +64,7 @@ class Source(object):
             env : Environment object
             args : the compile option args
         """
-        self.infile = infile                     # a .c, .cpp file
+        self.infile = infile                     # the cvs path of source file
         self.outfile = ""                        # the cvs path of object file, ie .o  
         self.args = args                         # compile option args
         self.env = env
