@@ -45,7 +45,7 @@ class TestUTMaster(unittest.TestCase):
         queue.put("gcc --watch out")
         queue.put("echo 'broc is great'")
         log = Log.Log()
-        master = UTMaster.UTMaster(2, queue, log)
+        master = UTMaster.UTMaster(queue, log)
         master.Start()
         self.assertEqual(1, len(master.Errors()))
 
