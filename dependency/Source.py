@@ -71,7 +71,7 @@ class Source(object):
         self.target = None                       # Target object that Source belongs to
 
         # compile options
-        self.includes = []
+        self.includes = ['.', 'broc_out']
         self.cppflags = []
         self.cflags = []
         self.cxxflags = []

@@ -78,6 +78,7 @@ class Environment(object):
         self._g_cflags = SyntaxTag.TagCFLAGS()
         self._g_cxxflags = SyntaxTag.TagCXXFLAGS()
         self._g_incpaths = SyntaxTag.TagINCLUDE()
+        self._g_incpaths.AddV('. broc_out')
         self._g_linkflags = SyntaxTag.TagLDFLAGS()
 
         # for tag PUBLISH

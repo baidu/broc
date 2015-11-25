@@ -126,7 +126,7 @@ class BrocTree(object):
         self._repo_domain = repo_domain
         self._logger = logger
         self._postfix = postfix
-        self._node_queue = Queue.Queue() # the queue of BrocModule
+        self._node_queue = Queue.Queue() # the queue of BrocModule_pb2
         self._node_queue.put(self._root)
         self._all_nodes = dict()       # { module cvspath : [BrocNode...] }  storing all of gathered modules
         self._broc_dir = tempfile.mkdtemp() # the temporary directory storing all BROC files 
@@ -180,38 +180,14 @@ class BrocTree(object):
                 node.AddChild(kid_node)
             return 
 
-        configs = None
-        broc_file = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
-        #  main module node
-        if node.module.is_main:
-            if not os.path.exists(broc_file):
-                raise BrocTreeError('no BROC file in main moudle(%s)' % node.module.module_cvspath) 
-            else:
-                try:
-                    configs = PlanishUtil.GetConfigsFromBroc(broc_file)
-                except PlanishUtil.PlanishError as err:
-                    raise BrocTreeError(str(err))
-        # dependent module node
-        else:
-            # to check whether the version of local BROC file equals Node's 
-            if os.path.exists(broc_file) and self._is_same_node(node):
-                try:
-                    node.EnableLocal()
-                    configs = PlanishUtil.GetConfigsFromBroc(broc_file)
-                except PlanishUtil.PlanishError as err:
-                    raise BrocTreeError(str(err))
-            # download BROC from repository
-            else:
-                try:
-                    broc_file = self._download_broc(node)
-                    if broc_file is -1:
-                        return
-                    configs = PlanishUtil.GetConfigsFromBroc(broc_file)
-                except BaseException as err:
-                    raise BrocTreeError(str(err))
-
-        # to parse CONFIGS infos in BROC file
         try:
+            # to fetch BROC file
+            broc_path = self._check_broc(node)
+            if broc_path is None:
+                self._logger.LevPrint("ERROR", "fetch BROC failed")
+                return 
+            # get CONFIGS from BROC
+            configs = PlanishUtil.GetConfigsFromBroc(broc_path) 
             kids = PlanishUtil.ParseConfigs(configs,
                                             node.module.workspace,
                                             node.module.dep_level + 1,
@@ -220,9 +196,9 @@ class BrocTree(object):
                                             self._postfix[0],
                                             self._postfix[1],
                                             self._postfix[2])
-        except PlanishUtil.PlanishError as e:
+        except BaseException as err:
             self._logger.LevPrint("ERROR", "parse BROC(%s) failed" % node.module.url)
-            raise BrocTreeError(str(e))
+            raise BrocTreeError(str(err))
 
         kid_nodes = []
         for kid in kids:
@@ -233,6 +209,42 @@ class BrocTree(object):
             self._node_queue.put(kid_node)
         # record the done broc file to prevernt from parse again
         self._done_broc[node.module.url] = kid_nodes
+
+    def _check_broc(self, node):
+        """
+        to check BROC file
+        Args:
+            node : the object of BrocNode
+        Returns:
+            return the abs path of BROC file if check successfully
+            return None if fail to check BROC file
+        """
+        broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
+        # BROC exists in local file system
+        if os.path.exists(broc_path):
+            if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+                if self.SameSvnNode(node):
+                    return broc_path
+                else:
+                    return self._download_broc(node)
+            else:
+                broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
+                cmd += "cd %s && git fetch --all && git checkout %s" \
+                        % (broc_dir, node.module.br_name)
+                if node.module.tag_name:
+                    cmd += " && git checkout %s" % node.module.tag_name
+                # to run cmd
+                ret, msg = Function.RunCommand(cmd)
+                if ret != 0:
+                    self._logger.LevPrint("ERROR", "fail to find BROC(%s) failed(%s)" % (cmd, msg))
+                    # FIX ME, maybe return None is better
+                    raise BrocTreeError("%s\n%s" % (cmd, msg))
+                else:
+                    return broc_path
+        # to dowonload BROC 
+        else:
+            return self._download_broc(node)
+
 
     def _add_node(self, node):
         """
@@ -251,33 +263,46 @@ class BrocTree(object):
         Args:
             node : BrocNode object of module
         Returns:
-            return the path of temporary BROC
-        Raises:
-            raise BrocTree.Error
+            return the path of BROC file if download successfully;
+            return None if fail to download BROC
         """
-        _file = Function.CalcMd5(node.module.url)
-        tmp_file = os.path.join(self._broc_dir, "%s_BROC" % _file)
+        broc_path = None
         cmd = None
-        url = os.path.join(node.module.url, 'BROC')
-        if node.module.revision:
-            url = "%s -r %s" % (url, node.module.revision)
         if node.module.repo_kind == BrocModule_pb2.Module.SVN:
-            cmd = "svn export %s %s" % (url, tmp_file)
+            _file = Function.CalcMd5(node.module.url)
+            broc_url = os.path.join(node.module.url, 'BROC')
+            broc_path = os.path.join(self._broc_dir, "%s_BROC" % _file)
+            if node.module.revision:
+                broc_url = "%s -r %s" % (broc_url, node.module.revision)
+            cmd = "svn export %s %s" % (broc_url, broc_path)
         else:
-            #TODO FIX ME in git
-            cmd = "git archive"
-        # self._logger.LevPrint("MSG", "run command %s" % cmd)
-        (ret, msg) = Function.RunCommand(cmd) 
+            # for GIT
+            broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
+            cmd = "git clone %s %s && cd %s && git fetch --all " \
+                  % (node.module.url, node.module.name, node.module.name)
+            if node.module.br_name is not "master":
+                cmd += " && cd %s && git checkout -b %s origin/%s" % (node.module.name, 
+                                                                    node.module.br_name, 
+                                                                    node.module.br_name)
+            if node.module.tag_name:
+                if "&&" in cmd:
+                    cmd += " && git checkout %s" % node.module.tag_name
+                else:
+                    cmd += " && cd %s && git checkout %s" % (node.module.name,
+                                                             node.module.tag_name)
+ 
+        self._logger.LevPrint("MSG", "run command %s" % cmd)
+        ret, msg = Function.RunCommand(cmd) 
         if ret != 0:
+            self._logger.LevPrint("ERROR", "%s" % msg)
             self._need_broc_list.append(node.module.url)
-            return -1
-        return tmp_file
+            return None
 
-    def _is_same_node(self, node):
+        return broc_path
+
+    def SameSvnNode(self, node):
         """
-        to check the repo infos(url, revesion/commit_id) of local director equals to node's, 
-        if both equals parse the local BROC file to get dependent modules, 
-        otherwise download BROC from repository
+        to check whether the repo infos(url, revesion/commit_id) of local directroy equals to node's
         Args:
             node : BrocNode object of module
         Returns:
@@ -285,33 +310,22 @@ class BrocTree(object):
         Raises:
             raise BrocTreeError when encounter some errors
         """
-        infos = None
-        if node.module.repo_kind == BrocModule_pb2.Module.SVN:
-            infos = RepoUtil.GetSvnUrlRevision(node.module.root_path, self._logger)
-        else:    
-            #TODO fetch commit id or tag name
-            infos = RepoUtil.GetGitUrl(node.module.root_path, self._logger)
-
+        infos = RepoUtil.GetSvnUrlRevision(node.module.root_path, self._logger)
         if infos is None:
             raise BrocTreeError("parse module(%s) failed" % node.module.url)
-
         # check url
         if infos[0] != node.module.url:
             return False
-        if node.module.repo_kind == BrocModule_pb2.Module.SVN:
-            # check version
-            if not node.module.revision: 
-                # TODO fetch the newest version of module from svn url
-                last_version = RepoUtil.GetSvnRevisionFromUrl(node.module.url, self._logger)
-                if last_version and infos[1] == last_version:
-                    return True
-                else:
-                    return False
+
+        # check version
+        if not node.module.revision: 
+            last_version = RepoUtil.GetSvnRevisionFromUrl(node.module.url, self._logger)
+            if last_version and infos[1] == last_version:
+                return True
             else:
-                return True if infos[1] == node.module.revision else False
+                return False
         else:
-            #TODO to check git tag name
-            return True
+            return True if infos[1] == node.module.revision else False
 
     def _dump(self, node, config_list):
         config_list.append(node.Dump())

@@ -17,81 +17,76 @@ broc_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file_
 sys.path.insert(0, broc_dir)
 from util import Log
 
-BROC_TEMPLATE="""#edit-mode: -*- python -*-
+BROC_TEMPLATE='''#edit-mode: -*- python -*-
 #coding:utf-8
 
 #set the search path of compiler comamnd
-#COMPILER("/usr/bin")
+COMPILER("/usr/bin")
 
 #Preprocessor flags.
-#CPP_FLAGS('debug flags', 'release flags')
+CPP_FLAGS('debug flags', 'release flags')
 
 #C flags.
-#C_FLAGS('debug flags', 'release flags')
+C_FLAGS('debug flags', 'release flags')
 
 #C++ flags.
-#CXX_FLAGS('debug flags', 'release flags')
+CXX_FLAGS('debug flags', 'release flags')
 
 #-I path
-#INCLUDE('./include $WORKSPACE/a/b/c/include')
-#INCLUDE(CONVERT_OUT('./proto')
+INCLUDE('./include $WORKSPACE/a/b/c/include')
+INCLUDE(CONVERT_OUT('./proto'))
 
 #link flags
-#LINK_FLAGS('-lpthread -lcrypto -lrt')
+LINK_FLAGS('-lpthread -lcrypto -lrt')
 
-#svn example
-#CONFIGS("app/foo/sky@trunk")
-#CONFIGS("app/foo/sky@trunk@12345") 
-#CONFIGS("app/foo/sky@trunk@12346")
-    
-#CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH")
-#CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12345")
-#CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12346")
+#trunk dependent module in svn 
+CONFIGS("app/foo/sky@trunk")
+CONFIGS("app/foo/sky@trunk@12345")
 
-#CONFIGS("app/foo/sky@sky_1-0-0-1_BRANCH")
-#CONFIGS("app/foo/sky@sky_1-0-0-1_BRANCH@1234")
-    
-#CONFIGS("app/foo/sky@sky_1-0-0-0_PD_BL")
-#CONFIGS("app/foo/sky@sky_1-0-0-1_PD_BL")
+#branch dependent module in svn 
+CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH")
+CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12345")
 
-#git example
-#CONFIGS("sky@master")
-#CONFIGS("sky@master@v1.0.0")
+#tag dependent module in svn
+CONFIGS("app/foo/sky@sky_1-0-0-1_PD_BL")
 
-#CONFIGS("sky@dev")
-#CONFIGS("sky@dev@v1.0.1")
+#master dependent module in git
+CONFIGS("sky@master")
+CONFIGS("sky@master@v1.0.0")   # v1.0.0 tag name
+
+#branch dependent module in git
+CONFIGS("sky@dev")
+CONFIGS("sky@dev@v1.0.1")
 
 #mv file or dirctory to $OUT
-#PUBLISH("relative path of file", "$OUT")
+PUBLISH("relative path to BROC", "$OUT")
 
 #bin
-#APPLICATION('name', 
-#            Sources("src/*.cpp"), 
-#            LinkFlags("link flags"), 
-#            Libs("$OUT/a/b/c/output/lib/libutil.a"))
+APPLICATION('name',
+            Sources("src/*.cpp"),
+            LinkFlags("link flags"),
+            Libs("$OUT/a/b/c/output/lib/libutil.a"))
 
-#UT
-#UT_APPLICATION('name', 
-#               Sources("src/*.cpp"),
-#               LinkFlags("link flags"),
-#               Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"),
-#               UTArgs(""))
+#ut bin
+UT_APPLICATION('name',
+               Sources("src/*.cpp"),
+               LinkFlags("link flags"),
+               Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"),
+               UTArgs(""))
 
-#.a
-#STATIC_LIBRARY('name', 
-#               Sources("src/*.cpp"), 
-#               Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))
+#static library file .a
+#STATIC_LIBRARY('name',
+               Sources("src/*.cpp"),
+               Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))
 
-#proto
-#PROTO_LIBRARY('name', 
-#              "proto/*.proto",
-#              Proto_Flags(""), 
-#              include(""), 
-#              CppFlags("debug flags", "release flags"), 
-#              CxxFlags("debug falgs","release flas"), 
-#              Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))
-
-"""
+#proto static library file .a
+#PROTO_LIBRARY('name',
+              'proto/*.proto',
+               Proto_Flags(""),
+               include(""),
+               CppFlags("debug flags", "release flags"),
+               CxxFlags("debug falgs","release flas"),
+               Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))'''
 
 def scratch(target_dir):
     """

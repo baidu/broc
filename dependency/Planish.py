@@ -104,6 +104,8 @@ class Planish(object):
     def DoPlanish(self, download_flag=True):
         """
         choose one version from multiple version of module
+        Args:
+            download_flag : whether download the code of module, if it is set True download code, and vice versa
         Returns:
             True if planish successfully, otherwise return False
         """
@@ -157,20 +159,20 @@ class Planish(object):
             download all modules successfully return True, otherwise return False
         """
         for k, node in self.planished_nodes.iteritems():
-            if node.IsLocal():
-                continue
-            if os.path.exists(node.module.root_path):
-                # FIX ME, replace delete with remove
-                dst = "%s-%f" % (node.module.root_path, time.time())
-                self.logger.LevPrint("WARNING", "local code doesn't match BROC, reload it(%s)"% \
-                                    (node.module.origin_config))
-                Function.MoveFiles(node.module.root_path, dst)
-                
+            if node.module.repo_kind == BrocModule_pb2.Module.SVN: 
+                # the infos of local code equal Node's info
+                if os.path.exists(node.module.root_path):
+                    if self._dep_tree.SameSvnNode(node):
+                        continue
+                    else:
+                        dst = "%s-%f" % (node.module.root_path, time.time())
+                        self.logger.LevPrint("WARNING", "local code doesn't match BROC, \
+reload it(%s)" % (node.module.origin_config))
+                        Function.MoveFiles(node.module.root_path, dst)
 
-            # generate command donwloading code from repository
-            cmd = None
-            url = node.module.url
-            if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+                # generate command donwloading code from repository
+                cmd = None
+                url = node.module.url
                 if node.module.revision:
                     url = "%s -r %s --force" % (url, node.module.revision)
                 else:
@@ -178,7 +180,10 @@ class Planish(object):
                 cmd = "svn checkout %s %s" % (url, node.module.root_path)
             else:
                 _dir = os.path.dirname(node.module.root_path)
-                cmd = "mkdir -p %s && cd %s && git clone %s" % (_dir, _dir, node.module.url)
+                cmd = "cd %s && git fetch --all %s && git checkout %s" \
+                       % (_dir, node.module.url, node.module.br_name)
+                if node.module.tag_name:
+                    cmd += " && git checkout %s" % node.module.tag_name
 
             self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)

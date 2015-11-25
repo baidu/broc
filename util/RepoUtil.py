@@ -239,7 +239,7 @@ def _get_svn_xml(target_dir, logger):
     command = "svn info --xml %s" % target_dir
     (status, stdout) = Function.RunCommand(command)
     if status != 0:
-        logger.LevPrint("ERROR", "Get svn info failed : %s" % (stdout), False)
+        logger.LevPrint("ERROR", "get svn info(%s) failed : %s" % (command, stdout), False)
         return None
     dom = None
     try: 

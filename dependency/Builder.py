@@ -70,7 +70,7 @@ class ObjBuilder(Builder):
         """ 
         Builder.__init__(self, obj, compiler, workspace)
         self.workspace = workspace
-        self._includes = "-I."
+        self._includes = ""
         self._opts = None
         self._infile = infile
         self._header_cmd = None
