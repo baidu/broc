@@ -91,8 +91,7 @@ def ParseConfigs(configs,
                              postfix_tag)
         modules.append(module)
     return modules
-        
-    
+            
 def ParseConfig(config, 
                 workspace, 
                 dep_level,
@@ -115,16 +114,40 @@ def ParseConfig(config,
     Returns:
         return a BrocModule_pb2.Module object, but if config is illegal raise PlanishError
     """
-    # infos = [module cvs path, branch name, version|tag name] 
+    if repo_kind is BrocModule_pb2.Module.SVN:
+        return CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
+                               postfix_trunk, postfix_branch, postfix_tag)
+    else:
+        return CreateGitModule(config, dep_level, workspace, repo_domain)
+
+
+def CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
+                    postfix_trunk, postfix_branch, postfix_tag):
+    """
+    to create a BrocModule_pb2.Module object whose repo_kind is BrocModule_pb2.Module.SVN
+    Args:
+        config : a str object whose format just like xx@xx, xx@xx@xx
+        dep_level : int value representing dependent level
+        workspace : the abs path of worksapce, ie $WORKSPACE
+        repo_domain : the domain name of repository server
+        postfix_trunk : the branch postfix, for example 'trunk'
+        postfix_branch : the branch postfix, for example 'BRANCH'
+        postfix_tag : the tag postfix, for example 'PD_BL'
+    Returns:
+        return a BrocModule_pb2.Module object 
+    Raise:
+        PlanishError exception
+    """
+    # infos = [module cvs path, branch name, version or tag name] 
     infos = config.split('@')
     if len(infos) < 2:
         raise PlanishError("%s is illegal" % config)
 
+    module = BrocModule_pb2.Module()
     module_cvspath = infos[0]
     module_branch = infos[1]
     module_version = None
 
-    module = BrocModule_pb2.Module()
     module.name = module_cvspath.split('/')[-1]
     module.module_cvspath = module_cvspath
     module.broc_cvspath = os.path.join(module_cvspath, 'BROC')
@@ -135,33 +158,79 @@ def ParseConfig(config,
     module.root_path = os.path.join(workspace, module_cvspath)
     module.origin_config = config
     try:
-        module.br_kind = ParseBranch(module_branch, repo_kind, 
-                                    postfix_trunk, postfix_branch, postfix_tag)
+        module.br_kind = ParseBranch(module_branch, 
+                                     repo_kind, 
+                                     postfix_trunk,
+                                     postfix_branch, 
+                                     postfix_tag)
     except PlanishError:
         raise  PlanishError("%s is illegal" % config)
-    if repo_kind == BrocModule_pb2.Module.SVN:
-        # check revision
-        if len(infos) == 3:
-            module.revision = infos[2]
-        else:
-            # default revision is empty
-            module.revision = ''
-        cvs_prefix = '/'.join(module_cvspath.split('/')[:-1])
-        if module.br_kind == BrocModule_pb2.Module.TAG:
-            module.tag_name = module_branch
-            module.url = os.path.join(repo_domain, cvs_prefix, 'tags', module.name, module_branch) 
-        else:
-            module.br_name = module_branch
-            if module_branch == "trunk":
-                module.url = os.path.join(repo_domain, cvs_prefix, 'trunk', module.name)
-            else: 
-                module.url = os.path.join(repo_domain, cvs_prefix, 'branches', 
-                                          module.name, module_branch)
+
+    # check revision
+    if len(infos) == 3:
+        module.revision = infos[2]
     else:
-        module.url = os.path.join(repo_domain, module.name)
+        # default revision is empty
+        module.revision = ''
+    cvs_prefix = '/'.join(module_cvspath.split('/')[:-1])
+    if module.br_kind == BrocModule_pb2.Module.TAG:
+        module.tag_name = module_branch
+        module.url = os.path.join(repo_domain, 
+                                  cvs_prefix, 
+                                  'tags',
+                                  module.name,
+                                  module_branch) 
+    else:
         module.br_name = module_branch
-        # tag in git is a alias of reversion
-        module.tag_name = module_version
+        if module_branch == postfix_trunk:
+            module.url = os.path.join(repo_domain, 
+                                      cvs_prefix,
+                                      postfix_trunk,
+                                      module.name)
+        else: 
+            module.url = os.path.join(repo_domain, 
+                                      cvs_prefix, 
+                                      'branches',
+                                      module.name,
+                                      module_branch)
+    return module
+
+
+def CreateGitModule(config, dep_level, workspace, repo_domain):
+    """
+    to create a BrocModule_pb2.Module object whose repo_kind is BrocModule_pb2.Module.GIT
+    Args:
+        config : a str object whose format is cvspath@branch_name@key_word_branch or cvspath@tag_name@key_word_tag
+        dep_level : int value representing dependent level
+        workspace : the abs path of worksapce, ie $WORKSPACE
+        repo_domain : the domain name of repository server
+    Returns:
+        return a BrocModule_pb2.Module object 
+    Raise:
+        PlanishError exception
+    """
+    infos = config.split('@')
+    if len(infos) < 3 or infos[2] not in['branch', 'tag']:
+        raise PlanishError("%s is illegal" % config)
+   
+    module = BrocModuel_pb2.Module()
+    # if 'ub' is module name, infos[0] format can be 'ub', 'xx/ub' or 'xx/xx/ub', ...
+    module.module_cvspath = infos[0]
+    module.name = infos[0].split('/')[-1]
+    module.repo_kind = BrocModule_pb2.Module.GIT
+    module.is_main = False
+    module.broc_cvspath = os.path.join(module.module_cvspath, 'BROC')
+    module.dep_level = dep_level
+    module.workspace = workspace
+    module.root_path = os.path.join(workspace, module_cvspath)
+    module.url = os.path.join(repo_domain, "%s.git" % infos[0])
+    if info[2] is 'branch':
+        module.br_kind = BrocModule.Module.BRANCH
+        module.br_name = info[1]
+    else:
+        module.br_kind = BrocModule.Module.TAG
+        module.tag_name = info[1]
+
     return module
 
 

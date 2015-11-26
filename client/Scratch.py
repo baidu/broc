@@ -51,12 +51,13 @@ CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12345")
 CONFIGS("app/foo/sky@sky_1-0-0-1_PD_BL")
 
 #master dependent module in git
-CONFIGS("sky@master")
-CONFIGS("sky@master@v1.0.0")   # v1.0.0 tag name
+CONFIGS("sky@master@branch")
 
 #branch dependent module in git
-CONFIGS("sky@dev")
-CONFIGS("sky@dev@v1.0.1")
+CONFIGS("sky@dev@branch")
+
+#tag dependent module in git
+CONFIGS("sky@v1.0.0@tag")
 
 #mv file or dirctory to $OUT
 PUBLISH("relative path to BROC", "$OUT")

@@ -245,7 +245,6 @@ class BrocTree(object):
         else:
             return self._download_broc(node)
 
-
     def _add_node(self, node):
         """
         add nodes
@@ -268,6 +267,7 @@ class BrocTree(object):
         """
         broc_path = None
         cmd = None
+        # for svn 
         if node.module.repo_kind == BrocModule_pb2.Module.SVN:
             _file = Function.CalcMd5(node.module.url)
             broc_url = os.path.join(node.module.url, 'BROC')
@@ -279,17 +279,16 @@ class BrocTree(object):
             # for GIT
             broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
             cmd = "git clone %s %s && cd %s && git fetch --all " \
-                  % (node.module.url, node.module.name, node.module.name)
-            if node.module.br_name is not "master":
-                cmd += " && cd %s && git checkout -b %s origin/%s" % (node.module.name, 
-                                                                    node.module.br_name, 
-                                                                    node.module.br_name)
-            if node.module.tag_name:
-                if "&&" in cmd:
-                    cmd += " && git checkout %s" % node.module.tag_name
-                else:
-                    cmd += " && cd %s && git checkout %s" % (node.module.name,
-                                                             node.module.tag_name)
+                  % (node.module.url, node.module.module_cvspath, node.module.module_cvspath)
+
+            if node.module.br_namae and node.module.br_name is not "master":
+                cmd += " && git checkout %s" % node.module.br_name
+            elif node.module.tag_name:
+                cmd += " && git checkout %s" % node.module.tag_name
+            else:
+                self._logger.LevPrint("ERROR", "couldn't find node(%s) branch or tag name" \
+                                      % node.module.module_cvspath)
+                return None
  
         self._logger.LevPrint("MSG", "run command %s" % cmd)
         ret, msg = Function.RunCommand(cmd) 
