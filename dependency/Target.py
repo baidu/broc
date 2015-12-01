@@ -347,7 +347,7 @@ class ProtoLibrary(object):
         # add cvs path of directory of BROC
         cvs_dirs += "-I=%s " % self.env.BrocCVSDir()
         #protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
-        protoc = '/opt/protobuf/bin/protoc'
+        protoc = 'protoc'
         for _dir in proto_dirs:
             # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
             cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
