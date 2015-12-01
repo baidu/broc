@@ -232,7 +232,7 @@ def INCLUDE(*ss):
         for x in ps:
             if x.startswith("$WORKSPACE"):
                 tag.AddSV(x.replace("$WORKSPACE/", '')) 
-            elif x.startswith("broc_out/"):
+            elif x.startswith("broc_out/") or os.path.isabs(x):
                 tag.AddSV(x)
             else:     
                 _x = os.path.normpath(os.path.join(broc_dir, x))
@@ -254,17 +254,17 @@ def Include(*ss):
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
     env = Environment.GetCurrent()
-    broc_dir = env.BrocCVSDir()
+    broc_dir = env.BrocDir()
     tag = SyntaxTag.TagInclude()
     for s in ss:
         ps = string.split(s)
         for x in ps:
             if x.startswith("$WORKSPACE"):
-                tag.AddSV(x.replace("$WORKSPACE", env.Workspace())) 
+                tag.AddSV(x.replace("$WORKSPACE/", "")) 
             elif x.startswith('broc_out/') or os.path.isabs(x):
                 tag.AddSV(x)
             else:
-                _x = os.path.abspath(os.path.join(broc_dir, x))
+                _x = os.path.normpath(os.path.join(broc_dir, x))
                 if env.ModulePath() not in _x:
                     raise NotInSelfModuleError(_x, env.ModulePath())
                 else:

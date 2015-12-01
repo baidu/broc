@@ -1,0 +1,520 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+################################################################################
+#
+# Copyright (c) 2015 Baidu.com, Inc. All Rights Reserved
+#
+################################################################################
+
+"""
+    test case for Syntax
+    Authors: liruihao(liruihao@baidu.com)
+    Date:   2015/11/11 16:24:42
+"""
+import os
+import sys
+import tempfile
+import unittest
+
+broc_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..'))
+sys.path.insert(0, broc_path)
+
+from dependency import Syntax
+from dependency import SyntaxTag
+from dependency import Environment
+from util import Function
+from dependency import BrocModule_pb2 
+from dependency import BrocTree
+from util import Log
+
+class TestSyntax(unittest.TestCase):
+    """
+    unit test for Syntax
+    """
+    def setUp(self):
+        """
+        init
+        """
+        module = BrocModule_pb2.Module()
+        module.name = 'broc'
+        module.module_cvspath = 'baidu/bcloud/broc'
+        module.broc_cvspath = 'baidu/bcloud/broc/BROC'
+        module.is_main = True
+        module.repo_kind = BrocModule_pb2.Module.GIT
+        module.revision = "1234"
+        module.last_changed_rev = "1236"
+        module.dep_level = 0
+        #get home dir
+        (ret, msg) = Function.RunCommand("cd ~ && pwd", False)
+        if msg.endswith("\n"):
+            msg = msg[:-1]
+        module.workspace = '%s/unittest_broc/workspace' % msg
+        module.root_path = '%s/unittest_broc/workspace/baidu/bcloud/broc' % msg
+        module.url = 'gerrit.baidu.com:8235/baidu/bcloud/broc'
+        module.br_kind = BrocModule_pb2.Module.BRANCH
+        module.br_name = 'trunk'
+        module.commit_id = '5d9819900c2781873aa0ffce285d5d3e75b072a8'
+        self._module = module
+        Function.RunCommand("mkdir -p %s" % module.root_path, ignore_stderr_when_ok = True)
+        Function.RunCommand("touch %s/hello.cpp" % module.root_path, ignore_stderr_when_ok = True)
+        Function.RunCommand("touch %s/hello.h" % module.root_path, ignore_stderr_when_ok = True)
+        self._env = Environment.Environment(module)
+        Environment.SetCurrent(self._env)
+
+    def tearDown(self):
+        """
+        teardow
+        """
+        Function.RunCommand("rm -rf ~/unittest_broc", ignore_stderr_when_ok = True)
+
+    def test_COMPILER_PATH(self):
+        """
+        test Syntax.COMPILER_PATH
+        """
+        Syntax.COMPILER_PATH('/usr/bin/')
+        self.assertEqual('/usr/bin/', self._env.CompilerDir())
+
+    def test_CPPFLAGS(self):
+        """
+        test Syntax.CPPFLAGS
+        """
+        #test case of debug mode
+        self._env._build_mode = 'debug'
+        Syntax.CPPFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cppflags.V() \
+                and "-g -O2" not in self._env._g_cppflags.V())
+
+        #test case of muti CPPFLAGS
+        Syntax.CPPFLAGS("-W -Wshadow", "-g -O2")
+        Syntax.CPPFLAGS("-finline-functions", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cppflags.V() \
+                and "-g -O2" not in self._env._g_cppflags.V())
+        self.assertTrue("-W -Wshadow" in self._env._g_cppflags.V() \
+                and "-g -O2" not in self._env._g_cppflags.V())
+        self.assertTrue("-finline-functions" in self._env._g_cppflags.V() \
+                and "-g -O2" not in self._env._g_cppflags.V())
+
+        #reset g_cppflags
+        self._env._g_cppflags = SyntaxTag.TagCPPFLAGS()
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        Syntax.CPPFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in self._env._g_cppflags.V() \
+                and "-g -Wall" not in self._env._g_cppflags.V())
+
+    def test_CppFlags(self):
+        """
+        test Syntax.CppFlags
+        """
+        #test case of debug mode
+        self._env._build_mode = 'debug'
+        tag = Syntax.CppFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in tag._v and "-g -O2" not in tag.V())
+        
+        #test case of release mode
+        self._env._build_mode = 'release'
+        tag2 = Syntax.CppFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in tag2.V() and "-g -Wall" not in tag2.V())
+
+    def test_CFLAGS(self):
+        """
+        test Syntax.CFLAGS
+        """ 
+        #test case of debug mode
+        self._env._build_mode = 'debug'
+        Syntax.CFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cflags.V() \
+                and "-g -O2" not in self._env._g_cflags.V())
+        
+        #test case of muti CPPFLAGS
+        Syntax.CFLAGS("-W -Wshadow", "-g -O2")
+        Syntax.CFLAGS("-finline-functions", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cflags.V() \
+                and "-g -O2" not in self._env._g_cflags.V())
+        self.assertTrue("-W -Wshadow" in self._env._g_cflags.V() \
+                and "-g -O2" not in self._env._g_cflags.V())
+        self.assertTrue("-finline-functions" in self._env._g_cflags.V() \
+                and "-g -O2" not in self._env._g_cflags.V())
+
+        #reset g_cflags
+        self._env._g_cflags = SyntaxTag.TagCFLAGS()
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        Syntax.CFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in self._env._g_cflags.V() \
+                and "-g -Wall" not in self._env._g_cflags.V())
+
+    def test_CFlags(self):
+        """
+        test Syntax.CFlags
+        """
+        #test case of debug mode
+        Environment.SetCurrent(self._env)
+        self._env._build_mode = 'debug'
+        tag = Syntax.CFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in tag._v and "-g -O2" not in tag.V())
+        
+        #test case of release mode
+        self._env._build_mode = 'release'
+        self._env._build_mode = 'release'
+        tag2 = Syntax.CFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in tag2.V() and "-g -Wall" not in tag2.V())
+
+    def test_CXXFLAGS(self):
+        """
+        test Syntax.CXXFLAGS
+        """
+        #test case of debug mode
+        Environment.SetCurrent(self._env)
+        self._env._build_mode = 'debug'
+        Syntax.CXXFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cxxflags.V() \
+                and "-g -O2" not in self._env._g_cxxflags.V())
+        
+        #test case of muti CPPFLAGS
+        Syntax.CXXFLAGS("-W -Wshadow", "-g -O2")
+        Syntax.CXXFLAGS("-finline-functions", "-g -O2")
+        self.assertTrue("-g -Wall" in self._env._g_cxxflags.V() \
+                and "-g -O2" not in self._env._g_cxxflags.V())
+        self.assertTrue("-W -Wshadow" in self._env._g_cxxflags.V() \
+                and "-g -O2" not in self._env._g_cxxflags.V())
+        self.assertTrue("-finline-functions" in self._env._g_cxxflags.V() \
+                and "-g -O2" not in self._env._g_cxxflags.V())
+
+        #reset g_cxxflags
+        self._env._g_cxxflags = SyntaxTag.TagCXXFLAGS()
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        Syntax.CXXFLAGS("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in self._env._g_cxxflags.V() \
+                and "-g -Wall" not in self._env._g_cxxflags.V())
+
+    def test_CxxFlags(self):
+        """
+        test Syntax.CxxFlags
+        """
+        #test case of debug mode
+        Environment.SetCurrent(self._env)
+        self._env._build_mode = 'debug'
+        tag = Syntax.CxxFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -Wall" in tag._v and "-g -O2" not in tag.V())
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        tag2 = Syntax.CxxFlags("-g -Wall", "-g -O2")
+        self.assertTrue("-g -O2" in tag2.V() and "-g -Wall" not in tag2.V())
+
+    def test_CONVERT_OUT(self):
+        """
+        test Syntax.CONVERT_OUT
+        """
+        self.assertEqual("broc_out/baidu/bcloud/broc/hello.h", Syntax.CONVERT_OUT("./hello.h"))
+        #test CONVERT_OUT can raise Syntax.NotInSelfModuleError or not
+        flag = False
+        try:
+            Syntax.CONVERT_OUT("../hello.h")
+        except Syntax.NotInSelfModuleError as er:
+            flag = True
+        self.assertTrue(flag)
+
+    def test_INCLUDE(self):
+        """
+        test Syntax.INCLUDE
+        """
+        Environment.SetCurrent(self._env)
+        # arg starts with $WORKSPACE
+        Syntax.INCLUDE("$WORKSPACE/baidu/bcloud/broc")
+        self.assertTrue("baidu/bcloud/broc" in self._env.IncludePaths().V())
+        self.assertTrue("baidu/agile" not in self._env.IncludePaths().V())
+        
+        # arg starts with broc_out
+        Syntax.INCLUDE("broc_out/baidu/bcloud/broc")
+        self.assertTrue("broc_out/baidu/bcloud/broc" in self._env.IncludePaths().V())
+        self.assertTrue("broc_out/baidu/agile" not in self._env.IncludePaths().V())
+
+        # arg is abs path
+        Syntax.INCLUDE("/opt/include")
+        self.assertTrue("/opt/include" in self._env.IncludePaths().V())
+        self.assertTrue("/home/include" not in self._env.IncludePaths().V())
+
+        # arg in self module
+        Syntax.INCLUDE("./include")
+        incpath = os.path.normpath(os.path.join(self._module.workspace, \
+                self._module.module_cvspath, "include"))
+        self.assertTrue(incpath in self._env.IncludePaths().V())
+
+    def test_Include(self):
+        """
+        test Syntax.Include
+        """
+        Environment.SetCurrent(self._env)
+        # arg starts with $WORKSPACE
+        tag = Syntax.Include("$WORKSPACE/baidu/bcloud/broc")
+        self.assertTrue("baidu/bcloud/broc" in tag.V())
+        self.assertTrue("baidu/agile" not in tag.V())
+        
+        # arg starts with broc_out
+        tag = Syntax.Include("broc_out/baidu/bcloud/broc")
+        self.assertTrue("broc_out/baidu/bcloud/broc" in tag.V())
+        self.assertTrue("broc_out/baidu/agile" not in tag.V())
+        
+        # arg is abs path
+        tag = Syntax.Include("/opt/include")
+        self.assertTrue("/opt/include" in tag.V())
+        self.assertTrue("/home/include" not in tag.V())
+
+        # arg in self module
+        tag = Syntax.Include("./include")
+        incpath = os.path.normpath(os.path.join(self._module.workspace, \
+                self._module.module_cvspath, "include"))
+        self.assertTrue(incpath in tag.V())
+
+    def test_Libs(self):
+        """
+        test Syntax.Libs
+        """
+        #one lib in arg
+        tag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/lib/libbroc.a")
+        self.assertTrue("broc_out/baidu/bcloud/broc/lib/libbroc.a" in tag.V())
+
+        #more than one libs in args
+        flag = True
+        tag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/lib/libbroc.a", \
+                "$OUT_ROOT/protobuf/lib/libprotobuf.a", \
+                "$OUT_ROOT/ccode/lib/libccode.a" \
+                "$OUT_ROOT/dict/lib/libdict.a")
+        lib_list = ["broc_out/baidu/bcloud/broc/lib/libbroc.a", \
+                "broc_out/protobuf/lib/libprotobuf.a", \
+                "broc_out/ccode/lib/libccode.a" \
+                "broc_out/dict/lib/libdict.a"]
+        for lib in lib_list:
+            if lib not in tag.V():
+                flag = False
+
+        self.assertTrue(flag)
+
+        #arg not start with $OUT_ROOT
+        flag = False
+        try:
+            tag = Syntax.Libs("baidu/bcloud/broc/lib/libbroc.a")
+        except Syntax.BrocArgumentIllegalError as ex:
+            flag = True
+        self.assertTrue(flag)
+
+    def test_LDFLAGS(self):
+        """
+        test Syntax.LDFLAGS
+        """
+        #test case of debug mode
+        Environment.SetCurrent(self._env)
+        self._env._build_mode = 'debug'
+        Syntax.LDFLAGS("-lpthread -lcrypto", "-lprotobuf -lpthread")
+        self.assertTrue("-lpthread -lcrypto" in self._env._g_linkflags.V() \
+                and "-lprotobuf -lpthread" not in self._env._g_linkflags.V())
+
+        #reset g_linkflags
+        self._env._g_linkflags = SyntaxTag.TagCPPFLAGS()
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        Syntax.LDFLAGS("-lpthread -lcrypto", "-lprotobuf -lpthread")
+        self.assertTrue("-lprotobuf -lpthread" in self._env._g_linkflags.V() \
+                and "-lpthread -lcrypto" not in self._env._g_linkflags.V())
+
+    def test_LDFlags(self):
+        """
+        test Syntax.LDFlags
+        """
+        #test case of debug mode
+        Environment.SetCurrent(self._env)
+        self._env._build_mode = 'debug'
+        tag = Syntax.LDFlags("-lpthread -lcrypto", "-lprotobuf -lpthread")
+        self.assertTrue("-lpthread -lcrypto" in tag.V() \
+                and "-lprotobuf -lpthread" not in tag.V())
+
+        #reset g_linkflags
+        self._env._g_linkflags = SyntaxTag.TagLDFLAGS()
+
+        #test case of release mode
+        self._env._build_mode = 'release'
+        tag = Syntax.LDFlags("-lpthread -lcrypto", "-lprotobuf -lpthread")
+        self.assertTrue("-lprotobuf -lpthread" in tag.V() \
+                and "-lpthread -lcrypto" not in tag.V())
+
+    def test_GLOB(self):
+        """
+        test Syntax.GLOB
+        """
+        #test case of one file
+        files = Syntax.GLOB("./*.cpp")
+        self.assertEqual(files, "hello.cpp")
+
+        #test case of more files and those files must in the lexicographical order
+        module = self._module
+        Function.RunCommand("touch %s/hello1.h" % module.root_path, ignore_stderr_when_ok = True)
+        Function.RunCommand("touch %s/hello2.h" % module.root_path, ignore_stderr_when_ok = True)
+        Function.RunCommand("touch %s/hello3.h" % module.root_path, ignore_stderr_when_ok = True)
+        Function.RunCommand("touch %s/hello10.h" % module.root_path, ignore_stderr_when_ok = True)
+        files = Syntax.GLOB("./*.h")
+        self.assertEqual(files, "hello.h hello1.h hello10.h hello2.h hello3.h")
+
+        #test case of files not in self module
+        Function.RunCommand("touch %s/../README" % module.root_path, ignore_stderr_when_ok = True)
+        flag = False
+        try:
+            Syntax.GLOB("../README")
+        except Syntax.NotInSelfModuleError as e:
+            flag = True
+        self.assertTrue(flag)
+
+        #test case of no such files
+        flag = False
+        try:
+            Syntax.GLOB("./just_test.cpp")
+        except Syntax.BrocArgumentIllegalError as e:
+            flag = True
+        self.assertTrue(flag)
+
+    def test_ParseNameAndArgs(self):
+        """
+        test Syntax._ParseNameAndArgs
+        """
+        #only has name
+        files, args = Syntax._ParseNameAndArgs("broc")
+        self.assertEqual(files, ["broc"])
+        self.assertEqual(args, [])
+
+        #more args
+        inctag = Syntax.Include("./ ./include")
+        cpptag = Syntax.CppFlags("-DDEBUG", "-DBROC")
+        ctag = Syntax.CFlags("-O2", "-O0")
+        cxxtag = Syntax.CxxFlags("-Werror", "-Wall")
+        files, args = Syntax._ParseNameAndArgs("./*.cpp", inctag)
+        self.assertEqual(files, ["./*.cpp"])
+        self.assertEqual(args, [inctag])
+        files, args = Syntax._ParseNameAndArgs("./*.cpp", inctag, cpptag)
+        self.assertEqual(files, ["./*.cpp"])
+        self.assertEqual(args, [inctag, cpptag])
+        files, args = Syntax._ParseNameAndArgs("./*.cpp", cpptag, ctag)
+        self.assertEqual(files, ["./*.cpp"])
+        self.assertEqual(args, [cpptag, ctag])
+        files, args = Syntax._ParseNameAndArgs("./*.cpp", "./*.c", cxxtag, ctag)
+        self.assertEqual(files, ["./*.cpp", "./*.c"])
+        self.assertEqual(args, [cxxtag, ctag])
+        files, args = Syntax._ParseNameAndArgs("./*.cpp", "./*.c", inctag, cpptag, cxxtag, ctag)
+        self.assertEqual(files, ["./*.cpp", "./*.c"])
+        self.assertEqual(args, [inctag, cpptag, cxxtag, ctag])
+
+    def test_Sources(self):
+        """
+        test Syntax.Sources
+        """
+        pass
+
+    def test_CreateSources(self):
+        """
+        test Syntax._CreateSource
+        """
+        pass
+
+    def test_APPLICATION(self):
+        """
+        test Syntax.APPLICATION
+        """
+        pass
+
+    def test_STATIC_LIBRARY(self):
+        """
+        test Syntax.STATIC_LIBRARY
+        """
+        pass
+
+    def test_UT_APPLICATION(self):
+        """
+        test Syntax.UT_APPLICATION
+        """
+        pass
+
+    def test_PROTO_LIBRARY(self):
+        """
+        test Syntax.PROTO_LIBRARY
+        """
+        pass
+
+    def test_UTArgs(self):
+        """
+        test Syntax.UTArgs
+        """
+        tag = Syntax.UTArgs("--conf=a.conf --log=a.log")
+        self.assertTrue("--conf=a.conf" in tag.V())
+        self.assertTrue("--log=a.log" in tag.V())
+        self.assertTrue("--help" not in tag.V())
+
+    def test_PUBLISH(self):
+        """
+        test Syntax.PUBLISH
+        """
+        pass
+        #src has one file
+        #Syntax.PUBLISH("conf/a.conf", "$OUT/conf")
+
+        #src has more files
+
+        #out_dir doesn't start with $OUT
+
+        #src doesn't in self module
+
+    def test_SVN_PATH(self):
+        """
+        test Syntax.SVN_PATH
+        """
+        self.assertEqual(self._module.root_path, Syntax.SVN_PATH())
+
+    def test_SVN_URL(self):
+        """
+        test Syntax.SVN_URL
+        """
+        self.assertEqual(self._module.url, Syntax.SVN_URL())
+
+    def test_SVN_REVISION(self):
+        """
+        test Syntax.SVN_REVISION
+        """
+        self.assertEqual(self._module.revision, Syntax.SVN_REVISION())
+
+    def test_SVN_LAST_CHANGED_REV(self):
+        """
+        test Syntax.LAST_CHANGED_REV
+        """
+        self.assertEqual(self._module.last_changed_rev, Syntax.SVN_LAST_CHANGED_REV())
+
+    def test_GIT_PATH(self):
+        """
+        test Syntax.GIT_PATH
+        """
+        self.assertEqual(self._module.root_path, Syntax.GIT_PATH())
+
+    def test_GIT_URL(self):
+        """
+        test Syntax.
+        """
+        self.assertEqual(self._module.url, Syntax.GIT_URL())
+
+    def test_GIT_BRANCH(self):
+        """
+        test Syntax.GIT_BRANCH
+        """
+        self.assertEqual(self._module.br_name, Syntax.GIT_BRANCH())
+
+    def test_GIT_TAG(self):
+        """
+        test Syntax.GIT_TAG
+        """
+        self.assertEqual(self._module.tag_name, Syntax.GIT_TAG())
+
+if __name__ == "__main__":
+    unittest.main()

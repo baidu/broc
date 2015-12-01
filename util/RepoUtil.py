@@ -623,28 +623,63 @@ def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
     return result
 
 
-def GetGitBranchKind(target_dir, logger):
+def _get_git_status_info(target_dir, logger):
     """
-    get git branch kind from it's local path
-    Args :
-        path : local path of module
+    get git status info from it's local path,this info contains branch name or tag name
+    Args:
+        target_dir : local path of module
         logger : the object of Log.Log
-    Returns :
-        return git branch kind of module,if enconters some errors return None
+    Returns:
+        return git status info which contains it's branch name or tag name
     """
-    pass
+    cmd = "cd %s && git status" % (target_dir)
+    status, msg = Function.RunCommand(cmd)
+    if status != 0:
+        logger.LevPrint("ERROR", "Get git current branch kind error: %s" % (msg), False)
+        return None
+    #if module on dev branch,the msg would be like this:
+    #On branch dev
+    #Your branch is up-to-date with 'origin/dev'.
+    #nothing to commit, working directory clean
+
+    #if module at v1.0.0 tag, the msg would be like this:
+    #HEAD detached at v1.0.0
+    #nothing to commit, working directory clean
+    
+    #the first line of msg contains the information we want
+    branch_info = msg.split('\n')[0]
+    return branch_info
 
 
 def GetGitBranchName(target_dir, logger):
     """
-    get git branch name from it's local path
+    get git current branch from it's local path
+    Args:
+        target_dir : local path of module
+        logger : the object of Log.Log
+    Returns:
+        return git current branch name of module,if enconters some errors return None
+    """
+    branch_info = _get_git_status_info(target_dir, logger)
+    if branch_info.find("branch") != -1:
+        return branch_info.split(' ')[-1]
+    return None
+
+
+def GetGitBranchKind(target_dir, logger):
+    """
+    get git branch kind from it's local path
     Args :
-        path : local path of module
+        target_dir : local path of module
         logger : the object of Log.Log
     Returns :
-        return git branch name of module,if enconters some errors return None
+        return git branch kind of module,if enconters some errors return None
     """
-    pass
+    branch_info = _get_git_status_info(target_dir, logger)
+    if branch_info.find("branch") != -1:
+        return 'BRANCH'
+    else:
+        return 'TAG'
 
 
 def GetGitTagName(target_dir, logger):
@@ -656,7 +691,10 @@ def GetGitTagName(target_dir, logger):
     Returns :
         return git tag name of module,if enconters some errors return None
     """
-    pass
+    branch_info = _get_git_status_info(target_dir, logger)
+    if branch_info.find('branch') != -1:
+        return None
+    return branch_info.split(' ')[-1]
 
 
 def GetGitCommitId(target_dir, logger):
@@ -740,13 +778,15 @@ def GetGitUrlInfos(target_dir, git_domain, logger):
     if result['br_kind'] is None:
         return result
 
-    result['br_name'] = GetGitBranchName(target_dir, logger)
-    if result['br_name'] is None:
-        return result
-
-    result['tag_name'] = GetGitTagName(target_dir, logger)
-    if result['tag_name'] is None:
-        return result
+    if result['br_kind'] == 'BRANCH':
+        result['br_name'] = GetGitBranchName(target_dir, logger)
+        if result['br_name'] is None:
+            return result
+    
+    if result['br_kind'] == 'TAG':
+        result['tag_name'] = GetGitTagName(target_dir, logger)
+        if result['tag_name'] is None:
+            return result
 
     result['commit_id'] = GetGitCommitId(target_dir, logger)
     if result['commit_id'] is None:
@@ -765,5 +805,4 @@ def GetGitUrlInfos(target_dir, git_domain, logger):
 
     result['result'] = True
     return result
-
 
