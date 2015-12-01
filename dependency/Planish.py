@@ -69,7 +69,6 @@ import time
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)
 
-from dependency import PlanishUtil
 from dependency import BrocTree
 from dependency import BrocModule_pb2
 from util import Function
@@ -83,7 +82,7 @@ class Planish(object):
     def __init__(self, main_module, repo_domain, logger, postfix):
         """
         Args:
-            main_module : the BrocModule_pb2.Moduel object representing the main module
+            main_module : the BrocModule_pb2.Module object representing the main module
             repo_domain : the domain name of repository
             logger : the log facility object
             postfix : the list of postfix, [postfix_trunk, postfix_branche, postfix_tag]

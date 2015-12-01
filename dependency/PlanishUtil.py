@@ -70,7 +70,7 @@ def ParseConfigs(configs,
     Args:
         configs : set([xx@xx, xx@xx@xx, xx@xx@xx, ...])
         workspace : the abs path of worksapce, ie $WORKSPACE
-        repo_kind : a enum value in BrocModuel_pb2.Module.EnumRepo
+        repo_kind : a enum value in BrocModule_pb2.Module.EnumRepo
         dep_level : int value presenting dependent level
         repo_domain : the domain name of repository
         postfix_trunk : the branch postfix, for example 'trunk'
@@ -101,12 +101,12 @@ def ParseConfig(config,
                 postfix_branch,
                 postfix_tag):
     """
-    parse tag CONFIGS' content and create a BrocModuel_pb2.Module object
+    parse tag CONFIGS' content and create a BrocModule_pb2.Module object
     Args:
         config : the dependent module's info whose format can be xx@xx, xx@xx@xx
         workspace : the abs path of worksapce, ie $WORKSPACE
         dep_level : int value representing dependent level
-        repo_kind : a enum value in BrocModuel_pb2.Module.EnumRepo
+        repo_kind : a enum value in BrocModule_pb2.Module.EnumRepo
         repo_domain : the domain name of repository server
         postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
@@ -213,7 +213,7 @@ def CreateGitModule(config, dep_level, workspace, repo_domain):
     if len(infos) < 3 or infos[2] not in['branch', 'tag']:
         raise PlanishError("%s is illegal" % config)
    
-    module = BrocModuel_pb2.Module()
+    module = BrocModule_pb2.Module()
     # if 'ub' is module name, infos[0] format can be 'ub', 'xx/ub' or 'xx/xx/ub', ...
     module.module_cvspath = infos[0]
     module.name = infos[0].split('/')[-1]
@@ -222,14 +222,14 @@ def CreateGitModule(config, dep_level, workspace, repo_domain):
     module.broc_cvspath = os.path.join(module.module_cvspath, 'BROC')
     module.dep_level = dep_level
     module.workspace = workspace
-    module.root_path = os.path.join(workspace, module_cvspath)
-    module.url = os.path.join(repo_domain, "%s.git" % infos[0])
-    if info[2] is 'branch':
-        module.br_kind = BrocModule.Module.BRANCH
-        module.br_name = info[1]
+    module.root_path = os.path.join(workspace, module.module_cvspath)
+    module.url = os.path.join(repo_domain, infos[0])
+    if infos[2] is 'branch':
+        module.br_kind = BrocModule_pb2.Module.BRANCH
+        module.br_name = infos[1]
     else:
-        module.br_kind = BrocModule.Module.TAG
-        module.tag_name = info[1]
+        module.br_kind = BrocModule_pb2.Module.TAG
+        module.tag_name = infos[1]
 
     return module
 
@@ -246,7 +246,7 @@ def ParseBranch(branch, repo_kind, postfix_trunk, postfix_branch, postfix_tag):
         branch : dev
     Args:
         branch : the name of branch
-        repo_kind : BrocModuel_pb2.Module.EnumRepo
+        repo_kind : BrocModule_pb2.Module.EnumRepo
         postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
@@ -342,5 +342,4 @@ def CreateBrocModuleFromDir(target_path,
     module.origin_config = ""
     module.highest_version = ""
     module.lowest_version = ""
-
     return module

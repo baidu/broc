@@ -117,7 +117,7 @@ class BrocTree(object):
     def __init__(self, root, repo_domain, logger, postfix):
         """
         Args:
-            root : the BrocModule_pb2.Moduel object, the root of BrocTree
+            root : the BrocModule_pb2.Module object, the root of BrocTree
             repo_domain : the damain of repository 
             logger : Log.Log object, the log facility object
             postfix : the list of postfix like [postfix_trunk, postfix_branche, postfix_tag]
@@ -229,7 +229,7 @@ class BrocTree(object):
                     return self._download_broc(node)
             else:
                 broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
-                cmd += "cd %s && git fetch --all && git checkout %s" \
+                cmd = "cd %s && git fetch --all && git checkout %s" \
                         % (broc_dir, node.module.br_name)
                 if node.module.tag_name:
                     cmd += " && git checkout %s" % node.module.tag_name
@@ -281,7 +281,7 @@ class BrocTree(object):
             cmd = "git clone %s %s && cd %s && git fetch --all " \
                   % (node.module.url, node.module.module_cvspath, node.module.module_cvspath)
 
-            if node.module.br_namae and node.module.br_name is not "master":
+            if node.module.br_name and node.module.br_name is not "master":
                 cmd += " && git checkout %s" % node.module.br_name
             elif node.module.tag_name:
                 cmd += " && git checkout %s" % node.module.tag_name

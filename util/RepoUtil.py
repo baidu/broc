@@ -714,7 +714,7 @@ def GetGitCommitId(target_dir, logger):
     return msg.strip()
 
 
-def GetGitCvspath(url, git_domain, logger):
+def GetGitCVSPath(url, git_domain, logger):
     """
     get module git cvspath from it's git url
     Args :
@@ -727,9 +727,11 @@ def GetGitCvspath(url, git_domain, logger):
     if not url.startswith(git_domain):
         logger.LevPrint('ERROR', 'Git url does not start with %s!!' % git_domain, False)
         return None
-    cvspath = url[len(git_domain):]
+
+    cvspath = url[len(git_domain)+1:]
     if cvspath.endswith('/'):
         cvspath = cvspath[:-1]
+
     return cvspath
 
 
@@ -792,7 +794,7 @@ def GetGitUrlInfos(target_dir, git_domain, logger):
     if result['commit_id'] is None:
         return result
     
-    result['module_cvspath'] = GetGitCvspath(result['url'], git_domain, logger)
+    result['module_cvspath'] = GetGitCVSPath(result['url'], git_domain, logger)
     if result['module_cvspath'] is None:
         return result
 
