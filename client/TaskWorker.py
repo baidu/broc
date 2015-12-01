@@ -73,6 +73,7 @@ class TaskWorker(threading.Thread):
                 response['result'] = False
                 self._master.AddResponse(response)
                 self._logger.LevPrint("ERROR", "%s" % result['msg'])
+                self._master.DisableBuildOK()
                 self._master.Stop()
                 break
             else:

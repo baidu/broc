@@ -63,7 +63,7 @@ class Environment(object):
     def __init__(self, module):       
         """
         Args:
-            module : BrocModule object
+            module : BrocModule_pb.Module object
         """
         self._module = module
         self._build_mode = 'debug'       # debug | release 

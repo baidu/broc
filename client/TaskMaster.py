@@ -41,8 +41,21 @@ class TaskMaster(object):
         self._response_queue = Queue.Queue()    # response queue
         self._running = True
         self._workers = list()
+        self._build_ok = True
         for i in xrange(0, num):
             self._workers.append(TaskWorker.TaskWorker(self, logger))
+
+    def DisableBuildOK(self):
+        """
+        set build flag as False means fail to build 
+        """
+        self._build_ok = False
+
+    def BuildOK(self):
+        """
+        return whether all build tasks have  done successfully
+        """
+        return self._build_ok
 
     def Start(self):
         """

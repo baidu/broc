@@ -229,10 +229,9 @@ def _build(options, do_ut=False):
     # load the code of all module, and create a environment object for each module
     nodes = planish.PlanishedNodes()
     queue = Queue.Queue()
-    queue.put(root_node)
     for node in nodes:
         queue.put(node.module) 
-    loader = Syntax.Loader(queue, logger, options['mode'], 4)
+    loader = Syntax.Loader(root_node, queue, logger, options['mode'], 4)
     loader.LoadBroc()
     if not loader.LoadOK():
         return -1
@@ -274,6 +273,9 @@ def _build(options, do_ut=False):
     # run build thread to build
     task_master.Start()
     task_master.Wait()
+    if not task_master.BuildOK():
+        logger.LevPrint("ERROR", "build failed")
+        return -1
     
     # create output link
     _mkdir_output(root_node, logger)
@@ -376,7 +378,9 @@ def _clean(pathname):
     root_node = _init_root_node(pathname, broc_config, repo['domain'], logger)
     if not root_node:
         return -1
-    Function.DelFiles(os.path.join(root_node.workspace, 'broc_out'))
+    bc_out = os.path.join(root_node.workspace, 'broc_out')
+    logger.LevPrint('MSG', 'clean %s ..' % bc_out)
+    Function.DelFiles(bc_out)
     return 0
     
 
