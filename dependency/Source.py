@@ -201,7 +201,7 @@ class CSource(Source):
         """
         Source.Action(self)
         self.CalcObjectName()
-        options = ['-DZUES']
+        options = ['-DBROC']
         options.extend(self.cppflags + self.cflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CC(), self.env.Workspace())
@@ -231,7 +231,7 @@ class CXXSource(Source):
         """
         Source.Action(self)
         self.CalcObjectName()
-        options = ['-DZUES']
+        options = ['-DBROC']
         options.extend(self.cppflags + self.cxxflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CXX(), self.env.Workspace())
