@@ -686,7 +686,35 @@ class TestSyntax(unittest.TestCase):
         """
         test Syntax.PROTO_LIBRARY
         """
-        pass
+        #make a new proto file
+        Function.RunCommand("touch %s/hello.proto" % self._module.root_path, \
+                ignore_stderr_when_ok = True)
+        #set local flags
+        cpptags = Syntax.CppFlags("-DDEBUG_LOCAL", "-DRELEASE_LOCAL")
+        cxxtags = Syntax.CxxFlags("-Wwrite-strings", "-Wswitch")
+        incflag = Syntax.Include("$WORKSPACE/baidu/bcloud/broc")
+        libflag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/output/lib/libhello.a")
+
+        now_dir = os.getcwd()
+        os.chdir(self._module.workspace)
+        protos = Syntax.PROTO_LIBRARY("hello", "*.proto", cpptags, cxxtags, incflag, libflag)
+        proto_library = self._env.Targets()[0]
+        src = proto_library.tag_sources.V()[0]
+        proto_library.Action()
+        os.chdir(now_dir)
+        
+        #check result
+        proto_cmd = """mkdir -p broc_out/baidu/bcloud/broc && protoc \
+--cpp_out=broc_out/baidu/bcloud/broc  -I=baidu/bcloud/broc \
+-I=baidu/bcloud/broc  -I=. baidu/bcloud/broc//*.proto\n"""
+        self.assertEqual(protos.__str__(), proto_cmd)
+        self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
+        self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
+        self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud/broc", \
+                u'broc_out/baidu/bcloud/broc', u'broc_out/baidu/bcloud/broc'])
+        self.assertEqual(src.infile, "broc_out/baidu/bcloud/broc/hello.pb.cc")
+        self.assertEqual(proto_library.tag_libs.V(), \
+                ["broc_out/baidu/bcloud/broc/output/lib/libhello.a"])
 
     def test_UTArgs(self):
         """

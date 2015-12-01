@@ -620,7 +620,8 @@ def PROTO_LIBRARY(name, files, *args):
     tag_sources = Sources(" ".join(list(source)), tag_include, tag_cppflags, tag_cxxflags)
     if not env.AppendTarget(Target.StaticLibrary(name, env, tag_sources, tag_libs)):
         raise BrocArgumentIllegalError("PROTO_LIBRARY(%s) name exists already" % name)
-    
+    return protolib
+
 
 def UTArgs(v):
     """

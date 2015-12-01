@@ -326,7 +326,7 @@ class ProtoLibrary(object):
         print protoc command
         """
         cmd = ""
-        for c in self._proto_cmd:
+        for c in self._proto_cmds:
             cmd += "%s\n" % c
 
         return cmd 
