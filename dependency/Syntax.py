@@ -532,6 +532,33 @@ def UT_APPLICATION(name, sources, *args):
         raise BrocArgumentIllegalError("UT_APPLICATION(%s) exists already" % name)
 
 
+def ProtoFlags(*ss):
+    """
+    add the command options for protoc
+    Args:
+       ss : a variable number of string objects 
+            ss may contain multiple string objects, each object can contain multiple options
+            one option may be:
+            1. option may contains $WORKSPACE, $OUT Macros value
+    Returns:
+        return a 
+    """
+    env = Environment.GetCurrent()
+    tag = SyntaxTag.TagProtoFlags()
+    for s in ss:
+        ps = s.split()
+        for x in ps:
+            if "$WORKSPACE" in x:
+                tag.AddSV(x.replace("$WORKSPACE/", '')) 
+            elif "$OUT" in x:
+                tag.AddSV(x.replace("$OUT", env.OutputPath()))
+            elif "$OUT_ROOT" in x:
+                tag.AddSV(x.replace("$OUT_ROOT", env.OutputRoot()))
+            else: 
+                tag.AddSV(x)
+    return tag
+
+
 def PROTO_LIBRARY(name, files, *args):
     """
     compile proto files into a static library .a
