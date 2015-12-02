@@ -97,7 +97,7 @@ class BrocNode(object):
         """
         self._is_local = True
  
-    def Dump(self):
+    def Dump(self, level):
         """
         return a string object representing the dependent list
         """
@@ -105,7 +105,7 @@ class BrocNode(object):
             deps = "=========BROC ORIGIN DEPENDENCY==========\n"
             deps += self.module.root_path + "\n"
         else:
-            deps = "\t" * self.module.dep_level + self.module.origin_config + '\n'
+            deps = "\t" * level + self.module.origin_config + '\n'
 
         return deps          
 
@@ -332,10 +332,10 @@ class BrocTree(object):
         else:
             return True if infos[1] == node.module.revision else False
 
-    def _dump(self, node, config_list):
-        config_list.append(node.Dump())
+    def _dump(self, node, config_list, level):
+        config_list.append(node.Dump(level))
         for n in node.Children():
-            self._dump(n, config_list)
+            self._dump(n, config_list, level + 1)
 
     def Dump(self):
         """
@@ -345,7 +345,7 @@ class BrocTree(object):
         config_file = os.path.join(self._root.module.workspace,
                                    self._root.module.module_cvspath, 
                                    ".BROC.ORIGIN.DEPS")
-        self._dump(self._root, config_list)
+        self._dump(self._root, config_list, 0)
         
         try:
             with open(config_file, 'w') as f:

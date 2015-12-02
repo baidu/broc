@@ -183,7 +183,7 @@ reload it(%s)" % (node.module.origin_config))
                 if node.module.tag_name:
                     cmd += " && git checkout %s" % node.module.tag_name
                 else:
-                    cmd += " && git checkout %s" % node.module.branch_name
+                    cmd += " && git checkout %s" % node.module.br_name
 
             self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)
