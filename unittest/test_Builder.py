@@ -75,7 +75,7 @@ class TestBuilder(unittest.TestCase):
         compiler = '/usr/bin/g++'
         builder = Builder.ObjBuilder(obj, infile, includes, opts, compiler, now_dir)
         right_cmd = "mkdir -p broc_out/a/b/c && /usr/bin/g++ \\\n\t-c \
-\\\n\t-DBROC \\\n\t-DVERSION=1.0.0 \\\n\t-I. \\\n\t-I/usr/include \\\n\t-I/usr/local/include \
+\\\n\t-DBROC \\\n\t-DVERSION=1.0.0 \\\n\t-I/usr/include \\\n\t-I/usr/local/include \
 \\\n\t-Ia/b/c \\\n\t-o \\\n\tbroc_out/a/b/c/test.o \\\n\ta/b/c/test.cpp"
         self.assertEqual(right_cmd, builder.GetBuildCmd())
         builder.CalcHeaderFiles()
@@ -90,7 +90,7 @@ class TestBuilder(unittest.TestCase):
         include = ['/usr/include', '/usr/local/include']
         compiler = '/usr/bin/g++'
         builder = Builder.ObjBuilder(obj, infile, include, None, compiler, now_dir)
-        right_header_cmd = "/usr/bin/g++ \\\n\t-MM \\\n\t-I. \\\n\t-I/usr/include \
+        right_header_cmd = "/usr/bin/g++ \\\n\t-MM \\\n\t-I/usr/include \
 \\\n\t-I/usr/local/include \\\n\tget_header_files.cpp"
         self.assertEqual(right_header_cmd, builder.GetHeaderCmd())
         with open('hello.h', 'wb') as f:
