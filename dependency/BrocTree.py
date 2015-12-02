@@ -175,8 +175,14 @@ class BrocTree(object):
             if handle node failed, raise BrocTreeError
         """
         # if node.module.url has been handled in other module's BROC
-        if node.module.url in self._done_broc:
-            for kid_node in self._done_broc[node.module.url]:
+        # Key is module's cvspath + branch kind + tag name or branch name.
+        # Key can't be module's url because ,in git any branch or tag has a same url.
+        if node.module.br_kind == BrocModule_pb2.Module.TAG:
+            key = node.module.module_cvspath + str(node.module.br_kind) + node.module.tag_name
+        else:
+            key = node.module.module_cvspath + str(node.module.br_kind) + node.module.br_name
+        if key in self._done_broc:
+            for kid_node in self._done_broc[key]:
                 node.AddChild(kid_node)
             return 
 
@@ -208,7 +214,7 @@ class BrocTree(object):
             self._add_node(kid_node)
             self._node_queue.put(kid_node)
         # record the done broc file to prevernt from parse again
-        self._done_broc[node.module.url] = kid_nodes
+        self._done_broc[key] = kid_nodes
 
     def _check_broc(self, node):
         """

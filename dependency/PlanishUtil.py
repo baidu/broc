@@ -225,7 +225,7 @@ def CreateGitModule(config, dep_level, workspace, repo_domain):
     module.root_path = os.path.join(workspace, module.module_cvspath)
     module.url = os.path.join(repo_domain, infos[0])
     module.origin_config = config
-    if infos[2] is 'branch':
+    if infos[2] == 'branch':
         module.br_kind = BrocModule_pb2.Module.BRANCH
         module.br_name = infos[1]
     else:

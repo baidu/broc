@@ -102,7 +102,7 @@ class TestPlanish(unittest.TestCase):
         #1-10-0-0 VS 1-9-0-0
         first_node.module.tag_name = 'ub_1-10-0-0_PD_BL'
         second_node.module.tag_name = 'ub_1-9-0-0_PD_BL'
-        self.assertEqual(0, planish._filter_dep_nodes(first_node, second_node))
+        self.assertEqual(1, planish._filter_dep_nodes(first_node, second_node))
         #BRANCH VS BRANCH
         first_node.module.br_kind = BrocModule_pb2.Module.BRANCH
         second_node.module.br_kind = BrocModule_pb2.Module.BRANCH
