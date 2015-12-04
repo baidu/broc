@@ -24,20 +24,19 @@ BROC_TEMPLATE='''#edit-mode: -*- python -*-
 COMPILER("/usr/bin")
 
 #Preprocessor flags.
-CPP_FLAGS('debug flags', 'release flags')
+CPPFLAGS('debug flags', 'release flags')
 
 #C flags.
-C_FLAGS('debug flags', 'release flags')
+CFLAGS('debug flags', 'release flags')
 
 #C++ flags.
-CXX_FLAGS('debug flags', 'release flags')
+CXXFLAGS('debug flags', 'release flags')
 
 #-I path
 INCLUDE('./include $WORKSPACE/a/b/c/include')
-INCLUDE(CONVERT_OUT('./proto'))
 
 #link flags
-LINK_FLAGS('-lpthread -lcrypto -lrt')
+LDFLAGS('-lpthread -lcrypto -lrt')
 
 #trunk dependent module in svn 
 CONFIGS("app/foo/sky@trunk")
@@ -66,7 +65,7 @@ PUBLISH("relative path to BROC", "$OUT")
 APPLICATION('name',
             Sources("src/*.cpp"),
             LinkFlags("link flags"),
-            Libs("$OUT/a/b/c/output/lib/libutil.a"))
+            Libs("$OUT_ROOT/a/b/c/output/lib/libutil.a"))
 
 #ut bin
 UT_APPLICATION('name',

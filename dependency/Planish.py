@@ -85,7 +85,7 @@ class Planish(object):
             main_module : the BrocModule_pb2.Module object representing the main module
             repo_domain : the domain name of repository
             logger : the log facility object
-            postfix : the list of postfix, [postfix_trunk, postfix_branche, postfix_tag]
+            postfix : the list of postfix [postfix_branche, postfix_tag]
         """
         self._dep_tree = BrocTree.BrocTree(main_module,
                                            repo_domain,

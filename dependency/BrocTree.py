@@ -50,7 +50,7 @@ class BrocNode(object):
         Args:
             module : the BrocModule_pb2.Module object
             parent : the BrocNode object representing the parent node
-            is_local : whether module code exists in local system
+            is_local : to mark whether module code exists in local file system
         """
         self.module = module
         self._children = []    # the list of kid nodes
@@ -93,7 +93,7 @@ class BrocNode(object):
 
     def EnableLocal(self):
         """
-        mark the code of module exists in local system
+        set the code of module exists in local system
         """
         self._is_local = True
  
@@ -120,7 +120,7 @@ class BrocTree(object):
             root : the BrocModule_pb2.Module object, the root of BrocTree
             repo_domain : the damain of repository 
             logger : Log.Log object, the log facility object
-            postfix : the list of postfix like [postfix_trunk, postfix_branche, postfix_tag]
+            postfix : the list of postfix like [postfix_branche, postfix_tag]
         """
         self._root = BrocNode(root, None, True) 
         self._repo_domain = repo_domain
@@ -200,8 +200,7 @@ class BrocTree(object):
                                             node.module.repo_kind,
                                             self._repo_domain,
                                             self._postfix[0],
-                                            self._postfix[1],
-                                            self._postfix[2])
+                                            self._postfix[1])
         except BaseException as err:
             self._logger.LevPrint("ERROR", "parse BROC(%s) failed" % node.module.url)
             raise BrocTreeError(str(err))

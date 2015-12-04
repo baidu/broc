@@ -385,12 +385,11 @@ def GetSvnUrlRevision(target_dir, logger):
     return (url, revision)
 
 
-def GetSvnBranchKind(url, postfix_trunk, postfix_branch, postfix_tag, logger):
+def GetSvnBranchKind(url, postfix_branch, postfix_tag, logger):
     """
     get svn branch kind using it's url
     Args :
         url : svn url of module
-        postfix_trunk : postfix of trunk
         postfix_branch : postfix of branch
         postfix_tag : postfix of tag
         logger : the object of Log.Log
@@ -402,19 +401,18 @@ def GetSvnBranchKind(url, postfix_trunk, postfix_branch, postfix_tag, logger):
         return "TAG"
     elif url.endswith(postfix_branch):
         return "BRANCH"
-    elif url.find(postfix_trunk) != -1:
+    elif url.find('trunk') != -1:
         return "BRANCH"
     else:
         logger.LevPrint('ERROR', 'Unknow type of branch!!Check the url %s' % (url), False)
         return None
 
 
-def GetSvnBranchName(url, postfix_trunk, postfix_branch, logger):
+def GetSvnBranchName(url, postfix_branch, logger):
     """
     get svn branch name using it's url
     Args :
         url : svn url of module
-        postfix_trunk : postfix of trunk
         postfix_branch : postfix of branch
         logger : the object of Log.Log
     Returns :
@@ -423,7 +421,7 @@ def GetSvnBranchName(url, postfix_trunk, postfix_branch, logger):
     if url.endswith(postfix_branch):
         br_name = url.split('/')[-1]
         return br_name
-    elif url.find(postfix_trunk) != -1:
+    elif url.find('trunk') != -1:
         return "trunk"
     else:
         logger.LevPrint('ERROR', 'Unknow name of branch!!Check the url %s' % (url), False)
@@ -448,13 +446,12 @@ def GetSvnTagName(url, postfix_tag, logger):
         return None
 
 
-def GetSvnCvspath(url, postfix_trunk, postfix_branch, postfix_tag, \
+def GetSvnCvspath(url, postfix_branch, postfix_tag, \
         svn_dir_types, svn_domain, logger):
     """
     get svn cvspath using it's url.
     Args :
         url : svn url of module
-        postfix_trunk : the postfix of trunk in svn url
         postfix_branch : the postfix of branches in svn url
         postfix_tag : the postfix of tags in svn url
         svn_dir_types : list of directory types of svn.
@@ -471,7 +468,7 @@ def GetSvnCvspath(url, postfix_trunk, postfix_branch, postfix_tag, \
         svn_domain = svn_domain[0:-1]
     url_without_domain = url[len(svn_domain):]
     splited_urls = url_without_domain.split('/')[1:]
-    if url.endswith(postfix_branch) or url.endswith(postfix_tag) or url.find(postfix_trunk) != -1:
+    if url.endswith(postfix_branch) or url.endswith(postfix_tag) or url.find('trunk') != -1:
         for item in splited_urls:
             if item in svn_dir_types:
                 continue
@@ -537,13 +534,12 @@ def GetWorkSpace(target_path, cvspath, logger):
         return None
 
 
-def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
+def GetSvnUrlInfos(target_dir, postfix_branch, postfix_tag, \
         svn_dir_types, svn_domain, logger):
     """
     Description : get svn info from a abs path of directory
     Args :
         path : the abs path of directory
-        postfix_trunk : the postfix of trunk in svn rul
         postfix_branch : the postfix of branches in svn url
         postfix_tag : the postfix of tags in svn url
         svn_dir_types : list of directory types of svn
@@ -585,7 +581,7 @@ def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
     if result['url'] is None:
         return result
 
-    result['br_kind'] = GetSvnBranchKind(result['url'], postfix_trunk, \
+    result['br_kind'] = GetSvnBranchKind(result['url'],
             postfix_branch, postfix_tag, logger)
     if result['br_kind'] is None:
         return result
@@ -599,7 +595,7 @@ def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
         return result
 
     if result['br_kind'] == 'BRANCH':
-        result['br_name'] = GetSvnBranchName(result['url'], postfix_trunk, postfix_branch, logger)
+        result['br_name'] = GetSvnBranchName(result['url'], postfix_branch, logger)
         if result['br_name'] is None:
             return result
 
@@ -609,7 +605,7 @@ def GetSvnUrlInfos(target_dir, postfix_trunk, postfix_branch, postfix_tag, \
             return result
 
     result['module_cvspath'] = GetSvnCvspath(result['url'],
-            postfix_trunk, postfix_branch, postfix_tag, svn_dir_types, svn_domain, logger)
+           postfix_branch, postfix_tag, svn_dir_types, svn_domain, logger)
     if result['module_cvspath'] is None:
         return result
     

@@ -62,7 +62,6 @@ def ParseConfigs(configs,
                  dep_level,
                  repo_kind, 
                  repo_domain,
-                 postfix_trunk,
                  postfix_branch,
                  postfix_tag):
     """
@@ -73,7 +72,6 @@ def ParseConfigs(configs,
         repo_kind : a enum value in BrocModule_pb2.Module.EnumRepo
         dep_level : int value presenting dependent level
         repo_domain : the domain name of repository
-        postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
     Returns:
@@ -86,7 +84,6 @@ def ParseConfigs(configs,
                              dep_level,
                              repo_kind, 
                              repo_domain,
-                             postfix_trunk,
                              postfix_branch,
                              postfix_tag)
         modules.append(module)
@@ -97,7 +94,6 @@ def ParseConfig(config,
                 dep_level,
                 repo_kind, 
                 repo_domain,
-                postfix_trunk,
                 postfix_branch,
                 postfix_tag):
     """
@@ -108,7 +104,6 @@ def ParseConfig(config,
         dep_level : int value representing dependent level
         repo_kind : a enum value in BrocModule_pb2.Module.EnumRepo
         repo_domain : the domain name of repository server
-        postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
     Returns:
@@ -116,13 +111,13 @@ def ParseConfig(config,
     """
     if repo_kind is BrocModule_pb2.Module.SVN:
         return CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
-                               postfix_trunk, postfix_branch, postfix_tag)
+                               postfix_branch, postfix_tag)
     else:
         return CreateGitModule(config, dep_level, workspace, repo_domain)
 
 
-def CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
-                    postfix_trunk, postfix_branch, postfix_tag):
+def CreateSvnModule(config, dep_level, workspace, repo_domain, 
+                    repo_kind, postfix_branch, postfix_tag):
     """
     to create a BrocModule_pb2.Module object whose repo_kind is BrocModule_pb2.Module.SVN
     Args:
@@ -130,7 +125,6 @@ def CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
         dep_level : int value representing dependent level
         workspace : the abs path of worksapce, ie $WORKSPACE
         repo_domain : the domain name of repository server
-        postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
     Returns:
@@ -160,7 +154,6 @@ def CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
     try:
         module.br_kind = ParseBranch(module_branch, 
                                      repo_kind, 
-                                     postfix_trunk,
                                      postfix_branch, 
                                      postfix_tag)
     except PlanishError:
@@ -182,10 +175,10 @@ def CreateSvnModule(config, dep_level, workspace, repo_domain, repo_kind,
                                   module_branch) 
     else:
         module.br_name = module_branch
-        if module_branch == postfix_trunk:
+        if module_branch == 'trunk':
             module.url = os.path.join(repo_domain, 
                                       cvs_prefix,
-                                      postfix_trunk,
+                                      'trunk',
                                       module.name)
         else: 
             module.url = os.path.join(repo_domain, 
@@ -235,11 +228,10 @@ def CreateGitModule(config, dep_level, workspace, repo_domain):
     return module
 
 
-def ParseBranch(branch, repo_kind, postfix_trunk, postfix_branch, postfix_tag):
+def ParseBranch(branch, repo_kind, postfix_branch, postfix_tag):
     """
     Parse branch and return branch name, branch kind infos
     the example for Svn:
-        trunk : trunk
         branch : sky_1-0-0-0_BRANCH
         tag    : sky_1-0-0-0_PD_BL
     the exmple for Git:
@@ -248,7 +240,6 @@ def ParseBranch(branch, repo_kind, postfix_trunk, postfix_branch, postfix_tag):
     Args:
         branch : the name of branch
         repo_kind : BrocModule_pb2.Module.EnumRepo
-        postfix_trunk : the branch postfix, for example 'trunk'
         postfix_branch : the branch postfix, for example 'BRANCH'
         postfix_tag : the tag postfix, for example 'PD_BL'
     Returns:
@@ -257,7 +248,7 @@ def ParseBranch(branch, repo_kind, postfix_trunk, postfix_branch, postfix_tag):
     """
     br_kind = None
     if repo_kind == BrocModule_pb2.Module.SVN:
-        if branch == postfix_trunk or branch.endswith(postfix_branch):
+        if branch == 'trunk' or branch.endswith(postfix_branch):
             br_kind = BrocModule_pb2.Module.BRANCH
         elif branch.endswith(postfix_tag):
             br_kind = BrocModule_pb2.Module.TAG
@@ -273,7 +264,6 @@ def ParseBranch(branch, repo_kind, postfix_trunk, postfix_branch, postfix_tag):
 
 def CreateBrocModuleFromDir(target_path, 
                             repo_domain, 
-                            postfix_trunk,
                             postfix_branch,
                             postfix_tag,
                             logger):
@@ -282,7 +272,6 @@ def CreateBrocModuleFromDir(target_path,
     Args:
         target_path : the abs path of a directory
         repo_domain : the domain name of repository
-        postfix_trunk : a string object representint the postfix of trunk
         postfix_branch : a string object representint the postfix of branch
         postfix_tag : a string object representint the postfix of tag
         logger : the object of Log.Log
@@ -301,7 +290,6 @@ def CreateBrocModuleFromDir(target_path,
     if RepoUtil.IsUnderSvnControl(target_path):
         repo_kind = BrocModule_pb2.Module.SVN
         module_infos = RepoUtil.GetSvnUrlInfos(target_path, 
-                                               postfix_trunk,
                                                postfix_branch,
                                                postfix_tag,
                                                ['trunk', 'branches', 'tags'],

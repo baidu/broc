@@ -10,6 +10,7 @@
 broc client
 
 Authors: zhousongsong(zhousongsong@baidu.com)
+	 liruihao(liruihao@baidu.com)
 Date:    2015/09/22 17:23:06
 """
 
@@ -99,7 +100,6 @@ def _init_root_node(pathname, broc_config, domain, logger):
     try:
         root_node = PlanishUtil.CreateBrocModuleFromDir(pathname, 
                                                         domain,
-                                                        broc_config.SVNPostfixTrunk(),
                                                         broc_config.SVNPostfixBranch(),
                                                         broc_config.SVNPostfixTag(),
                                                         logger)
@@ -207,9 +207,7 @@ def _build(options, do_ut=False):
     os.chdir(root_node.workspace)
 
     # planish modules
-    postfix = [broc_config.SVNPostfixTrunk(), 
-                broc_config.SVNPostfixBranch(), 
-                broc_config.SVNPostfixTag()]
+    postfix = [broc_config.SVNPostfixBranch(), broc_config.SVNPostfixTag()]
     planish = Planish.Planish(root_node, repo['domain'], logger, postfix)
     if not planish.DoPlanish():
         logger.LevPrint("ERROR", "Analyzing dependency failed")
@@ -337,9 +335,7 @@ def _show_deps(options):
         return -1
 
     # planish modules
-    postfix = [broc_config.SVNPostfixTrunk(), 
-                broc_config.SVNPostfixBranch(), 
-                broc_config.SVNPostfixTag()]
+    postfix = [broc_config.SVNPostfixBranch(), broc_config.SVNPostfixTag()]
     planish = Planish.Planish(root_node, repo['domain'], logger, postfix)
     if not planish.DoPlanish(False):
         logger.LevPrint("ERROR", "Analyzing dependency failed")

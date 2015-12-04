@@ -31,17 +31,15 @@ class BrocConfig(object):
         self._file = os.path.join(os.environ['HOME'], '.broc.rc')
         self._svn_repo_domain = 'https://svn.baidu.com'
         self._git_repo_domain = 'https://git.baidu.com'
-        self._svn_postfix_trunk = "trunk"
         self._svn_postfix_branch = "BRANCH"
         self._svn_postfix_tag = "PD_BL"
 
     def __str__(self):
         """
         """
-        return "svn repo domain: %s\ngit repo domain: %s\nsvn postfix trunk: %s \
+        return "svn repo domain: %s\ngit repo domain: %s\n \
 svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain, 
                                                self._git_repo_domain, 
-                                               self._svn_postfix_trunk,
                                                self._svn_postfix_branch,
                                                self._svn_postfix_tag)
 
@@ -61,7 +59,6 @@ svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
                 conf.add_section('repo')
                 conf.set('repo', 'svn_repo_domain', self._svn_repo_domain)
                 conf.set('repo', 'git_repo_domain', self._git_repo_domain)
-                conf.set('repo', 'svn_postfix_trunk', 'trunk')
                 conf.set('repo', 'svn_postfix_branch', 'BRANCH')
                 conf.set('repo', 'svn_postfix_tag', 'PD_BL')
                 conf.write(cfgfile)
@@ -72,7 +69,6 @@ svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
                 conf.read(self._file)
                 self._svn_repo_domain = conf.get('repo', 'svn_repo_domain') 
                 self._git_repo_domain = conf.get('repo', 'git_repo_domain') 
-                self._svn_postfix_trunk = conf.get('repo', 'svn_postfix_trunk')
                 self._svn_postfix_branch = conf.get('repo', 'svn_postfix_branch')
                 self._svn_postfix_tag = conf.get('repo', 'svn_postfix_tag')
         except ConfigParser.Error as e:
@@ -90,12 +86,6 @@ svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
             return self._svn_repo_domain
         elif repo_type == BrocModule_pb2.Module.GIT:
             return self._git_repo_domain
-
-    def SVNPostfixTrunk(self):
-        """
-        return postfix of svn trunk
-        """
-        return self._svn_postfix_trunk
 
     def SVNPostfixBranch(self):
         """
@@ -115,7 +105,6 @@ svn postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
         """
         print("-- svn domain : %s" % self._svn_repo_domain)
         print("-- git domain : %s" % self._git_repo_domain)
-        print("-- svn trunk postfix : %s" % self._svn_postfix_trunk)
         print("-- svn branch posfix : %s" % self._svn_postfix_branch)
         print("-- svn tag postfix   : %s" % self._svn_postfix_tag)
         
