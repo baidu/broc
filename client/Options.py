@@ -56,13 +56,13 @@ def Help(bin_name, subcommand=None):
             Log.colorprint("DEFAULT", "test: Builds and runs the specified targets", False)
         Log.colorprint("DEFAULT", "Usage: %s %s [option] <path>" % (bin_name, subcommand), False)
         Log.colorprint("DEFAULT", "Valid options:", False)
-        if subcommand == "build":
-            Log.colorprint("DEFAULT", 
-            "\t--target=ARG\t\t: Build specified targets, default build all targets", False)
-        else:
-            Log.colorprint("DEFAULT",
-            "\t--target=ARG\t\t: Build and run specified targets, default run all targets",
-            False)
+        #if subcommand == "build":
+        #    Log.colorprint("DEFAULT", 
+        #    "\t--target=ARG\t\t: Build specified targets, default build all targets", False)
+        #else:
+        #    Log.colorprint("DEFAULT",
+        #    "\t--target=ARG\t\t: Build and run specified targets, default run all targets",
+        #    False)
         Log.colorprint("DEFAULT",
             "\t--mode=[release|debug]  : Set build mode, default mode is debug",
             False)

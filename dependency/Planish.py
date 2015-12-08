@@ -222,10 +222,15 @@ reload it(%s)" % (node.module.origin_config))
             # different branches confict
             if reserved.module.br_name != coming.module.br_name:
                 return -1
-            if int(reserved.module.revision) > int(coming.module.revision):
-                return 0
+            if reserved.module.repo_kind == BrocModule_pb2.Module.SVN:
+                #only in SVN module has revision
+                if int(reserved.module.revision) > int(coming.module.revision):
+                    return 0
+                else:
+                    return 1
             else:
-                return 1
+                #in git, they will be regarded as same branch
+                return 0
         # tags
         if reserved.module.br_kind == BrocModule_pb2.Module.TAG:
             if reserved.module.tag_name < coming.module.tag_name:
