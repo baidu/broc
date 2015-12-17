@@ -26,14 +26,16 @@ class TaskWorker(threading.Thread):
     """
     to run build task
     """
-    def __init__(self, master, logger):
+    def __init__(self, master, all_log, logger):
         """
         Args:
             master : the TaskMaster object
+            all_log : show all build log
             logger : the Log.Log() object 
         """
         threading.Thread.__init__(self)
         self._master = master
+        self._all_log = all_log
         self._logger = logger
         self._running = True
 
@@ -77,7 +79,17 @@ class TaskWorker(threading.Thread):
                 self._master.Stop()
                 break
             else:
-                self._logger.LevPrint("MSG", "[OK] %s" % task.BuildCmd())
+                info = "compile %s" % (task.pathname)
+                log_level = "MSG"
+                if len(result['msg']) > 0:
+                    info += "\tresult : [WARNING]\n"
+                    log_level = "WARNING"
+                else:
+                    info += "\tresult : [OK]\n"
+                if self._all_log:
+                    info += "%s\n" % task.BuildCmd()
+                info += result['msg']
+                self._logger.LevPrint(log_level, info)
                 self._master.UpdateCache(task.Pathname())
                 self._master.AddResponse(response)
 

@@ -267,6 +267,7 @@ def _build(options, do_ut=False):
     task_master = TaskMaster.TaskMaster(options['jobs'], 
                                         cache_master,
                                         modified_targets,
+                                        options['all_log'],
                                         logger)
     # run build thread to build
     task_master.Start()

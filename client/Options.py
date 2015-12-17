@@ -43,7 +43,7 @@ def Help(bin_name, subcommand=None):
                 False)
         Log.colorprint("DEFAULT", "    show-deps  : Print the dependency graph", False)
         Log.colorprint("DEFAULT", "    clean      : Remove output files", False)
-        Log.colorprint("DEFAULT", "    scratch    : Create a BCLOUD template", False)
+        Log.colorprint("DEFAULT", "    scratch    : Create a BROC template", False)
         Log.colorprint("DEFAULT", "    version    : Display the version", False)
         Log.colorprint("DEFAULT", "    config     : Display broc's config items", False)
         Log.colorprint("DEFAULT", "    help       : Print the help commands", False)
@@ -56,19 +56,13 @@ def Help(bin_name, subcommand=None):
             Log.colorprint("DEFAULT", "test: Builds and runs the specified targets", False)
         Log.colorprint("DEFAULT", "Usage: %s %s [option] <path>" % (bin_name, subcommand), False)
         Log.colorprint("DEFAULT", "Valid options:", False)
-        #if subcommand == "build":
-        #    Log.colorprint("DEFAULT", 
-        #    "\t--target=ARG\t\t: Build specified targets, default build all targets", False)
-        #else:
-        #    Log.colorprint("DEFAULT",
-        #    "\t--target=ARG\t\t: Build and run specified targets, default run all targets",
-        #    False)
         Log.colorprint("DEFAULT",
             "\t--mode=[release|debug]  : Set build mode, default mode is debug",
             False)
         Log.colorprint("DEFAULT",
             "\t--jobs=num\t\t: Set the number of build threads",
             False)
+        Log.colorprint("DEFAULT", "\t --all-log\t\t: Show all build log infomation")
         return 0
 
     if subcommand == "show-deps":
@@ -82,7 +76,7 @@ def Help(bin_name, subcommand=None):
         return 0
 
     if subcommand == "scratch":
-        Log.colorprint("DEFAULT", "scratch: Create a BCLOUD template", False)
+        Log.colorprint("DEFAULT", "scratch: Create a BROC template", False)
         Log.colorprint("DEFAULT", "Usage: %s scratch" % (bin_name), False)
         return 0
 
@@ -108,19 +102,19 @@ def OptionBuild(argv):
     Return:
         None : fail
         options : build or test options
-        options["target"] : specified targets
+        options["all_log"] : show all build log
         options["mode"] : debug or release
         options["path"] : modular path
         options["jobs"] : the number of build threads
     """
     options = dict()
-    options["target"] = ""
+    options["all_log"] = False
     options["path"] = ""
     options["mode"] = "debug"
     options["jobs"] = 4
 
     try:
-        opts, args = getopt.gnu_getopt(argv, "", ["target=", "mode=", "jobs="])
+        opts, args = getopt.gnu_getopt(argv, "", ["all-log", "mode=", "jobs="])
     except getopt.GetoptError as ex:
         Log.colorprint("DEFAULT", "%s\nType '%s help' for usage" % \
                 (str(ex), os.path.basename(sys.argv[0])), False)
@@ -136,8 +130,8 @@ def OptionBuild(argv):
         return None
     
     for opt, arg in opts:
-        if opt == "--target":
-            options["target"] = arg
+        if opt == "--all-log":
+            options["all_log"] = True
             continue
         if opt == "--mode":
             options["mode"] = arg

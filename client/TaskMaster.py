@@ -26,12 +26,13 @@ class TaskMaster(object):
     TaskMaster object is a thread object master
     dispatching build task
     """
-    def __init__(self, num, cache_master, changed_list, logger):
+    def __init__(self, num, cache_master, changed_list, all_log, logger):
         """
         Args:
             num : the number of build threads
             cache_master : the BrocObjectMaster object
             changed_list : the changed file list of BrocObject
+            all_log : show all build log
             logger : the Log.Log() object
         """
         self._logger = logger
@@ -43,7 +44,7 @@ class TaskMaster(object):
         self._workers = list()
         self._build_ok = True
         for i in xrange(0, num):
-            self._workers.append(TaskWorker.TaskWorker(self, logger))
+            self._workers.append(TaskWorker.TaskWorker(self, all_log, logger))
 
     def DisableBuildOK(self):
         """

@@ -196,7 +196,7 @@ class BrocObject(object):
             return (False, 'error msg') if fail to build   
         """
         result = dict()
-        ret, msg = Function.RunCommand(self.build_cmd)
+        ret, msg = Function.RunCommand(self.build_cmd, ignore_stderr_when_ok = False)
         if ret != 0:
             result['ret'] = False
             result['msg'] = "%s\n%s" % (self.build_cmd, msg)
