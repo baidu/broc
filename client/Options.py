@@ -134,6 +134,9 @@ def OptionBuild(argv):
             options["all_log"] = True
             continue
         if opt == "--mode":
+            if arg != "debug" and arg != "release":
+                Log.colorprint("RED", "invalid mode %s. Please use debug or release" % arg, False)
+                return None
             options["mode"] = arg
             continue
         if opt == "--jobs":
