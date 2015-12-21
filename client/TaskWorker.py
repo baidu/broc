@@ -82,10 +82,10 @@ class TaskWorker(threading.Thread):
                 info = "compile %s" % (task.pathname)
                 log_level = "MSG"
                 if len(result['msg']) > 0:
-                    info += " [WARNING]\n"
+                    info += " [WARNING]"
                     log_level = "WARNING"
                 else:
-                    info += " [OK]\n"
+                    info += " [OK]"
                 if self._all_log:
                     info += "%s\n" % task.BuildCmd()
                 info += result['msg']

@@ -21,7 +21,7 @@ BROC_TEMPLATE='''#edit-mode: -*- python -*-
 #coding:utf-8
 
 #set the search path of compiler comamnd
-COMPILER("/usr/bin")
+COMPILER_PATH("/usr/bin")
 
 #Preprocessor flags.
 CPPFLAGS('debug flags', 'release flags')

@@ -234,6 +234,9 @@ class BrocTree(object):
                     return self._download_broc(node)
             else:
                 broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
+                if node.module.is_main:
+                    return os.path.join(broc_dir, "BROC")
+
                 cmd = "cd %s && git fetch --all" % broc_dir
                 if node.module.tag_name:
                     cmd += " && git checkout %s" % node.module.tag_name

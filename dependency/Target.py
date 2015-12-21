@@ -351,7 +351,7 @@ class ProtoLibrary(object):
         for _dir in proto_dirs:
             # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
             cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
-            protos = os.path.normpath("%(_dir)s/*.proto" %(locals())
+            protos = os.path.normpath("%(_dir)s/*.proto" % (locals()))
             cmd = "mkdir -p %(cvs_out_dir)s && %(protoc)s --cpp_out=%(cvs_out_dir)s %(proto_flags)s %(cvs_dirs)s \
 -I=. %(protos)s" % (locals())
             # 执行protoc的目录，在output下
