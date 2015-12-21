@@ -9,8 +9,8 @@
 set -x
 set -e
 set -u
-
-declare -r PROTOC=/opt/protobuf/bin/protoc
+declare -r PROTOBUF=$HOME/protobuf
+declare -r PROTOC=$PROTOBUF/bin/protoc
 
 # print help information
 function help() 
@@ -34,7 +34,7 @@ function deploy_protobuf()
         echo "-- installing protobuf ..."
         tar -xzvf ./protobuf-2.6.1.tar.gz
         [[ $? -ne 0 ]] && err "-- unpack protobuf failed" && return 1
-        (cd protobuf-2.6.1 && ./configure --prefix=/opt/protobuf && make -j12 && make install)
+        (cd protobuf-2.6.1 && ./configure --prefix=$PROTOBUF && make -j12 && make install)
         [[ $? -ne 0 ]] && err "-- compile protobuf failed" && return 1
         (cd protobuf-2.6.1/python && python setup.py build && python setup.py install)
         [[ $? -ne 0 ]] && err "-- install protobuf failed" && return 1

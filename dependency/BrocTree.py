@@ -234,10 +234,11 @@ class BrocTree(object):
                     return self._download_broc(node)
             else:
                 broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
-                cmd = "cd %s && git fetch --all && git checkout %s" \
-                        % (broc_dir, node.module.br_name)
+                cmd = "cd %s && git fetch --all" % broc_dir
                 if node.module.tag_name:
                     cmd += " && git checkout %s" % node.module.tag_name
+                else:
+                    cmd += " && git checkout %s" % node.module.br_name
                 # to run cmd
                 ret, msg = Function.RunCommand(cmd)
                 if ret != 0:
