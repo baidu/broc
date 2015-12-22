@@ -225,17 +225,14 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
-            # Log.Log().LevPrint("MSG", "%s build status is Ture, changed" % self.pathname)
             return True
         # check mtime
         modify_time = None
-        last_time = self.modify_time
         try:
             modify_time = os.stat(self.pathname).st_mtime
-        except BaseException as err:
+        except BaseException:
             self.build = True
             self.modify_time = 0
-            # Log.Log().LevPrint("MSG", "get %s mtime failed, changed" % self.pathname)
             return True
 
         if modify_time == self.modify_time:
@@ -244,7 +241,6 @@ class BrocObject(object):
         # check hash
         _hash = Function.GetFileMd5(self.pathname)
         if _hash != self.hash:
-            # Log.Log().LevPrint("MSG", "%s hash changed, %s --> %s" % (self.pathname, self.hash, _hash))
             self.hash = _hash
             self.build = True
             return True

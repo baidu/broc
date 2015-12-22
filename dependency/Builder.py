@@ -159,9 +159,6 @@ class BinBuilder(Builder):
             compiler : the abs path of compiler
         """
         Builder.__init__(self, obj, compiler, workspace)
-        objs = ""
-        links = ""
-        libs = ""
         # mkdir -p broc_out/et/tools/app/output/bin && g++ -DBROC -o broc_out/et/tools/app/output/bin/hello broc_out/et/tools/app/2_hello_hello.o -Xlinker "-(" broc_out/et/tools/app/output/lib/libperson.a /home/zss/zeus/protobuf/lib/libprotobuf.a  -Xlinker "-)"
         self.build_cmd = "mkdir -p %s && %s \\\n\t-DBROC \\\n\t-o \\\n\t%s \\\n\t" \
                          % (self.obj_dir, self.compiler, self.obj)

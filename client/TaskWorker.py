@@ -14,7 +14,6 @@ Date:    2015/10/26 10:50:06
 import os
 import sys
 import threading
-import Queue
 
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)

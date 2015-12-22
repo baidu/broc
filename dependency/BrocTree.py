@@ -233,11 +233,11 @@ class BrocTree(object):
                 else:
                     return self._download_broc(node)
             else:
-                broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
+                _broc_dir = os.path.join(node.module.workspace, node.module.module_cvspath)
                 if node.module.is_main:
-                    return os.path.join(broc_dir, "BROC")
+                    return os.path.join(_broc_dir, "BROC")
 
-                cmd = "cd %s && git fetch --all" % broc_dir
+                cmd = "cd %s && git fetch --all" % _broc_dir
                 if node.module.tag_name:
                     cmd += " && git checkout %s" % node.module.tag_name
                 else:
@@ -290,7 +290,7 @@ class BrocTree(object):
             cmd = "git clone %s %s && cd %s && git fetch --all " \
                   % (node.module.url, node.module.module_cvspath, node.module.module_cvspath)
 
-            if node.module.br_name and node.module.br_name is not "master":
+            if node.module.br_name:
                 cmd += " && git checkout %s" % node.module.br_name
             elif node.module.tag_name:
                 cmd += " && git checkout %s" % node.module.tag_name

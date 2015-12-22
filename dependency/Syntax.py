@@ -283,7 +283,6 @@ def Libs(*ss):
     Returns:
         SyntaxTag.TagLibs() 
     """
-    env = Environment.GetCurrent()
     tag = SyntaxTag.TagLibs()
     for s in ss:
         if not isinstance(s, str):
@@ -341,7 +340,6 @@ def GLOB(*ss):
         string containing the relative path of files or directories, each path separeated by blank character
     """
     env = Environment.GetCurrent()
-    dir_path = env.ModulePath()
     strs=[]
     for s in ss:
         ps = string.split(s)
@@ -407,7 +405,6 @@ def Sources(*ss):
         TagSources Object
     """
     # FIX ME: you can extend wildcard
-    wildcard = ['*']
     files, args = _ParseNameAndArgs(*ss)
     tag = SyntaxTag.TagSources()
     env = Environment.GetCurrent()

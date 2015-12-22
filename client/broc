@@ -127,7 +127,8 @@ def _mkdir_output(root_node, logger):
         cmd = 'rm -rf %s && ln -sf %s %s' % (link, output, link)
         ret, msg = Function.RunCommand(cmd)
         if ret != 0:
-            logger.LevPring("WARNING", "check result in %s" % (msg, output))
+            logger.LevPrint("WARNING", "run %s %s " % (cmd, msg))
+            logger.LevPrint("WARNING", "check result in %s" % output)
             return -1
 
 
