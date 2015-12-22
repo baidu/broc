@@ -6,7 +6,7 @@
 # Brief:
 #   install and deploy broc
 
-set -x
+#set -x
 set -e
 set -u
 declare -r PROTOBUF=$HOME/protobuf
@@ -15,11 +15,10 @@ declare -r PROTOC=$PROTOBUF/bin/protoc
 # print help information
 function help() 
 {
-    echo "Usage: broc options ..."
-    echo "  deploy   : deploy borc "
-    echo "  protobuf : install protobuf in /opt"
-    echo "  proto    : compile proto files"
-    echo "  broc     : compile proto files"
+    echo "Usage: sh install [protobuf|proto]"
+    echo "Options:"
+    echo "    protobuf : install protobuf in $HOME/protobuf"
+    echo "    proto    : compile broc's proto files"
 }
 
 function err() 
@@ -33,7 +32,7 @@ function deploy_protobuf()
     if [[ ! -e $PROTOC ]]; then
         echo "-- installing protobuf ..."
         tar -xzvf ./protobuf-2.6.1.tar.gz
-        [[ $? -ne 0 ]] && err "-- unpack protobuf failed" && return 1
+        [[ $? -ne 0 ]] && err "-- unpack ./protobuf-2.6.1.tar.gz failed" && return 1
         (cd protobuf-2.6.1 && ./configure --prefix=$PROTOBUF && make -j12 && make install)
         [[ $? -ne 0 ]] && err "-- compile protobuf failed" && return 1
         (cd protobuf-2.6.1/python && python setup.py build && python setup.py install)
@@ -55,44 +54,16 @@ function deploy_proto()
     echo "-- compile broc proto files success" && return 0
 }
 
-function deploy_broc() 
-{
-    mkdir -p /opt/broc
-    [[ $? -ne 0 ]] && err "-- fail to mkdir /opt/broc" && return 1
-    cp -rf ../* /opt/broc
-    [[ $? -ne 0 ]] && err "-- install broc failed" && return 1
-    grep 'PATH=/opt/broc/bin' ~/.bash_profile
-    [[ $? -ne 0 ]] && echo 'PATH=/opt/broc/client:$PATH'  >> ~/.bash_profile
-    echo "-- install broc OK, and run: source ~/.bash_profile" && return 0
-}
-
-deploy()
-{
-    deploy_protobuf
-    [[ $? -ne 0 ]] && return 1
-    deploy_proto
-    [[ $? -ne 0 ]] && return 1
-    deploy_broc
-    [[ $? -ne 0 ]] && return 1
-    return 0
-}
-
 function main() 
 {
     [[ $# -lt 1 ]] && help && return 1
     case "$1" in
-            deploy)
-                    deploy
-                    ;;
             protobuf)
                     deploy_protobuf
                     ;;     
             proto)
                     deploy_proto
                     ;;     
-            broc)
-                    deploy_broc
-                    ;;
                  *)
                     help
                     ;;

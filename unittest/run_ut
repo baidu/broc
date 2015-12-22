@@ -10,6 +10,7 @@
 set -e
 set -u
 
+export PATH=$HOME/protobuf/bin:$PATH
 
 function err() {
     echo "[$(date +'%Y-%m-%D %H:%M:%S')]: $@" >&2

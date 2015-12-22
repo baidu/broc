@@ -706,7 +706,7 @@ class TestSyntax(unittest.TestCase):
         #check result
         proto_cmd = """mkdir -p broc_out/baidu/bcloud/broc && protoc \
 --cpp_out=broc_out/baidu/bcloud/broc  -I=baidu/bcloud/broc \
--I=baidu/bcloud/broc  -I=. baidu/bcloud/broc//*.proto\n"""
+-I=baidu/bcloud/broc  -I=. baidu/bcloud/broc/*.proto\n"""
         self.assertEqual(protos.__str__(), proto_cmd)
         self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
         self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
