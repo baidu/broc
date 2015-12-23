@@ -37,7 +37,7 @@ class TestPlanish(unittest.TestCase):
         #init
         logger = Log.Log()
         root_node = BrocModule_pb2.Module()
-        repo_domain = 'http://bc.baidu.com/zeus/'
+        repo_domain = 'https://github.com'
         postfix = ["trunk", "_BRANCH", "_PD_BL"]
         planish = Planish.Planish(root_node, repo_domain, logger, postfix)
         reserved = BrocModule_pb2.Module()

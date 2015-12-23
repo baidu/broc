@@ -7,7 +7,7 @@
 ################################################################################
 """
 	Description :
-	Authors     : zhousongsong(zhousongsong@baidu.com)
+	Authors     : zhousongsong(doublesongsong@gmail.com)
 	Date        : 2015-10-16 06:47:23
 """
 import sys

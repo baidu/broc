@@ -40,8 +40,8 @@ class TestSyntax(unittest.TestCase):
         """
         module = BrocModule_pb2.Module()
         module.name = 'broc'
-        module.module_cvspath = 'baidu/bcloud/broc'
-        module.broc_cvspath = 'baidu/bcloud/broc/BROC'
+        module.module_cvspath = 'baidu/broc'
+        module.broc_cvspath = 'baidu/broc/BROC'
         module.is_main = True
         module.repo_kind = BrocModule_pb2.Module.GIT
         module.revision = "1234"
@@ -52,8 +52,8 @@ class TestSyntax(unittest.TestCase):
         if msg.endswith("\n"):
             msg = msg[:-1]
         module.workspace = '%s/unittest_broc/workspace' % msg
-        module.root_path = '%s/unittest_broc/workspace/baidu/bcloud/broc' % msg
-        module.url = 'gerrit.baidu.com:8235/baidu/bcloud/broc'
+        module.root_path = '%s/unittest_broc/workspace/baidu/broc' % msg
+        module.url = 'https://github.com/baidu/broc'
         module.br_kind = BrocModule_pb2.Module.BRANCH
         module.br_name = 'trunk'
         module.commit_id = '5d9819900c2781873aa0ffce285d5d3e75b072a8'
@@ -214,7 +214,7 @@ class TestSyntax(unittest.TestCase):
         """
         test Syntax.CONVERT_OUT
         """
-        self.assertEqual("broc_out/baidu/bcloud/broc/hello.h", Syntax.CONVERT_OUT("./hello.h"))
+        self.assertEqual("broc_out/baidu/broc/hello.h", Syntax.CONVERT_OUT("./hello.h"))
         #test CONVERT_OUT can raise Syntax.NotInSelfModuleError or not
         flag = False
         try:
@@ -229,13 +229,13 @@ class TestSyntax(unittest.TestCase):
         """
         Environment.SetCurrent(self._env)
         # arg starts with $WORKSPACE
-        Syntax.INCLUDE("$WORKSPACE/baidu/bcloud/broc")
-        self.assertTrue("baidu/bcloud/broc" in self._env.IncludePaths().V())
+        Syntax.INCLUDE("$WORKSPACE/baidu/broc")
+        self.assertTrue("baidu/broc" in self._env.IncludePaths().V())
         self.assertTrue("baidu/agile" not in self._env.IncludePaths().V())
         
         # arg starts with broc_out
-        Syntax.INCLUDE("broc_out/baidu/bcloud/broc")
-        self.assertTrue("broc_out/baidu/bcloud/broc" in self._env.IncludePaths().V())
+        Syntax.INCLUDE("broc_out/baidu/broc")
+        self.assertTrue("broc_out/baidu/broc" in self._env.IncludePaths().V())
         self.assertTrue("broc_out/baidu/agile" not in self._env.IncludePaths().V())
 
         # arg is abs path
@@ -255,13 +255,13 @@ class TestSyntax(unittest.TestCase):
         """
         Environment.SetCurrent(self._env)
         # arg starts with $WORKSPACE
-        tag = Syntax.Include("$WORKSPACE/baidu/bcloud/broc")
-        self.assertTrue("baidu/bcloud/broc" in tag.V())
+        tag = Syntax.Include("$WORKSPACE/baidu/broc")
+        self.assertTrue("baidu/broc" in tag.V())
         self.assertTrue("baidu/agile" not in tag.V())
         
         # arg starts with broc_out
-        tag = Syntax.Include("broc_out/baidu/bcloud/broc")
-        self.assertTrue("broc_out/baidu/bcloud/broc" in tag.V())
+        tag = Syntax.Include("broc_out/baidu/broc")
+        self.assertTrue("broc_out/baidu/broc" in tag.V())
         self.assertTrue("broc_out/baidu/agile" not in tag.V())
         
         # arg is abs path
@@ -280,16 +280,16 @@ class TestSyntax(unittest.TestCase):
         test Syntax.Libs
         """
         #one lib in arg
-        tag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/lib/libbroc.a")
-        self.assertTrue("broc_out/baidu/bcloud/broc/lib/libbroc.a" in tag.V())
+        tag = Syntax.Libs("$OUT_ROOT/baidu/broc/lib/libbroc.a")
+        self.assertTrue("broc_out/baidu/broc/lib/libbroc.a" in tag.V())
 
         #more than one libs in args
         flag = True
-        tag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/lib/libbroc.a", \
+        tag = Syntax.Libs("$OUT_ROOT/baidu/broc/lib/libbroc.a", \
                 "$OUT_ROOT/protobuf/lib/libprotobuf.a", \
                 "$OUT_ROOT/ccode/lib/libccode.a" \
                 "$OUT_ROOT/dict/lib/libdict.a")
-        lib_list = ["broc_out/baidu/bcloud/broc/lib/libbroc.a", \
+        lib_list = ["broc_out/baidu/broc/lib/libbroc.a", \
                 "broc_out/protobuf/lib/libprotobuf.a", \
                 "broc_out/ccode/lib/libccode.a" \
                 "broc_out/dict/lib/libdict.a"]
@@ -302,7 +302,7 @@ class TestSyntax(unittest.TestCase):
         #arg not start with $OUT_ROOT
         flag = False
         try:
-            tag = Syntax.Libs("baidu/bcloud/broc/lib/libbroc.a")
+            tag = Syntax.Libs("baidu/broc/lib/libbroc.a")
         except Syntax.BrocArgumentIllegalError as ex:
             flag = True
         self.assertTrue(flag)
@@ -429,7 +429,7 @@ class TestSyntax(unittest.TestCase):
         self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
         self.assertEqual(src.cflags, ["-Wwrite-strings"])
         self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud"])
-        self.assertEqual(src.infile, "baidu/bcloud/broc/hello.cpp")
+        self.assertEqual(src.infile, "baidu/broc/hello.cpp")
  
 
     def test_CreateSources(self):
@@ -451,16 +451,16 @@ class TestSyntax(unittest.TestCase):
         incflag = Syntax.Include("$WORKSPACE/baidu/bcloud")
 
         #no flags
-        src = Syntax._CreateSources("baidu/bcloud/broc/hello.cpp", [])
+        src = Syntax._CreateSources("baidu/broc/hello.cpp", [])
         Source.Source.Action(src)
         self.assertEqual(src.cppflags, [])
         self.assertEqual(src.cxxflags, [])
         self.assertEqual(src.cflags, [])
         self.assertEqual(src.includes, [".", "broc_out"])
-        self.assertEqual(src.infile, "baidu/bcloud/broc/hello.cpp")
+        self.assertEqual(src.infile, "baidu/broc/hello.cpp")
 
         #only local flags
-        src = Syntax._CreateSources("baidu/bcloud/broc/hello.cpp", \
+        src = Syntax._CreateSources("baidu/broc/hello.cpp", \
                 [cpptags, cxxtags, ctags, incflag])
         Source.Source.Action(src)
         self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
@@ -472,35 +472,35 @@ class TestSyntax(unittest.TestCase):
         Syntax.CFLAGS("-Werror -O2", "-W")
         Syntax.CXXFLAGS("-Werror -O2", "-W")
         Syntax.CPPFLAGS("-DDEBUG", "-DRELEASE")
-        Syntax.INCLUDE("$WORKSPACE/baidu/bcloud/broc")
-        src = Syntax._CreateSources("baidu/bcloud/broc/hello.cpp", [])
+        Syntax.INCLUDE("$WORKSPACE/baidu/broc")
+        src = Syntax._CreateSources("baidu/broc/hello.cpp", [])
         Source.Source.Action(src)
         self.assertEqual(src.cppflags, ["-DDEBUG"])
         self.assertEqual(src.cxxflags, ["-Werror -O2"])
         self.assertEqual(src.cflags, ["-Werror -O2"])
-        self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud/broc"])
-        self.assertEqual(src.infile, "baidu/bcloud/broc/hello.cpp")
+        self.assertEqual(src.includes, [".", "broc_out", "baidu/broc"])
+        self.assertEqual(src.infile, "baidu/broc/hello.cpp")
 
         #more value of global flags
         Syntax.CFLAGS("-Wall", "-Wall")
         Syntax.CXXFLAGS("-Wall", "-Wall")
         Syntax.CPPFLAGS("-DBROC", "-DBROC")
-        src = Syntax._CreateSources("baidu/bcloud/broc/hello.cpp", [])
+        src = Syntax._CreateSources("baidu/broc/hello.cpp", [])
         Source.Source.Action(src)
         self.assertEqual(src.cppflags, ["-DDEBUG", "-DBROC"])
         self.assertEqual(src.cxxflags, ["-Werror -O2", "-Wall"])
         self.assertEqual(src.cflags, ["-Werror -O2", "-Wall"])
-        self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud/broc"])
-        self.assertEqual(src.infile, "baidu/bcloud/broc/hello.cpp")
+        self.assertEqual(src.includes, [".", "broc_out", "baidu/broc"])
+        self.assertEqual(src.infile, "baidu/broc/hello.cpp")
 
         #local flags cover golbal flags
-        src = Syntax._CreateSources("baidu/bcloud/broc/hello.cpp", [cpptags, cxxtags])
+        src = Syntax._CreateSources("baidu/broc/hello.cpp", [cpptags, cxxtags])
         Source.Source.Action(src)
         self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
         self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
         self.assertEqual(src.cflags, ["-Werror -O2", "-Wall"])
-        self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud/broc"])
-        self.assertEqual(src.infile, "baidu/bcloud/broc/hello.cpp")
+        self.assertEqual(src.includes, [".", "broc_out", "baidu/broc"])
+        self.assertEqual(src.infile, "baidu/broc/hello.cpp")
 
     def test_APPLICATION(self):
         """
@@ -508,7 +508,7 @@ class TestSyntax(unittest.TestCase):
         """
         #set local flags tag
         ldflag = Syntax.LDFlags("-lpthread", "-lcrypto")
-        libs = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/libhello.a")
+        libs = Syntax.Libs("$OUT_ROOT/baidu/broc/libhello.a")
         cpptags = Syntax.CppFlags("-DBROC", "-DRELEASE")
 
         #set global flags
@@ -558,14 +558,14 @@ class TestSyntax(unittest.TestCase):
         app = self._env.Targets()[2]
         app.Action()
         self.assertEqual(app.link_options, ["-lpthread"])
-        self.assertEqual(app.tag_libs.V(), ["broc_out/baidu/bcloud/broc/libhello.a"])
+        self.assertEqual(app.tag_libs.V(), ["broc_out/baidu/broc/libhello.a"])
 
     def test_STATIC_LIBRARY(self):
         """
         test Syntax.STATIC_LIBRARY
         """
         #set local flags tag
-        libs = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/libhello.a")
+        libs = Syntax.Libs("$OUT_ROOT/baidu/broc/libhello.a")
         cpptags = Syntax.CppFlags("-DBROC", "-DRELEASE")
         src = Syntax.Sources("hello.cpp")
         
@@ -589,7 +589,7 @@ class TestSyntax(unittest.TestCase):
         Syntax.STATIC_LIBRARY("hello", src, libs)
         library = self._env.Targets()[0]
         library.Action()
-        self.assertEqual(library.tag_libs.V(), ["broc_out/baidu/bcloud/broc/libhello.a"])
+        self.assertEqual(library.tag_libs.V(), ["broc_out/baidu/broc/libhello.a"])
 
         #two samename target
         flag = False
@@ -618,7 +618,7 @@ class TestSyntax(unittest.TestCase):
         """
         #set local flags tag
         ldflag = Syntax.LDFlags("-lpthread", "-lcrypto")
-        libs = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/libhello.a")
+        libs = Syntax.Libs("$OUT_ROOT/baidu/broc/libhello.a")
         cpptags = Syntax.CppFlags("-DBROC", "-DRELEASE")
         utargs = Syntax.UTArgs("--log=a.log --conf=a.conf")
 
@@ -671,7 +671,7 @@ class TestSyntax(unittest.TestCase):
         utapp = self._env.Targets()[2]
         utapp.Action()
         self.assertEqual(utapp.link_options, ["-lpthread"])
-        self.assertEqual(utapp.tag_libs.V(), ["broc_out/baidu/bcloud/broc/libhello.a"])
+        self.assertEqual(utapp.tag_libs.V(), ["broc_out/baidu/broc/libhello.a"])
         self.assertEqual(utapp._ut_args, [])
         
         #UTArgs
@@ -679,7 +679,7 @@ class TestSyntax(unittest.TestCase):
         utapp = self._env.Targets()[3]
         utapp.Action()
         self.assertEqual(utapp.link_options, ["-lpthread"])
-        self.assertEqual(utapp.tag_libs.V(), ["broc_out/baidu/bcloud/broc/libhello.a"])
+        self.assertEqual(utapp.tag_libs.V(), ["broc_out/baidu/broc/libhello.a"])
         self.assertEqual(utapp._ut_args, ["--log=a.log", "--conf=a.conf"])
 
     def test_PROTO_LIBRARY(self):
@@ -692,8 +692,8 @@ class TestSyntax(unittest.TestCase):
         #set local flags
         cpptags = Syntax.CppFlags("-DDEBUG_LOCAL", "-DRELEASE_LOCAL")
         cxxtags = Syntax.CxxFlags("-Wwrite-strings", "-Wswitch")
-        incflag = Syntax.Include("$WORKSPACE/baidu/bcloud/broc")
-        libflag = Syntax.Libs("$OUT_ROOT/baidu/bcloud/broc/output/lib/libhello.a")
+        incflag = Syntax.Include("$WORKSPACE/baidu/broc")
+        libflag = Syntax.Libs("$OUT_ROOT/baidu/broc/output/lib/libhello.a")
 
         now_dir = os.getcwd()
         os.chdir(self._module.workspace)
@@ -704,17 +704,17 @@ class TestSyntax(unittest.TestCase):
         os.chdir(now_dir)
         
         #check result
-        proto_cmd = """mkdir -p broc_out/baidu/bcloud/broc && protoc \
---cpp_out=broc_out/baidu/bcloud/broc  -I=baidu/bcloud/broc \
--I=baidu/bcloud/broc  -I=. baidu/bcloud/broc/*.proto\n"""
+        proto_cmd = """mkdir -p broc_out/baidu/broc && protoc \
+--cpp_out=broc_out/baidu/broc  -I=baidu/broc \
+-I=baidu/broc  -I=. baidu/broc/*.proto\n"""
         self.assertEqual(protos.__str__(), proto_cmd)
         self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
         self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
-        self.assertEqual(src.includes, [".", "broc_out", "baidu/bcloud/broc", \
-                u'broc_out/baidu/bcloud/broc', u'broc_out/baidu/bcloud/broc'])
-        self.assertEqual(src.infile, "broc_out/baidu/bcloud/broc/hello.pb.cc")
+        self.assertEqual(src.includes, [".", "broc_out", "baidu/broc", \
+                u'broc_out/baidu/broc', u'broc_out/baidu/broc'])
+        self.assertEqual(src.infile, "broc_out/baidu/broc/hello.pb.cc")
         self.assertEqual(proto_library.tag_libs.V(), \
-                ["broc_out/baidu/bcloud/broc/output/lib/libhello.a"])
+                ["broc_out/baidu/broc/output/lib/libhello.a"])
 
     def test_UTArgs(self):
         """
