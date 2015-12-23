@@ -5,7 +5,7 @@
 #
 ################################################################################
 """
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/10/13 14:50:06
 """
 

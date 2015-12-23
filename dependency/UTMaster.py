@@ -7,7 +7,7 @@
 #
 ################################################################################
 """
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/11/16 14:07:06
 """
 

@@ -9,9 +9,7 @@
 """
 This module manage the classes of Syntax
 
-Authors: shenweizheng(shenweizheng@baidu.com)
-         liangbao(liangbao@baidu.com)
-         zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2014/09/15 10:36:08
 """
 

@@ -9,7 +9,7 @@
 
 """
     test case for target
-    Authors: zhousongsong(zhousongsong@baidu.com)
+    Authors: zhousongsong(doublesongsong@gmail.com)
     Date:   2015/09/16 10:44:24
 """
 import os

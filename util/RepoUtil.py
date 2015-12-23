@@ -8,8 +8,8 @@
 ################################################################################
 """
 Description : svn and git basic functions
-Authors     : zhongsongsong(zhousongsong@baidu.com)
-              liruihao(liruihao@baidu.com)
+Authors     : zhongsongsong(doublesongsong@gmail.com)
+              liruihao(liruihao01@gmail.com)
 Date        : 2015-09-22 12:29:51
 """
 import os

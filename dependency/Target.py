@@ -9,7 +9,7 @@
 """
 This module manage the bin/.a
 
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/09/15 10:34:31
 """
 

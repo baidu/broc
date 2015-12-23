@@ -9,7 +9,7 @@
 """
 This module manages the Syntax used in BROC file
 
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/09/15 10:30:02
 """
 

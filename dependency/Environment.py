@@ -9,7 +9,7 @@
 """
 This module manage info generate by BROC file.
 
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/09/09 17:23:06
 """
 

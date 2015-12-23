@@ -8,10 +8,8 @@
 ################################################################################
 """
     Description : analyse command line option
-    Authors     : shenweizheng(shenweizheng@baidu.com)
-                  liangbao(liangbao@baidu.com)
-                  zhousongsong(zhousongsong@baidu.com)
-                  liruihao(liruihao@baidu.com)
+    Authors     : zhousongsong(doublesongsong@gmail.com)
+                  liruihao(liruihao01@gmail.com)
     Date        : 2015-09-18 10:28:23
 """
 

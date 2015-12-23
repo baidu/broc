@@ -9,7 +9,7 @@
 
 """
     test case for Planish
-    Authors: liruihao(liruihao@baidu.com)
+    Authors: liruihao(liruihao01@gmail.com)
     Date:   2015/11/05 17:26:42
 """
 import os

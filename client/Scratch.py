@@ -8,7 +8,7 @@
 ################################################################################
 """
 This module create a Broc template
-Authors: zhousongsong
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/09/23 09:44:05
 """
 import os

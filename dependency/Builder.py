@@ -8,7 +8,7 @@
 ################################################################################
 """
 splice complie command for all kind of target file
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015-09-23 13:33:49
 """
 import os

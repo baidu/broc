@@ -7,7 +7,7 @@
 ################################################################################
 """
 utility function for planishing dependent modules
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015-09-15 14:13:44
 """
 import os

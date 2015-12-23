@@ -9,7 +9,7 @@
 """
 This module manage source files(.c .cpp)
 
-Authors: zhousongsong(zhousongsong@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
 Date:    2015/09/14 13:28:57
 """
 

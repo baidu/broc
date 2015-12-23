@@ -8,7 +8,7 @@
 ################################################################################
 """
     This file gathers and plannishes the dependent modules
-    Authors: zhousongsong(zhousongsong@baidu.com)
+    Authors: zhousongsong(doublesongsong@gmail.com)
     Date:   2015/09/16 10:44:24
 
     ==================SVN EXAMPLE=========================
@@ -28,10 +28,13 @@
 
     ==================GIT EXAMPLE=========================
     CONFIGS("sky@master")
-    CONFIGS("sky@master@v1.0.0")
+    CONFIGS("sky@master@branch")
 
     CONFIGS("sky@dev")
-    CONFIGS("sky@dev@v1.0.1")
+    CONFIGS("sky@dev@branch")
+
+    CONFIGS("sky@v1.0.0@tag")
+    CONFIGS("sky@v1.1.0@tag")
     
     SVN Dependency conficting examples
     ==================================
@@ -50,17 +53,11 @@
     GIT Dependency conficting conditions
     ====================================
     1. two different branches
-       CONFIGS("sky@master")
-       CONFIGS("sky@dev")
+       CONFIGS("sky@master@branch")
+       CONFIGS("sky@dev@branch")
 
-       CONFIGS("sky@master")
-       CONFIGS("sky@dev@v1.0.1")
-
-       CONFIGS("sky@master@v1.0.0")
-       CONFIGS("sky@dev")
-
-       CONFIGS("sky@master@v1.0.0")
-       CONFIGS("sky@dev@v1.0.1")
+       CONFIGS("sky@master@branch")
+       CONFIGS("sky@v1.0.1@tag")
 """
 import os
 import sys

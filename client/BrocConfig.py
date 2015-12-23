@@ -8,7 +8,7 @@
 ################################################################################
 """
     Description : manage config file $HOME/.broc.rc
-    Authors     : zhousongsong(zhousongsong@baidu.com)
+    Authors     : zhousongsong(doublesongsong@gmail.com)
     Date        : 2015-09-18 10:28:23
 """
 
@@ -29,8 +29,8 @@ class BrocConfig(object):
         """
         """
         self._file = os.path.join(os.environ['HOME'], '.broc.rc')
-        self._svn_repo_domain = 'https://svn.baidu.com'
-        self._git_repo_domain = 'https://git.baidu.com'
+        self._svn_repo_domain = 'https://svn.github.com'
+        self._git_repo_domain = 'https://github.com'
         self._svn_postfix_branch = "BRANCH"
         self._svn_postfix_tag = "PD_BL"
 

@@ -8,8 +8,8 @@
 """
 This module provide some log function.
 
-Authors: zhousongsong(zhousongsong@baidu.com)
-         liruihao(liruihao@baidu.com)
+Authors: zhousongsong(doublesongsong@gmail.com)
+         liruihao(liruihao01@gmail.com)
 Date:    2015/09/09 15:48:35
 """
 

@@ -9,7 +9,7 @@
 
 """
     test case for Syntax
-    Authors: liruihao(liruihao@baidu.com)
+    Authors: liruihao(liruihao01@gmail.com)
     Date:   2015/11/11 16:24:42
 """
 import os

@@ -8,7 +8,7 @@
 ################################################################################
 """
     This file gathers and plannishes the dependent modules
-    Authors: zhousongsong(zhousongsong@baidu.com)
+    Authors: zhousongsong(doublesongsong@gmail.com)
     Date:   2015/09/17 10:50:20
 """
 import os
