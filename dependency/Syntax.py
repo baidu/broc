@@ -762,6 +762,7 @@ class Loader(object):
         """
         if not self._load_main_broc():
             self._load_done = False
+            self._load_ok = False
             return 
 
         for i in range(0, self._workers):
