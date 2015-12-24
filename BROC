@@ -27,4 +27,4 @@ UT_APPLICATION("ut", Sources("example/foo/ut.cpp"), UTArgs("-c conf -h help"))
 STATIC_LIBRARY("lib", Sources("example/foo/lib.cpp"))
 
 #use dependency module ub, get an application
-APPLICATION("dep", Sources("example/foo/dep.cpp", Include("%s/protobuf/include" % os.environ['HOME'])), Libs("$OUT_ROOT/brocbuild/function/output/lib/libfunction.a", "$OUT_ROOT/brocbuild/configure/output/lib/libconfigure.a", "$OUT_ROOT/brocbuild/log/output/lib/liblog.a", "%s/protobuf/lib/libprotobuf.a" % os.environ['HOME']))
+APPLICATION("dep", Sources("example/foo/dep.cpp", Include("%s/protobuf/include" % os.environ['HOME'])), Libs("$OUT_ROOT/brocbuild/function/output/lib/libfunction.a", "$OUT_ROOT/brocbuild/configure/output/lib/libconfigure.a", "$OUT_ROOT/brocbuild/log/output/lib/liblog.a", "$OUT_ROOT/brocbuild/data/output/lib/libdata.a", "%s/protobuf/lib/libprotobuf.a" % os.environ['HOME']))
