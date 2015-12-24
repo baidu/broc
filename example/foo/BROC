@@ -1,0 +1,30 @@
+#edit-mode: -*- python -*-
+#coding:utf-8
+import os
+COMPILER_PATH('/usr/bin')
+
+#add this to deal with dependency conflict
+CONFIGS("brocbuild/configure@master@branch")
+
+#add this to get dependency conflict
+CONFIGS("brocbuild/test@master@branch")
+
+#planish dependency
+CONFIGS("brocbuild/log@master@branch")
+
+#add a dependency
+CONFIGS("brocbuild/function@master@branch")
+
+CONFIGS("brocbuild/data@master@branch")
+#show the debug mode and the release mode
+CXXFLAGS("-Werror -O0", "-Wall -O2")
+
+#get a "hello world" application
+APPLICATION("app", Sources("app.cpp"))
+UT_APPLICATION("ut", Sources("ut.cpp"), UTArgs("-c conf -h help"))
+
+#get a staticlibrary
+STATIC_LIBRARY("lib", Sources("lib.cpp"))
+
+#use dependency module ub, get an application
+APPLICATION("dep", Sources("dep.cpp", Include("%s/protobuf/include" % os.environ['HOME'])), Libs("$OUT_ROOT/brocbuild/function/output/lib/libfunction.a", "$OUT_ROOT/brocbuild/configure/output/lib/libconfigure.a", "$OUT_ROOT/brocbuild/log/output/lib/liblog.a", "%s/protobuf/lib/libprotobuf.a" % os.environ['HOME']))
