@@ -22,7 +22,7 @@ make通过文件的修改时间来判断文件是否需要进行再编译，当�
 broc内置对protobuf的支持，将proto文件编译成静态库.a文件一步完成
 
 # 使用手册
-https://github.com/baidu/broc/wiki
+https://github.com/baidu/broc/wiki/broc-tutorial
 
 # 构建规范
 https://github.com/baidu/broc/wiki/broc-manual
