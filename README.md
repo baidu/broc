@@ -1,5 +1,5 @@
 # Broc是什么
-broc是一款面向c/c++语言的构建工具，提供了编译、分支依赖、依赖模块下载等功能。不同于make, cmake等以库文件链接的编译方式，broc将依赖库源代码与程序源代码一并同时进行编译，这种方式可以避免程序源代码与依赖库编译选项或平台不一致导致的软件兼容性问题；broc支持构建和运行单元测试用例；借助Jenkins broc还能完成软件的[持续集成](https://en.wikipedia.org/wiki/Continuous_integration)
+broc是一款面向c/c++语言的构建工具，提供了编译、分支依赖、依赖模块下载等功能。不同于make, cmake等以库文件链接的编译方式，broc将依赖库源代码与程序源代码一并同时进行编译，这种方式可以避免程序源代码与依赖库编译选项或平台不一致导致的软件兼容性问题；broc支持编译结束后自动运行单元测试用例；借助Jenkins broc还能完成软件的[持续集成](https://en.wikipedia.org/wiki/Continuous_integration)
 
 # Broc有那些优势
 
