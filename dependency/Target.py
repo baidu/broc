@@ -343,14 +343,15 @@ class ProtoLibrary(object):
             proto_dirs.add(os.path.join(self.env.BrocCVSDir(), os.path.dirname(proto)))
         proto_flags = " ".join(self._tag_protoflags.V())
         # add protobuf include set from PROTO_LIBRARY
+        # print(self._tag_include.V())
         cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, self._tag_include.V()))
         # add cvs path of directory of BROC
         cvs_dirs += "-I=%s " % self.env.BrocCVSDir()
         #protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
         protoc = 'protoc'
         for _dir in proto_dirs:
-            # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
-            cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
+            cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
+            # cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
             protos = os.path.normpath("%(_dir)s/*.proto" % (locals()))
             cmd = "mkdir -p %(cvs_out_dir)s && %(protoc)s --cpp_out=%(cvs_out_dir)s %(proto_flags)s %(cvs_dirs)s \
 -I=. %(protos)s" % (locals())

@@ -254,7 +254,8 @@ def Include(*ss):
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
     env = Environment.GetCurrent()
-    broc_dir = env.BrocDir()
+    broc_abs_dir = env.BrocDir()
+    broc_cvs_dir = env.BrocCVSDir()
     tag = SyntaxTag.TagInclude()
     for s in ss:
         ps = string.split(s)
@@ -264,11 +265,11 @@ def Include(*ss):
             elif x.startswith('broc_out/') or os.path.isabs(x):
                 tag.AddSV(x)
             else:
-                _x = os.path.normpath(os.path.join(broc_dir, x))
+                _x = os.path.normpath(os.path.join(broc_abs_dir, x))
                 if env.ModulePath() not in _x:
                     raise NotInSelfModuleError(_x, env.ModulePath())
                 else:
-                    tag.AddSV(_x)
+                    tag.AddSV(os.path.normpath(os.path.join(broc_cvs_dir, x)))
     return tag
 
 
@@ -605,15 +606,17 @@ def PROTO_LIBRARY(name, files, *args):
         result_file = os.path.join(os.path.join('broc_out', env.ModuleCVSPath()), \
                 "%s.pb.cc" % root)
         include.add(os.path.dirname(result_file))
+        if os.path.dirname(f):
+            tag_include.AddV(os.path.join(env.ModuleCVSPath(), os.path.dirname(f)))
         source.add(result_file)
-
     protolib = Target.ProtoLibrary(env, files, tag_include, tag_protoflags)
     ret, msg = protolib.PreAction()
     if not ret:
         raise BrocProtoError(msg)
-
     tag_include.AddSVs(include)
-    tag_include.AddV(os.path.join("broc_out", env.BrocCVSDir()))
+    broc_out = os.path.join("broc_out", env.BrocCVSDir())
+    if broc_out not in tag_include.V():
+        tag_include.AddV(os.path.join("broc_out", env.BrocCVSDir()))
     tag_sources = Sources(" ".join(list(source)), tag_include, tag_cppflags, tag_cxxflags)
     if not env.AppendTarget(Target.StaticLibrary(name, env, tag_sources, tag_libs)):
         raise BrocArgumentIllegalError("PROTO_LIBRARY(%s) name exists already" % name)
