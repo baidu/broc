@@ -199,7 +199,7 @@ class BrocObject(object):
         ret, msg = Function.RunCommand(self.build_cmd, ignore_stderr_when_ok = False)
         if ret != 0:
             result['ret'] = False
-            result['msg'] = "%s\n%s" % (self.build_cmd, msg)
+            result['msg'] = "%s\n%s" % (str(self.build_cmd), msg)
         else:
             self.build = False
             result['ret'] = True
@@ -310,7 +310,7 @@ class SourceCache(BrocObject):
         """
         # to check source file 
         if self.src_obj.IsChanged(None):
-            Log.Log().LevPrint('MSG', "%s changed" % self.pathname)
+            #Log.Log().LevPrint('MSG', "%s changed" % self.pathname)
             self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True
@@ -325,6 +325,7 @@ class SourceCache(BrocObject):
 
         # to check obj file
         if BrocObject.IsChanged(self, target.InFile()):
+            #Log.Log().LevPrint('MSG', "obj %s changed" % targetg.InFile())
             self.build_cmd = target.GetBuildCmd()
             self.build = True
             return True

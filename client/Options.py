@@ -60,7 +60,7 @@ def Help(bin_name, subcommand=None):
         Log.colorprint("DEFAULT",
             "\t--jobs=num\t\t: Set the number of build threads",
             False)
-        Log.colorprint("DEFAULT", "\t --all-log\t\t: Show all build log infomation")
+        Log.colorprint("DEFAULT", "\t --all-log\t\t: Show all build log infomation", False)
         return 0
 
     if subcommand == "show-deps":
