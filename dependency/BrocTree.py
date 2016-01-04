@@ -290,13 +290,14 @@ class BrocTree(object):
         else:
             # for GIT
             broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
-            cmd = "git clone %s %s && cd %s && git fetch --all " \
+            cmd = "git clone %s %s && cd %s" \
                   % (node.module.url, node.module.module_cvspath, node.module.module_cvspath)
 
             if node.module.br_name:
-                cmd += " && git checkout %s" % node.module.br_name
+                cmd += " && (git checkout %s || git fetch -all && git checkout %s)" \
+                       % (node.module.br_name, node.module.br_name)
             elif node.module.tag_name:
-                cmd += " && git checkout %s" % node.module.tag_name
+                cmd += " && git fetch -all && git checkout %s " % node.module.tag_name
             else:
                 self._logger.LevPrint("ERROR", "couldn't find node(%s) branch or tag name" \
                                       % node.module.module_cvspath)
