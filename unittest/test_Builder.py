@@ -90,7 +90,7 @@ class TestBuilder(unittest.TestCase):
         include = ['/usr/include', '/usr/local/include']
         compiler = '/usr/bin/g++'
         builder = Builder.ObjBuilder(obj, infile, include, None, compiler, now_dir)
-        right_header_cmd = "/usr/bin/g++ \\\n\t-MM \\\n\t-I/usr/include \
+        right_header_cmd = "/usr/bin/g++ \\\n\t-MM -MG\\\n\t-I/usr/include \
 \\\n\t-I/usr/local/include \\\n\tget_header_files.cpp"
         self.assertEqual(right_header_cmd, builder.GetHeaderCmd())
         with open('hello.h', 'wb') as f:
