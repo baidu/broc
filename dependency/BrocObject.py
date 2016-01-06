@@ -88,6 +88,12 @@ class BrocObject(object):
         """
         return self.build_cmd
 
+    def UpdateBuildCmd(self, cmd):
+       '''
+       update bulild cmd
+       '''
+       self.build_cmd = cmd
+
     def Hash(self):
         """
         return the hash value

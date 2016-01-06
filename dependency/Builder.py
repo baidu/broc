@@ -83,7 +83,7 @@ class ObjBuilder(Builder):
         self.build_cmd = "mkdir -p %s && %s \\\n\t-c \\\n\t%s \\\n\t%s\t-o \\\n\t%s \\\n\t%s" % \
                          (self.obj_dir, self.compiler, self._opts, self._includes, self.obj, infile)
 
-        self._header_cmd = "%s \\\n\t-MM \\\n\t%s\t%s" % \
+        self._header_cmd = "%s \\\n\t-MM -MG\\\n\t%s\t%s" % \
                             (self.compiler, self._includes, self._infile)
 
     def CalcHeaderFiles(self):
