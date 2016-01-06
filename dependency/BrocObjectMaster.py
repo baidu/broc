@@ -141,11 +141,13 @@ class BrocObjectMaster(threading.Thread):
 
         # head files changed
         if ret:
+            self._cache[source.OutFile()].UpdateBuildCmd(source.GetBuildCmd())
             self._cache[source.OutFile()].EnableBuild()
             return ret
 
         # head files no changed, check itself
         if self._cache[source.OutFile()].IsChanged(source):
+            self._cache[source.OutFile()].UpdateBuildCmd(source.GetBuildCmd())
             self._cache[source.OutFile()].EnableBuild()
             return True
 
@@ -171,6 +173,7 @@ class BrocObjectMaster(threading.Thread):
             target_cache.EnableBuild()
 
         # 3. check all source object, remove uesless source cache
+        # self._logger.LevPrint("MSG", "check target %s Source" % target.OutFile())
         last_sources = set()
         for x in target_cache.Deps():
             if x.TYPE is BrocObject.BrocObjectType.BROC_SOURCE:

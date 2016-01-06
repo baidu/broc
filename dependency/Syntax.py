@@ -232,8 +232,13 @@ def INCLUDE(*ss):
         for x in ps:
             if x.startswith("$WORKSPACE"):
                 tag.AddSV(x.replace("$WORKSPACE/", '')) 
+                continue
             elif x.startswith("broc_out/") or os.path.isabs(x):
                 tag.AddSV(x)
+                continue
+            elif x.startswith("$OUT_ROOT"):
+                tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
+                continue
             else:     
                 _x = os.path.normpath(os.path.join(broc_dir, x))
                 if env.ModulePath() not in _x:
@@ -262,8 +267,13 @@ def Include(*ss):
         for x in ps:
             if x.startswith("$WORKSPACE"):
                 tag.AddSV(x.replace("$WORKSPACE/", "")) 
+                continue
             elif x.startswith('broc_out/') or os.path.isabs(x):
                 tag.AddSV(x)
+                continue
+            elif x.startswith("$OUT_ROOT"):
+                tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
+                continue
             else:
                 _x = os.path.normpath(os.path.join(broc_abs_dir, x))
                 if env.ModulePath() not in _x:
