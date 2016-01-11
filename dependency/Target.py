@@ -350,7 +350,8 @@ class ProtoLibrary(object):
         #protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
         protoc = 'protoc'
         for _dir in proto_dirs:
-            cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
+            # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
+            cvs_out_dir = 'broc_out'
             # cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
             protos = os.path.normpath("%(_dir)s/*.proto" % (locals()))
             cmd = "mkdir -p %(cvs_out_dir)s && %(protoc)s --cpp_out=%(cvs_out_dir)s %(proto_flags)s %(cvs_dirs)s \

@@ -615,6 +615,7 @@ def PROTO_LIBRARY(name, files, *args):
         root, _ = os.path.splitext(f)
         result_file = os.path.join(os.path.join('broc_out', env.ModuleCVSPath()), \
                 "%s.pb.cc" % root)
+        print(result_file)
         include.add(os.path.dirname(result_file))
         if os.path.dirname(f):
             tag_include.AddV(os.path.join(env.ModuleCVSPath(), os.path.dirname(f)))
