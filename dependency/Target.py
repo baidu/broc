@@ -337,24 +337,42 @@ class ProtoLibrary(object):
         Returns:
             return (True, '') if deal with proto files successfully, otherwise return (False, 'error msg')
         """
-        proto_dirs = set()
-        # find the cvs path of directory of all proto files
+        proto_dirs = list()
+        # find the first directory of all proto files
+        # for example: a/b/c/util.proto, the first directory is a, to handle proto like this because 
+        # https://developers.google.com/protocol-buffers/docs/reference/python-generated#invocation
+        proto_paths = set()
         for proto in self._protos.split():
-            proto_dirs.add(os.path.join(self.env.BrocCVSDir(), os.path.dirname(proto)))
+            tmp_proto = os.path.normpath(proto)
+            first_dir_pos = tmp_proto.find('/')
+            first_dir = ''
+            if first_dir_pos != -1:
+                first_dir = tmp_proto[:first_dir_pos]
+            proto_paths.add(os.path.normpath(os.path.join(self.env.BrocCVSDir(),
+                                                          first_dir)))
+                
         proto_flags = " ".join(self._tag_protoflags.V())
         # add protobuf include set from PROTO_LIBRARY
-        # print(self._tag_include.V())
-        cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, self._tag_include.V()))
-        # add cvs path of directory of BROC
-        cvs_dirs += "-I=%s " % self.env.BrocCVSDir()
+        proto_paths.update(set(self._tag_include.V()))
+        # add the cvs path of directory of BROC
+        proto_paths.add(self.env.BrocCVSDir())
+        cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, proto_paths))
         #protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
         protoc = 'protoc'
-        for _dir in proto_dirs:
-            # cvs_out_dir = os.path.normpath(os.path.join('broc_out', _dir))
-            cvs_out_dir = 'broc_out'
-            # cvs_out_dir = os.path.normpath(os.path.join('broc_out', self.env.BrocCVSDir()))
-            protos = os.path.normpath("%(_dir)s/*.proto" % (locals()))
-            cmd = "mkdir -p %(cvs_out_dir)s && %(protoc)s --cpp_out=%(cvs_out_dir)s %(proto_flags)s %(cvs_dirs)s \
+        for proto in self._protos.split():
+            normpath_proto = os.path.normpath(proto)
+            protos = os.path.join(self.env.BrocCVSDir(), normpath_proto)
+            out = os.path.normpath(os.path.join("broc_out", 
+                                   self.env.BrocCVSDir(), 
+                                   os.path.dirname(normpath_proto)))
+            cpp_out = os.path.join('broc_out', self.env.BrocCVSDir())
+            pos = normpath_proto.find('/')
+            if pos != -1:
+                cpp_out = os.path.join('broc_out', 
+                                        self.env.BrocCVSDir(),
+                                        normpath_proto[:pos]) 
+             
+            cmd = "mkdir -p %(out)s && %(protoc)s --cpp_out=%(cpp_out)s %(proto_flags)s %(cvs_dirs)s \
 -I=. %(protos)s" % (locals())
             # 执行protoc的目录，在output下
             self._proto_cmds.add(cmd)
