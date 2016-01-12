@@ -371,10 +371,9 @@ class ProtoLibrary(object):
                 cpp_out = os.path.join('broc_out', 
                                         self.env.BrocCVSDir(),
                                         normpath_proto[:pos]) 
-             
+            # the current working directory is $WORKSPACE
             cmd = "mkdir -p %(out)s && %(protoc)s --cpp_out=%(cpp_out)s %(proto_flags)s %(cvs_dirs)s \
 -I=. %(protos)s" % (locals())
-            # 执行protoc的目录，在output下
             self._proto_cmds.add(cmd)
 
         # run protoc
