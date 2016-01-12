@@ -76,7 +76,7 @@ class ObjBuilder(Builder):
         self._header_cmd = None
         self._header_files = set()
         if includes:
-            self._includes += "\t".join(map(lambda x: "-I%s \\\n" % x, includes))
+            self._includes += "\t".join(map(lambda x: "-I%s \\\n" % os.path.normpath(x), includes))
         if opts: 
             self._opts = " \\\n\t".join(map(lambda x: x, opts))
 

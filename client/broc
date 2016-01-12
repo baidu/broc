@@ -273,6 +273,7 @@ def _build(options, do_ut=False):
     # run build thread to build
     task_master.Start()
     task_master.Wait()
+    cache_master.Stop()
     if not task_master.BuildOK():
         logger.LevPrint("ERROR", "build failed")
         return -1

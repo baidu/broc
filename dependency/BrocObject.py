@@ -92,6 +92,7 @@ class BrocObject(object):
        '''
        update bulild cmd
        '''
+       Log.Log.LevPrint("MSG", 'update build cmd for %s' % self.pathname)
        self.build_cmd = cmd
 
     def Hash(self):
@@ -217,7 +218,8 @@ class BrocObject(object):
         to notify all reversed dependent BrocObject objects to build
         """
         for obj in self.reverse_deps:
-            # Log.Log().LevPrint("MSG", "%s nofity reverse dep(%s) build " % (self.pathname, obj.Pathname()))
+            #Log.Log().LevPrint("MSG", "%s nofity reverse cache dep(%s) build" \
+#% (self.pathname, obj.Pathname()))
             obj.EnableBuild()
 
     def IsChanged(self, target=None):
@@ -231,12 +233,14 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
+            Log.Log().LevPrint('MSG', 'cache %s build mark is true' % self.pathname)
             return True
         # check mtime
         modify_time = None
         try:
             modify_time = os.stat(self.pathname).st_mtime
         except BaseException:
+            Log.Log().LevPrint('MSG', 'get %s modify_time failed' % self.pathname)
             self.build = True
             self.modify_time = 0
             return True
@@ -248,6 +252,7 @@ class BrocObject(object):
         _hash = Function.GetFileMd5(self.pathname)
         if _hash != self.hash:
             self.hash = _hash
+            Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
             self.build = True
             return True
 
@@ -399,6 +404,7 @@ class LibCache(BrocObject):
         # to check build option
         if self.build_cmd != target.GetBuildCmd():
             self.build_cmd = target.GetBuildCmd()
+            Log.Log.LevPrint("MSG", "%s build cmd changed" % self.pathname)
             self.build = True
             return True
         else:

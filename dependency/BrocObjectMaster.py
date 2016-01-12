@@ -63,6 +63,7 @@ class BrocObjectMaster(threading.Thread):
         stop thread
         """
         self._queue.put(('stop', None))
+        self.join()
 
     def run(self):
         """
@@ -165,6 +166,7 @@ class BrocObjectMaster(threading.Thread):
         if target.OutFile() not in self._cache:
             self._add_target_cache(target)
             return True
+
         # 2. check whether target cache is a empty cache, empty cache was created by target depended on it
         target_cache = self._cache[target.OutFile()]
         if not target_cache.initialized:
@@ -186,6 +188,7 @@ class BrocObjectMaster(threading.Thread):
         # check source objets contained in trget object
         for source in target.Sources():
             if self._check_source_cache(source, self._cache[target.OutFile()]):
+                #self._logger.LevPrint("MSG", "source %s changed" % source.Infile())
                 ret = True
 
         # 4. check all .a files, remove useless .a cache first
@@ -198,20 +201,22 @@ class BrocObjectMaster(threading.Thread):
         for missing in missing_libs:
             target_cache.DelDep(missing)
             self._cache[missing].DelReverseDep(target.OutFile())
+        #self._logger.LevPrint('MSG', "check %s ..." % target.OutFile())
         # check .a files contained in target object
         for lib_file in target.Libs():
-            # self._logger.LevPrint("MSG", "check dep lib %s for target %s" % (lib_file, target.OutFile()))
             if self._check_lib_cache(lib_file, target_cache):
+                #self._logger.LevPrint("MSG", "check dep lib %s changed, enable target %s" % (lib_file, target.OutFile()))
                 ret = True
 
         # if there is source or .a has changed, tareget need to rebuild
         if ret:
             target_cache.EnableBuild()
+            #self._logger.LevPrint("MSG", 'some deps change, target %s nee to rebuild' % target.OutFile())
             return True
 
         # 5. check target file itself
-        if self._cache[target.OutFile()].IsChanged(target):
-            self._cache[target.OutFile()].EnableBuild()
+        if target_cache.IsChanged(target):
+            target_cache.EnableBuild()
             return True
 
         return False
@@ -227,6 +232,7 @@ class BrocObjectMaster(threading.Thread):
             pathname: the cvs path of .a file
             target_cache : the reversed dependent target cache of lib file
         """
+        
         if pathname not in self._cache:
             self._add_lib_cache(pathname, target_cache)
             return True
@@ -362,7 +368,7 @@ class BrocObjectMaster(threading.Thread):
         # self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
         cache.Update()
         # save cache into file 
-        # self._logger.LevPrint("MSG", "save cache %s, id(%s), hash is %s" % (cache.Pathname(), id(cache), cache.Hash()))
+        # self._logger.LevPrint("MSG", "save cache %s, id(%s), hash is %s, build %s" % (cache.Pathname(), id(cache), cache.Hash(), cache.build ))
         self._save_cache()
 
     def GetChangedCache(self):
@@ -391,7 +397,7 @@ class BrocObjectMaster(threading.Thread):
                 else:
                     for cache in caches[1:]:
                         self._cache[cache.Pathname()] = cache
-                        # self._logger.LevPrint("MSG", 'cache %s , %d hash is %s' % (cache.Pathname(), id(cache), cache.Hash()))
+                        #self._logger.LevPrint("MSG", 'cache %s , %d hash is %s, build %s' % (cache.Pathname(), id(cache), cache.Hash(), cache.build))
         except BaseException as err:
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
