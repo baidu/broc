@@ -341,22 +341,10 @@ class ProtoLibrary(object):
         # find the first directory of all proto files
         # for example: a/b/c/util.proto, the first directory is a, to handle proto like this because 
         # https://developers.google.com/protocol-buffers/docs/reference/python-generated#invocation
-        proto_paths = set()
-        for proto in self._protos.split():
-            tmp_proto = os.path.normpath(proto)
-            first_dir_pos = tmp_proto.find('/')
-            first_dir = ''
-            if first_dir_pos != -1:
-                first_dir = tmp_proto[:first_dir_pos]
-            proto_paths.add(os.path.normpath(os.path.join(self.env.BrocCVSDir(),
-                                                          first_dir)))
-                
         proto_flags = " ".join(self._tag_protoflags.V())
-        # add protobuf include set from PROTO_LIBRARY
-        proto_paths.update(set(self._tag_include.V()))
         # add the cvs path of directory of BROC
-        proto_paths.add(self.env.BrocCVSDir())
-        cvs_dirs = " ".join(map(lambda x: "-I=%s " % x, proto_paths))
+        self._tag_include.AddV(self.env.BrocCVSDir())
+        cvs_dirs = " ".join(map(lambda x: "-I=%s " % os.path.normpath(x), self._tag_include.V()))
         #protoc = os.path.join(os.environ['HOME'], "broc/protobuf/bin/protoc")
         protoc = 'protoc'
         for proto in self._protos.split():

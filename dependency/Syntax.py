@@ -274,6 +274,9 @@ def Include(*ss):
             elif x.startswith("$OUT_ROOT"):
                 tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
                 continue
+            elif x.startswith("$OUT"):
+                tag.AddSV(x.replace("$OUT", env.OutputPath()))
+                continue
             else:
                 _x = os.path.normpath(os.path.join(broc_abs_dir, x))
                 if env.ModulePath() not in _x:
