@@ -1,4 +1,5 @@
 How to run example?
 
-1. download and deploy broc(https://github.com/baidu/broc/wiki#%E5%AE%89%E8%A3%85)
-2. in directory baidu/broc, run command 'broc build', broc will build example/foo
+1. Download and deploy broc(https://github.com/baidu/broc/wiki#%E5%AE%89%E8%A3%85)
+2. In directory baidu/broc, run command 'broc build', broc will build example/foo
+3. In the directory output, you will find the build result file
