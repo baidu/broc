@@ -232,7 +232,7 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
-            #$Log.Log().LevPrint('MSG', 'cache %s build mark is true' % self.pathname)
+            #Log.Log().LevPrint('MSG', 'cache %s build mark is true' % self.pathname)
             return True
         # check mtime
         modify_time = None
