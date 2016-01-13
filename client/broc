@@ -215,8 +215,7 @@ def _build(options, do_ut=False):
         return -1
 
     # load build cache
-    cache_file = os.path.join(root_node.workspace, 
-                              "broc_out", 
+    cache_file = os.path.join("broc_out", 
                               "broc_cache", 
                               root_node.module_cvspath.replace("/", "_"),
                               "broc.cache")

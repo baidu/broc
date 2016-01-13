@@ -170,7 +170,7 @@ class BrocObjectMaster(threading.Thread):
         # 2. check whether target cache is a empty cache, empty cache was created by target depended on it
         target_cache = self._cache[target.OutFile()]
         if not target_cache.initialized:
-            #self._logger.LevPrint("MSG", "Initialize target %s" % target.OutFile())
+            # self._logger.LevPrint("MSG", "Initialize target %s" % target.OutFile())
             target_cache.Initialize(target)
             target_cache.EnableBuild()
 
@@ -201,17 +201,17 @@ class BrocObjectMaster(threading.Thread):
         for missing in missing_libs:
             target_cache.DelDep(missing)
             self._cache[missing].DelReverseDep(target.OutFile())
-        #self._logger.LevPrint('MSG', "check %s ..." % target.OutFile())
+        # self._logger.LevPrint('MSG', "check %s ..." % target.OutFile())
         # check .a files contained in target object
         for lib_file in target.Libs():
             if self._check_lib_cache(lib_file, target_cache):
-                #self._logger.LevPrint("MSG", "check dep lib %s changed, enable target %s" % (lib_file, target.OutFile()))
+                # self._logger.LevPrint("MSG", "check dep lib %s changed, enable target %s" % (lib_file, target.OutFile()))
                 ret = True
 
         # if there is source or .a has changed, tareget need to rebuild
         if ret:
             target_cache.EnableBuild()
-            #self._logger.LevPrint("MSG", 'some deps change, target %s nee to rebuild' % target.OutFile())
+            # self._logger.LevPrint("MSG", 'some deps change, target %s nee to rebuild' % target.OutFile())
             return True
 
         # 5. check target file itself
@@ -388,6 +388,7 @@ class BrocObjectMaster(threading.Thread):
             self._logger.LevPrint("MSG", "no broc cache and create a empty one")
             return 
         # try to load cache file
+        self._logger.LevPrint("MSG", "loading cache(%s) ..." % self._cache_file)
         try:
             with open(self._cache_file, 'rb') as f:
                 caches = cPickle.load(f)
@@ -401,6 +402,7 @@ class BrocObjectMaster(threading.Thread):
         except BaseException as err:
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
+        self._logger.LevPrint("MSG", "loading cache success")
 
     def _save_cache(self):
         """

@@ -92,7 +92,6 @@ class BrocObject(object):
        '''
        update bulild cmd
        '''
-       Log.Log.LevPrint("MSG", 'update build cmd for %s' % self.pathname)
        self.build_cmd = cmd
 
     def Hash(self):
@@ -233,7 +232,7 @@ class BrocObject(object):
         """
         # if build flag is True, means it has changed 
         if self.build:
-            Log.Log().LevPrint('MSG', 'cache %s build mark is true' % self.pathname)
+            #Log.Log().LevPrint('MSG', 'cache %s build mark is true' % self.pathname)
             return True
         # check mtime
         modify_time = None
