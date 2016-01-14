@@ -84,7 +84,7 @@ class TaskWorker(threading.Thread):
                     info += " [WARNING]"
                     log_level = "WARNING"
                 else:
-                    info += " [OK]"
+                    info += " [OK]\n"
                 if self._all_log:
                     info += "%s\n" % task.BuildCmd()
                 info += result['msg']

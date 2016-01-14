@@ -233,7 +233,6 @@ def _build(options, do_ut=False):
     loader.LoadBroc()
     if not loader.LoadOK():
         return -1
-
     # to find all of targets needed to be built
     envs = loader.Envs()
     for env in envs:
@@ -242,7 +241,6 @@ def _build(options, do_ut=False):
     cache_master.WaitCheckDone()
     # save the dependency relation of targets into file
     cache_master.Dump()
-
     # to get all of targets needed to be built
     modified_targets = cache_master.GetChangedCache()
     # if no targets need to build, exit
@@ -263,7 +261,6 @@ def _build(options, do_ut=False):
             return 0
         else:
             return -1
-
     task_master = TaskMaster.TaskMaster(options['jobs'], 
                                         cache_master,
                                         modified_targets,

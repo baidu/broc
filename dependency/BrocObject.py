@@ -49,7 +49,7 @@ class BrocObject(object):
         self.build_cmd = ""            # the commond of BrocObject to build
         if self.initialized:
             try:
-                self.hash = Function.GetFileMd5(pathname)
+                self.hash = Function.GetFileHash(pathname)
                 if self.hash:
                     self.modify_time = os.stat(self.pathname.st_mtime) 
             except BaseException:
@@ -161,11 +161,23 @@ class BrocObject(object):
 
     def EnableBuild(self):
         """
-        eaable build flag
+        enable build flag
         """
         self.build = True
         # set all reversed dependent BrocObject to build
         self.NotifyReverseDeps()
+
+    def EnableBuildNoReverse(self):
+        '''
+        enable build flag, but not notify reversed cache
+        '''
+        self.build = True
+
+    def Build(self):
+        '''
+        return build flag
+        '''
+        return self.build
 
     def IsBuilt(self):
         """
@@ -246,16 +258,51 @@ class BrocObject(object):
 
         if modify_time == self.modify_time:
             return False
+        else:
+            self.modify_time = modify_time
+            ret = False
+            # check hash
+            _hash = Function.GetFileHash(self.pathname)
+            if _hash != self.hash:
+                self.hash = _hash
+                Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
+                self.build = True
+                ret = True
+            return ret
 
-        # check hash
-        _hash = Function.GetFileMd5(self.pathname)
-        if _hash != self.hash:
-            self.hash = _hash
-            Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
-            self.build = True
-            return True
+    def IsSelfChanged(self):
+        '''
+        to check whether object self changed
+        Returns:
+            -1 : the file that cacahe representing is missing
+            0 : not changed
+            1 : changed
+        '''
+        if not os.path.exists(self.pathname):
+            return -1
 
-        return False
+        # check mtime
+        modify_time = None
+        try:
+            modify_time = os.stat(self.pathname).st_mtime
+        except BaseException:
+            Log.Log().LevPrint('MSG', 'get %s modify_time failed' % self.pathname)
+            self.modify_time = 0
+            return 1
+
+        if modify_time == self.modify_time:
+            return 0
+        else:
+            self.modify_time = modify_time
+            ret = 0
+            # check hash
+            _hash = Function.GetFileHash(self.pathname)
+            if _hash != self.hash:
+                self.hash = _hash
+                ret = 1
+                Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
+            return ret
+
 
     def Update(self):
         """
@@ -275,7 +322,7 @@ class BrocObject(object):
         
         self.modify_time = modify_time
         # update hash
-        _hash = Function.GetFileMd5(self.pathname)
+        _hash = Function.GetFileHash(self.pathname)
         # Log.Log().LevPrint("MSG", "update %s hash id(%s) %s --> %s" % (self.pathname, id(self), self.hash, _hash))
         self.hash = _hash 
         self.build = False
@@ -342,6 +389,24 @@ class SourceCache(BrocObject):
 
         return False
 
+    def IsSelfChanged(self):
+        '''
+        to check whether source file and obj file changed
+        Returns:
+            0 : not changed
+            1 : changed
+            -1: the source file is missing
+        '''
+        # check source file itself
+        ret = self.src_obj.IsSelfChanged()
+        # source file changed or missed
+        if ret != 0:
+            return ret
+        # source file not change, to check object file
+        else:
+            ret = BrocObject.IsSelfChanged(self)
+            return 0 if ret == 0 else 1
+
     def Update(self):
         """
         update source cache, this function update object file's cache
@@ -382,7 +447,7 @@ class LibCache(BrocObject):
         """
         if not self.initialized:
             try:
-                self.hash = Function.GetFileMd5(self.pathname)
+                self.hash = Function.GetFileHash(self.pathname)
                 if self.hash:
                     self.modify_time = os.stat(self.pathname.st_mtime) 
             except BaseException:

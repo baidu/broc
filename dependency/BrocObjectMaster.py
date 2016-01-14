@@ -65,6 +65,33 @@ class BrocObjectMaster(threading.Thread):
         self._queue.put(('stop', None))
         self.join()
 
+    def SelfCheck(self):
+        '''
+        After BrocObjectMaster loading caches, to check whether all caches have been modified,
+        this step must be execute before run BROC files
+        '''
+        missing = list()
+        for cvs, cache in self._cache.iteritems():
+            ret = cache.IsSelfChanged()
+            # not change
+            if ret == 0:
+                continue
+            # changed
+            elif ret == 1:
+                cache.EnableBuildNoReverse()
+                continue
+            # the file cache represents is missing
+            else:
+                missing.append(cvs)
+        try:
+            for miss in  missing:
+                del self._cache[miss]
+        except KeyError:
+            pass
+
+        #for k in self._cache:
+        #   print('(%s): %s' % (self._cache[k].pathname, self._cache[k].build))
+
     def run(self):
         """
         Returns:
@@ -122,12 +149,15 @@ class BrocObjectMaster(threading.Thread):
         """
         # source infile no exists in cache
         if source.OutFile() not in self._cache:
+            source.CalcHeaderFiles()
             self._add_source_cache(source, target_cache)
             return True
 
         # check header files
         # remove useless dependent cache
         source_cache = self._cache[source.OutFile()]
+        if source_cache.Build():
+            source.CalcHeaderFiles()
         last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
         now_headers = source.builder.GetHeaderFiles()
         missing_headers = last_headers - now_headers
@@ -403,6 +433,9 @@ class BrocObjectMaster(threading.Thread):
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
         self._logger.LevPrint("MSG", "loading cache success")
+        self._logger.LevPrint("MSG", "check all cache ...")
+        self.SelfCheck()
+        self._logger.LevPrint("MSG", "check all cache done")
 
     def _save_cache(self):
         """

@@ -205,8 +205,12 @@ class CSource(Source):
         options.extend(self.cppflags + self.cflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CC(), self.env.Workspace())
-        self.builder.CalcHeaderFiles()
         
+    def CalcHeaderFiles(self):
+        """
+        calculate head file 
+        """
+        self.builder.CalcHeaderFiles()
 
 class CXXSource(Source):
     """
@@ -235,4 +239,9 @@ class CXXSource(Source):
         options.extend(self.cppflags + self.cxxflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CXX(), self.env.Workspace())
+
+    def CalcHeaderFiles(self):
+        """
+        calculate head file 
+        """
         self.builder.CalcHeaderFiles()

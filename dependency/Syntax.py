@@ -239,6 +239,9 @@ def INCLUDE(*ss):
             elif x.startswith("$OUT_ROOT"):
                 tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
                 continue
+            elif x.startswith("$OUT"):
+                out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
+                tag.AddSV(x.replace("$OUT", out))
             else:     
                 _x = os.path.normpath(os.path.join(broc_dir, x))
                 if env.ModulePath() not in _x:
@@ -275,7 +278,8 @@ def Include(*ss):
                 tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
                 continue
             elif x.startswith("$OUT"):
-                tag.AddSV(x.replace("$OUT", env.OutputPath()))
+                out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
+                tag.AddSV(x.replace("$OUT", out))
                 continue
             else:
                 _x = os.path.normpath(os.path.join(broc_abs_dir, x))
@@ -301,15 +305,19 @@ def Libs(*ss):
     for s in ss:
         if not isinstance(s, str):
             raise BrocArgumentIllegalError("argument %s is illegal in tag Libs" % s)
-
         if os.path.isabs(s):
             tag.AddSV(s)
             continue
-
-        if not s.startswith("$OUT_ROOT"):
-            raise BrocArgumentIllegalError("args %s should startswith $OUT_ROOT in tag Libs" % s)
-        else:
+        elif s.startswith("$OUT_ROOT"):
             tag.AddSV(os.path.normpath(s.replace("$OUT_ROOT", "broc_out")))
+            continue
+        elif s.startswith("$OUT"):
+            env = Environment.GetCurrent()
+            out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
+            tag.AddSV(os.path.normpath(s.replace("$OUT", out)))
+            continue
+        else:
+            raise BrocArgumentIllegalError("args %s should startswith $OUT_ROOT in tag Libs" % s)
 
     return tag
 
@@ -785,6 +793,7 @@ class Loader(object):
             t = threading.Thread(target=self._load_all_broc)
             t.daemon = True
             t.start()
+        
         # waiting for all BROC files have been deal
         self._queue.join()
         self._load_done = True
@@ -797,6 +806,7 @@ class Loader(object):
             return True if load BROC file successfully
         """
         # BROC file
+
         f = os.path.join(self._main_module.root_path, 'BROC')
         self._main_env = Environment.Environment(self._main_module)
         if self._build_mode == "release":
@@ -804,7 +814,6 @@ class Loader(object):
 
         Environment.SetCurrent(self._main_env)
         try:
-            # self._logger.LevPrint("MSG", "run BROC %s" % f)
             execfile(f)
         except BaseException as ex:
             self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
@@ -858,7 +867,6 @@ class Loader(object):
                 env.DisableDebug()
             Environment.SetCurrent(env)
             try:
-                # self._logger.LevPrint("MSG", "run BROC %s" % f)
                 execfile(f)
             except BaseException as ex:
                 self._queue.task_done()
