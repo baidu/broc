@@ -221,6 +221,7 @@ class BrocObject(object):
         else:
             self.build = False
             result['ret'] = True
+            #TODO handle decode type of msg
             result['msg'] = msg
         return result
 

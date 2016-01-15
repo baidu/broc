@@ -154,10 +154,15 @@ class BrocObjectMaster(threading.Thread):
 
         # check header files
         source_cache = self._cache[source.OutFile()]
-        if source_cache.Build() or source.GetBuildCmd() != source_cache.BuildCmd():
-            #self._logger.LevPrint("MSG", "recaculate source %s head file" % source.InFile())
+        # source file content changed
+        if source_cache.Build():
             source.CalcHeaderFiles()
             source_cache.UpdateBuildCmd(source.GetBuildCmd())
+            source_cache.EnableBuild()
+        else:
+            if source.GetBuildCmd() != source_cache.BuildCmd():
+                source_cache.UpdateBuildCmd(source.GetBuildCmd())
+                source_cache.EnableBuild()
             
         last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
         now_headers = source.builder.GetHeaderFiles()
@@ -194,7 +199,7 @@ class BrocObjectMaster(threading.Thread):
         ret = False
         # 1. check whether target cache exists
         if target.OutFile() not in self._cache:
-            self._logger.LevPrint("MSG", "create cache for target %s" % target.OutFile())
+            #self._logger.LevPrint("MSG", "create cache for target %s" % target.OutFile())
             self._add_target_cache(target)
             return True
 
@@ -219,7 +224,7 @@ class BrocObjectMaster(threading.Thread):
             self._cache[missing].DelReverseDep(target.OutFile())
         # check source objets contained in trget object
         for source in target.Sources():
-            if self._check_source_cache(source, self._cache[target.OutFile()]):
+            if self._check_source_cache(source, target_cache):
                 ret = True
 
         # 4. check all .a files, remove useless .a cache first
@@ -279,6 +284,7 @@ class BrocObjectMaster(threading.Thread):
             source : the Source.Source object
             target_cache : the BrocObject object that dependeds on the source file
         """
+        # self._logger.LevPrint('MSG', 'add source cache %s' % source.InFile())
         source_cache = BrocObject.SourceCache(source)
         self._cache[source.OutFile()] = source_cache
         source_cache.AddReverseDep(target_cache)

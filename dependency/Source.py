@@ -239,7 +239,6 @@ class CXXSource(Source):
         options.extend(self.cppflags + self.cxxflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CXX(), self.env.Workspace())
-
     def CalcHeaderFiles(self):
         """
         calculate head file 
