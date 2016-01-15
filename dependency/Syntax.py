@@ -634,6 +634,7 @@ def PROTO_LIBRARY(name, files, *args):
     ret, msg = protolib.PreAction()
     if not ret:
         raise BrocProtoError(msg)
+
     tag_include.AddSVs(include)
     broc_out = os.path.join("broc_out", env.BrocCVSDir())
     if broc_out not in tag_include.V():

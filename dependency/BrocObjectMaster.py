@@ -153,9 +153,9 @@ class BrocObjectMaster(threading.Thread):
             return True
 
         # check header files
-        # remove useless dependent cache
         source_cache = self._cache[source.OutFile()]
         if source_cache.Build() or source.GetBuildCmd() != source_cache.BuildCmd():
+            #self._logger.LevPrint("MSG", "recaculate source %s head file" % source.InFile())
             source.CalcHeaderFiles()
             source_cache.UpdateBuildCmd(source.GetBuildCmd())
             
@@ -192,9 +192,9 @@ class BrocObjectMaster(threading.Thread):
             target : can be Application, StaticLibrary, UT_Application, ProtoLibrary
         """
         ret = False
-        # self._logger.LevPrint("MSG", "check target %s" % target.OutFile())
         # 1. check whether target cache exists
         if target.OutFile() not in self._cache:
+            self._logger.LevPrint("MSG", "create cache for target %s" % target.OutFile())
             self._add_target_cache(target)
             return True
 
@@ -220,7 +220,6 @@ class BrocObjectMaster(threading.Thread):
         # check source objets contained in trget object
         for source in target.Sources():
             if self._check_source_cache(source, self._cache[target.OutFile()]):
-                #self._logger.LevPrint("MSG", "source %s changed" % source.Infile())
                 ret = True
 
         # 4. check all .a files, remove useless .a cache first
@@ -436,9 +435,9 @@ class BrocObjectMaster(threading.Thread):
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))
         self._logger.LevPrint("MSG", "loading cache success")
-        self._logger.LevPrint("MSG", "check all cache ...")
+        self._logger.LevPrint("MSG", "checking cache ...")
         self.SelfCheck()
-        self._logger.LevPrint("MSG", "check all cache done")
+        self._logger.LevPrint("MSG", "checking cache done")
 
     def _save_cache(self):
         """

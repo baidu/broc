@@ -21,7 +21,7 @@ DIGITS = [str(x) for x in xrange(0, 10)]
 ALPHABETS = []
 ALPHABETS.extend(DIGITS)
 ALPHABETS.extend([chr(x) for x in xrange(97, 123)])
-ALPHABETS.append("_")
+ALPHABETS.extend(["_", "-"])
 ALPHABETS.extend([chr(x) for x in xrange(65, 91)])
 
 def CheckName(v):
