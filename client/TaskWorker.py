@@ -84,13 +84,12 @@ class TaskWorker(threading.Thread):
                 info += "compile %s" % (task.Pathname())
                 log_level = "MSG"
                 if len(result['msg']) > 0:
-                    info += " [WARNING]"
                     log_level = "WARNING"
                 else:
                     info += " [OK]"
-                # FIX ME, urgent
-                #info += result['msg']
                 self._logger.LevPrint(log_level, info)
+                if result['msg']:
+                    self._logger.LevPrint(log_level, result['msg'])
                 self._master.UpdateCache(task.Pathname())
                 self._master.AddResponse(response)
 
