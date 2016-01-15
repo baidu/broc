@@ -265,7 +265,7 @@ class BrocObject(object):
             _hash = Function.GetFileHash(self.pathname)
             if _hash != self.hash:
                 self.hash = _hash
-                Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
+                # Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
                 self.build = True
                 ret = True
             return ret
@@ -300,7 +300,7 @@ class BrocObject(object):
             if _hash != self.hash:
                 self.hash = _hash
                 ret = 1
-                Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
+            # Log.Log().LevPrint('MSG', '%s content changed' % self.pathname)
             return ret
 
 

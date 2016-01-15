@@ -17,7 +17,6 @@ import threading
 import Queue
 import cPickle
 
-import Source
 import Target
 import BrocObject
 
@@ -156,8 +155,10 @@ class BrocObjectMaster(threading.Thread):
         # check header files
         # remove useless dependent cache
         source_cache = self._cache[source.OutFile()]
-        if source_cache.Build():
+        if source_cache.Build() or source.GetBuildCmd() != source_cache.BuildCmd():
             source.CalcHeaderFiles()
+            source_cache.UpdateBuildCmd(source.GetBuildCmd())
+            
         last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
         now_headers = source.builder.GetHeaderFiles()
         missing_headers = last_headers - now_headers
@@ -177,9 +178,9 @@ class BrocObjectMaster(threading.Thread):
             return ret
 
         # head files no changed, check itself
-        if self._cache[source.OutFile()].IsChanged(source):
-            self._cache[source.OutFile()].UpdateBuildCmd(source.GetBuildCmd())
-            self._cache[source.OutFile()].EnableBuild()
+        if source_cache.IsChanged(source):
+            source_cache.UpdateBuildCmd(source.GetBuildCmd())
+            source_cache.EnableBuild()
             return True
 
         return False
@@ -198,6 +199,7 @@ class BrocObjectMaster(threading.Thread):
             return True
 
         # 2. check whether target cache is a empty cache, empty cache was created by target depended on it
+        # self._logger.LevPrint("MSG", "check target %s cache" % target.OutFile())
         target_cache = self._cache[target.OutFile()]
         if not target_cache.initialized:
             # self._logger.LevPrint("MSG", "Initialize target %s" % target.OutFile())
@@ -205,7 +207,7 @@ class BrocObjectMaster(threading.Thread):
             target_cache.EnableBuild()
 
         # 3. check all source object, remove uesless source cache
-        # self._logger.LevPrint("MSG", "check target %s Source" % target.OutFile())
+        #self._logger.LevPrint("MSG", "check target %s Source" % target.OutFile())
         last_sources = set()
         for x in target_cache.Deps():
             if x.TYPE is BrocObject.BrocObjectType.BROC_SOURCE:
@@ -316,6 +318,7 @@ class BrocObjectMaster(threading.Thread):
             if source.OutFile() in self._cache:
                 self._cache[source.OutFile()].AddReverseDep(target_cache)
                 target_cache.AddDep(self._cache[source.OutFile()])
+                self._check_source_cache(source, target_cache)
             else:
                 self._add_source_cache(source, target_cache)
 

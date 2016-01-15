@@ -366,7 +366,7 @@ class ProtoLibrary(object):
 
         # run protoc
         for cmd in self._proto_cmds:
-            Log.Log().LevPrint("MSG", "%s" % cmd)
+            #Log.Log().LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd, True)
             if ret != 0:
                 return (False, "%s%s" % (cmd, msg))

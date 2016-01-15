@@ -711,8 +711,7 @@ class TestSyntax(unittest.TestCase):
         self.assertEqual(' '.join(protos.__str__().split()), ' '.join(proto_cmd.split()))
         self.assertEqual(src.cppflags, ["-DDEBUG_LOCAL"])
         self.assertEqual(src.cxxflags, ["-Wwrite-strings"])
-        print(src.includes)
-        self.assertEqual(src.includes, [".", "broc_out", \
+        self.assertEqual(src.includes, [".", "broc_out", 'baidu/broc', 
                 u'broc_out/baidu/broc'])
         self.assertEqual(src.infile, "broc_out/baidu/broc/hello.pb.cc")
         self.assertEqual(proto_library.tag_libs.V(), \
