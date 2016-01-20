@@ -165,14 +165,14 @@ class BrocObjectMaster(threading.Thread):
                 source_cache.EnableBuild()
             
         last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
-        now_headers = source.builder.GetHeaderFiles()
+        now_headers = source.GetHeaderFiles()
         missing_headers = last_headers - now_headers
         for f in missing_headers:
             source_cache.DelDep(f)
             self._cache[f].DelReverseDep(source_cache.Pathname())
         # check head files source object depended
         ret = False
-        for f in source.builder.GetHeaderFiles():
+        for f in source.GetHeaderFiles():
             if self._check_head_cache(f, source_cache):
                 ret = True
 
@@ -291,7 +291,7 @@ class BrocObjectMaster(threading.Thread):
         target_cache.AddDep(source_cache)
 
         # add header cache for source cache
-        header_files = source.builder.GetHeaderFiles()
+        header_files = source.GetHeaderFiles()
         for f in header_files:
             if f in self._cache:
                 source_cache.AddDep(self._cache[f])
