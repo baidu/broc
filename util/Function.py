@@ -21,7 +21,7 @@ DIGITS = [str(x) for x in xrange(0, 10)]
 ALPHABETS = []
 ALPHABETS.extend(DIGITS)
 ALPHABETS.extend([chr(x) for x in xrange(97, 123)])
-ALPHABETS.append("_")
+ALPHABETS.extend(["_", "-"])
 ALPHABETS.extend([chr(x) for x in xrange(65, 91)])
 
 def CheckName(v):
@@ -110,9 +110,9 @@ def CalcMd5(data):
         return None
 
 
-def GetFileMd5(path):
+def GetFileHash(path, methord='MD5'):
     """
-    calculate the md5 of file
+    calculate the hash of file
     Args: 
         path : the path of file to calculate
     Return:
