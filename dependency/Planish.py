@@ -179,10 +179,10 @@ reload it(%s)" % (node.module.origin_config))
                 #cmd = "cd %s && git fetch --all" % node.module.module_cvspath
                 cmd = "cd %s" % node.module.module_cvspath
                 if node.module.tag_name:
-                    cmd += " && (git checkout %s || git fetch --all && git checkout %s)" \
+                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
 % (node.module.tag_name, node.module.tag_name)
                 else:
-                    cmd += " && (git checkout %s || git fetch --all && git checkout %s)" \
+                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
 % (node.module.br_name, node.module.br_name)
 
             self.logger.LevPrint("MSG", "%s" % cmd)

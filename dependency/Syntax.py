@@ -271,11 +271,11 @@ def Include(*ss):
             if x.startswith("$WORKSPACE"):
                 tag.AddSV(x.replace("$WORKSPACE/", "")) 
                 continue
-            elif x.startswith('broc_out/') or os.path.isabs(x):
+            elif x.startswith('broc_out') or os.path.isabs(x):
                 tag.AddSV(x)
                 continue
             elif x.startswith("$OUT_ROOT"):
-                tag.AddSV(x.replace("$OUT_ROOT", 'broc_out'))
+                tag.AddSV(x.replace("$OUT_ROOT/", 'broc_out'))
                 continue
             elif x.startswith("$OUT"):
                 out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
@@ -311,13 +311,16 @@ def Libs(*ss):
         elif s.startswith("$OUT_ROOT"):
             tag.AddSV(os.path.normpath(s.replace("$OUT_ROOT", "broc_out")))
             continue
+        elif s.startswith('$WORKSPACE'):
+            tag.AddSV(os.path.normpath(s.replace("$WORKSPACE/", "")))
+            continue
         elif s.startswith("$OUT"):
             env = Environment.GetCurrent()
             out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
             tag.AddSV(os.path.normpath(s.replace("$OUT", out)))
             continue
         else:
-            raise BrocArgumentIllegalError("args %s should startswith $OUT_ROOT in tag Libs" % s)
+            raise BrocArgumentIllegalError("args(%s) should be a abs path or startswith $WORKSPACE|$OUT|$OUT_ROOT in tag Libs" % s)
 
     return tag
 
