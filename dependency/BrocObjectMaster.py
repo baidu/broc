@@ -71,7 +71,7 @@ class BrocObjectMaster(threading.Thread):
         '''
         missing = list()
         for cvs, cache in self._cache.iteritems():
-            ret = cache.IsSelfChanged()
+            ret = cache.IsModified()
             # not change
             if ret == 0:
                 continue
@@ -79,9 +79,11 @@ class BrocObjectMaster(threading.Thread):
             elif ret == 1:
                 cache.EnableBuildNoReverse()
                 continue
-            # the file cache represents is missing
+            # the file that cache representing is missing
             else:
                 missing.append(cvs)
+
+        # here to handle the caches of missed files
         try:
             for miss in  missing:
                 del self._cache[miss]
@@ -90,6 +92,18 @@ class BrocObjectMaster(threading.Thread):
 
         #for k in self._cache:
         #   print('(%s): %s' % (self._cache[k].pathname, self._cache[k].build))
+
+
+    def IsModified(self, outpath):
+        """
+        whether a file has been modified since last build
+        Args:
+            outpath : the build result file
+        """
+        if outpath not in self._cache:
+            return True
+        else:
+            return self._cache[outpath].Modified()
 
     def run(self):
         """
@@ -154,22 +168,23 @@ class BrocObjectMaster(threading.Thread):
 
         # check header files
         source_cache = self._cache[source.OutFile()]
+        last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
         # source file content changed
-        if source_cache.Build():
-            source.CalcHeaderFiles()
+        if source_cache.Modified():
             source_cache.UpdateBuildCmd(source.GetBuildCmd())
             source_cache.EnableBuild()
         else:
             if source.GetBuildCmd() != source_cache.BuildCmd():
                 source_cache.UpdateBuildCmd(source.GetBuildCmd())
                 source_cache.EnableBuild()
-            
-        last_headers = set(map(lambda x: x.Pathname(), source_cache.Deps()))
+            source.SetHeaderFiles(last_headers)
+             
         now_headers = source.GetHeaderFiles()
         missing_headers = last_headers - now_headers
         for f in missing_headers:
             source_cache.DelDep(f)
             self._cache[f].DelReverseDep(source_cache.Pathname())
+
         # check head files source object depended
         ret = False
         for f in source.GetHeaderFiles():
@@ -399,15 +414,17 @@ class BrocObjectMaster(threading.Thread):
             self._logger.LevPrint("INFO", "%s not in cache, could not update" % pathname)
             return 
         cache = self._cache[pathname]
-        cache.DisableBuild()
         # head file information has been updated in check stage, so no need to update
         if cache.TYPE == BrocObject.BrocObjectType.BROC_HEADER:
+            cache.DisableBuild()
+            cache.DisableModified()
             return
-        # self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
-        cache.Update()
-        # save cache into file 
-        # self._logger.LevPrint("MSG", "save cache %s, id(%s), hash is %s, build %s" % (cache.Pathname(), id(cache), cache.Hash(), cache.build ))
-        self._save_cache()
+        else:
+            # self._logger.LevPrint("MSG", "update cache %s, hash is %s" % (cache.Pathname(), cache.Hash()))
+            cache.Update()
+            # save cache into file 
+            # self._logger.LevPrint("MSG", "save cache %s, id(%s), hash is %s, build %s" % (cache.Pathname(), id(cache), cache.Hash(), cache.build ))
+            self._save_cache()
 
     def GetChangedCache(self):
         """
@@ -436,7 +453,7 @@ class BrocObjectMaster(threading.Thread):
                 else:
                     for cache in caches[1:]:
                         self._cache[cache.Pathname()] = cache
-                        #self._logger.LevPrint("MSG", 'cache %s , %d hash is %s, build %s' % (cache.Pathname(), id(cache), cache.Hash(), cache.build))
+                        #self._logger.LevPrint("MSG", 'cache %s , %d hash is %s, build %s, Modified %s' % (cache.Pathname(), id(cache), cache.Hash(), cache.Build(), cache.Modified()))
         except BaseException as err:
             self._logger.LevPrint("MSG", "load broc cache(%s) faild(%s), create a empty cache"
                                  % (self._cache_file, str(err)))

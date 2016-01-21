@@ -174,6 +174,7 @@ class BrocTree(object):
         Raises:
             if handle node failed, raise BrocTreeError
         """
+        # self._logger.LevPrint("MSG", "handle node(%s) ..." % node.module.name)
         # if node.module.url has been handled in other module's BROC
         # Key is module's cvspath + branch kind + tag name or branch name.
         # Key can't be module's url because ,in git any branch or tag has a same url.
@@ -188,6 +189,7 @@ class BrocTree(object):
 
         try:
             # to fetch BROC file
+            # self._logger.LevPrint("MSG", "fetch node(%s) BROC" % node.module.name)
             broc_path = self._check_broc(node)
             if broc_path is None:
                 self._logger.LevPrint("ERROR", "fetch BROC failed")
@@ -237,7 +239,6 @@ class BrocTree(object):
                 if node.module.is_main:
                     return os.path.join(_broc_dir, "BROC")
 
-                #cmd = "cd %s && git fetch --all" % _broc_dir
                 cmd = "cd %s " % _broc_dir
                 if node.module.tag_name:
                     cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
@@ -246,6 +247,7 @@ class BrocTree(object):
                     cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
 % (node.module.br_name, node.module.br_name)
                 # to run cmd
+                # self._logger.LevPrint("MSG", "run cmd: %s ..." % cmd)
                 ret, msg = Function.RunCommand(cmd)
                 if ret != 0:
                     self._logger.LevPrint("ERROR", "fail to find BROC(%s) failed(%s)" % (cmd, msg))

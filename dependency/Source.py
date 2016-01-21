@@ -104,6 +104,12 @@ class Source(object):
         """
         return self.headers
 
+    def SetHeaderFiles(self, headers):
+        """
+        set headers files
+        """
+        self.headers = headers
+
     def Compiler(self):
         """
         return the compiler cmd
