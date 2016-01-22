@@ -25,6 +25,7 @@ from util import Function
 from dependency import BrocModule_pb2 
 from dependency import BrocTree
 from util import Log
+from dependency.Syntax import *
 
 class TestPlanish(unittest.TestCase):
     """

@@ -32,7 +32,7 @@ from util import Function
 from dependency import PlanishUtil
 from dependency import Planish
 from dependency import BrocModule_pb2
-from dependency import Syntax
+from dependency import Loader
 from dependency import Target
 from dependency import BrocObjectMaster
 from dependency import UTMaster
@@ -229,7 +229,7 @@ def _build(options, do_ut=False):
     queue = Queue.Queue()
     for node in nodes:
         queue.put(node.module) 
-    loader = Syntax.Loader(root_node, queue, logger, options['mode'], 4)
+    loader = Loader.Loader(root_node, queue, logger, options['mode'], 4)
     loader.LoadBroc()
     if not loader.LoadOK():
         return -1
