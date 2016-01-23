@@ -84,10 +84,8 @@ class Planish(object):
             logger : the log facility object
             postfix : the list of postfix [postfix_branche, postfix_tag]
         """
-        self._dep_tree = BrocTree.BrocTree(main_module,
-                                           repo_domain,
-                                           logger,
-                                           postfix)
+        self._dep_tree = BrocTree.BrocTree()
+        self._dep_tree.SetRoot(main_module)
         self.logger = logger
         self.planished_nodes = dict()  # module cvspath --> BrocNode
 

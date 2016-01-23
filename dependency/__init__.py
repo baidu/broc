@@ -20,3 +20,13 @@ from dependency import BrocTree
 from dependency import PlanishUtil
 from dependency import Planish
 from dependency import BrocObjectMaster
+from dependency import BrocObject
+from dependency import BrocConfig
+from dependency import Builder
+from dependency import Syntax
+from dependency import Target
+from dependency import Environment
+from dependency import Source
+from dependency import Loader
+from dependency import UTMaster
+

@@ -38,6 +38,7 @@ class TestSyntax(unittest.TestCase):
         """
         init
         """
+        sys.argv = ['NOT PLANISH']
         module = BrocModule_pb2.Module()
         module.name = 'broc'
         module.module_cvspath = 'baidu/broc'

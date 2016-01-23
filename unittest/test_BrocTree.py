@@ -34,6 +34,25 @@ from util import Log
 class TestBrocTree(unittest.TestCase):
     """
     """
+    def test_singleton(self):
+        """
+        Test singleton interface 
+        """
+        logger = Log.Log()
+        repo_domain = 'https://github.com'
+        postfix = ['trunk', 'BRANCH', 'PD_BL']
+        root = PlanishUtil.CreateBrocModuleFromDir("..",
+                                                         repo_domain,
+                                                         postfix[1],
+                                                         postfix[2],
+                                                         logger)
+        tree = BrocTree.BrocTree()
+        tree.SetRoot(root)
+        tree1 = BrocTree.BrocTree()
+        tree2 = BrocTree.BrocTree()
+        self.assertEqual(tree.Id(), tree1.Id())
+        self.assertEqual(tree.Id(), tree2.Id())
+
     def test_git_module(self):
         """
         """
