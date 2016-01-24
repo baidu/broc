@@ -708,7 +708,7 @@ def DIRECOTYR(v):
     Args:
        v : the name of subdirectory, v is relative path
     """   
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     env.AppendSubDirectory(os.path.normpath(v))
@@ -722,7 +722,7 @@ def PUBLISH(srcs, out_dir):
         out_dir: the destination directory that must start with $OUT
         if argument is illeagl, raise BrocArgumentIllegalError 
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     if not out_dir.strip().startswith('$OUT'):
@@ -741,7 +741,7 @@ def SVN_PATH():
     """
     return local path of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnPath()
@@ -751,7 +751,7 @@ def SVN_URL():
     """
     return url of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnUrl()
@@ -761,7 +761,7 @@ def SVN_REVISION():
     """
     return revision of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnRevision()
@@ -771,7 +771,7 @@ def SVN_LAST_CHANGED_REV():
     """
     return last changed rev
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnLastChangedRev()
@@ -781,7 +781,7 @@ def GIT_PATH():
     """
     return local path of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitPath()
@@ -791,7 +791,7 @@ def GIT_URL():
     """
     return url of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitUrl()
@@ -801,7 +801,7 @@ def GIT_BRANCH():
     """
     return the branch name of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitBranch()
@@ -811,7 +811,7 @@ def GIT_COMMIT_ID():
     """
     return the commit id of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitCommitID()
@@ -821,7 +821,7 @@ def GIT_TAG():
     """
     return the tag of module
     """
-    if PUBLISH:
+    if sys.argv[0]=='PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitTag()
