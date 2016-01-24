@@ -24,7 +24,7 @@ from dependency.Syntax import *
 from util import Function
 from util import Log
 
-class Loader(object):
+class CacheLoader(object):
     """
     This class parses all BROC file and creates Environment object for each BROC
     """

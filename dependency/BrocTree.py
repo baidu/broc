@@ -122,17 +122,26 @@ class BrocTree(object):
             """
             """
             self._root = None
-            self._node_queue = Queue.Queue() # the queue of BrocModule_pb2
-            self._all_nodes = dict()       # { module cvspath : [BrocNode...] }  storing all of gathered modules
             self._broc_dir = tempfile.mkdtemp() # the temporary directory storing all BROC files 
-            self._done_broc = dict()       # module url --> [BrocNode...]
-            self._checked_node = list()    # list to save the node which has been traversed.
-            self._need_broc_list = list()  # list of no BROC modules
+            self._all_nodes = dict() 
+            self._done_broc = dict()         # module url --> [BrocNode...]
+            self._checked_node = list()      # list to save the node which has been traversed.
+            self._need_broc_list = list()    # list of no BROC modules
 
         def __del__(self):
             """
             """
             Function.DelFiles(self._broc_dir)
+
+
+        def GetModule(self, hash_key):
+            """
+            return node whose BROC's hash value is hash_key
+            """ 
+            if hash_key in self._all_nodes:
+                return self._all_nodes[hash_key]
+            else:
+                return None
 
         def Id(self):
             """
@@ -154,9 +163,12 @@ class BrocTree(object):
             """
             if not self._root:
                 self._root = BrocNode(root, None, True)
-            broc_config = BrocConfig.BrocConfig()
-            self._repo_damain = broc_config.RepoDomain(root.repo_kind)
-            self._postfix = [broc_config.SVNPostfixBranch(), broc_config.SVNPostfixTag()]
+                broc_config = BrocConfig.BrocConfig()
+                self._repo_damain = broc_config.RepoDomain(root.repo_kind)
+                self._postfix = [broc_config.SVNPostfixBranch(), broc_config.SVNPostfixTag()]
+                broc_file = os.path.join(root.workspace, root.broc_cvspath)
+                hash_key = Function.GetFileHash(broc_file, 'MD5')
+                self._all_nodes[hash_key] = self._root
 
         def AllNodes(self):
             """
@@ -164,21 +176,13 @@ class BrocTree(object):
             """
             return self._all_nodes
 
-        def ConstructTree(self):
+        def AddNode(self, hash_key, node):
             """
-            to construct the denpendent tree 
-            Raises:
-                raise BrocTreeError
             """
-            while not self._node_queue.empty():
-                node = self._node_queue.get()
-                self._handle_node(node)
-
-            if len(self._need_broc_list) > 0:
-                module_list = "There is no BROC in these modules:\n"
-                for module_name in self._need_broc_list:
-                    module_list += module_name + '\n'
-                raise BrocTreeError(module_list)
+            if hash_key in self._all_nodes:
+                raise BrocTreeError("node (%s) record has been existed" % node.module.url)
+            
+            self._all_nodes[hash_key] = node
 
         def _handle_node(self, node):
             """
@@ -416,6 +420,7 @@ class BrocTree(object):
                 for i in range(1, len(self._checked_node)):
                     msg = msg + ' -> ' + self._checked_node[i]
             return ret, msg
+
 
     # class BrocTree
     __instance = None

@@ -7,7 +7,7 @@ COMPILER_PATH('/usr/bin')
 CONFIGS("brocbuild/configure@master@branch")
 
 #add this to get dependency conflict
-CONFIGS("brocbuild/test@master@branch")
+#CONFIGS("brocbuild/test@master@branch")
 
 #planish dependency
 CONFIGS("brocbuild/log@master@branch")

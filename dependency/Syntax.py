@@ -18,6 +18,8 @@ import os
 import sys
 import string
 import glob
+import tempfile
+import traceback
 
 broc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_path)
@@ -26,6 +28,10 @@ from dependency import SyntaxTag
 from dependency import Environment
 from dependency import Source
 from dependency import Target
+from dependency import PlanishUtil
+from dependency import BrocTree
+from dependency import BrocConfig
+from dependency import BrocModule_pb2
 from util import Function
 from util import Log
 
@@ -446,7 +452,9 @@ def CONFIGS(s):
     """
     if not sys.argv[0]=='PLANISH':
         return
-    print(s)
+    hash_key = Function.GetFileHash(sys.argv[1])
+    broc_loader = BrocLoader()
+    broc_loader.handle_configs(s, sys.argv[1])    
 
 def Sources(*ss):
     """
@@ -826,3 +834,131 @@ def GIT_TAG():
     env = Environment.GetCurrent()
     return env.GitTag()
 
+class BrocLoader(object):
+    """
+    the class loading BROC file
+    """
+    class __impl(object):
+        """
+        the implementation of singleton interface
+        """
+        def __init__(self):
+            """
+            """
+            self._checked_node = dict()
+            self._broc_dir = tempfile.mkdtemp() # the temporary directory storing all BROC files 
+    
+        def Id(self):
+            """
+            test method, return singleton id
+            """
+            return id(self)
+
+        def handle_configs(self, s, broc_file):
+            """
+            Args:
+                s : xx@xx@xx set at tag CONFIGS 
+                hash_key: the hash key of parent BROC file
+            """
+            hash_key = Function.GetFileHash(broc_file)
+            tree = BrocTree.BrocTree()
+            parent = tree.GetModule(hash_key)
+            if not parent:
+                raise BaseException('Not found BROC of module %s' % broc_file)
+
+            repo_domain = BrocConfig.BrocConfig().RepoDomain(parent.module.repo_kind)
+            postfix_branch = BrocConfig.BrocConfig().SVNPostfixBranch()
+            postfix_tag = BrocConfig.BrocConfig().SVNPostfixTag()
+            #Log.Log().LevPrint("MSG", 'Create child module %s' % s)
+            child_module = PlanishUtil.ParseConfig(s, 
+                                           parent.module.workspace, 
+                                           parent.module.dep_level, 
+                                           parent.module.repo_kind, 
+                                           repo_domain, 
+                                           postfix_branch, 
+                                           postfix_tag) 
+            
+            child_node = BrocTree.BrocNode(child_module, parent, False)
+            child_broc_file = self._download_broc(child_node)
+            if not child_broc_file:
+                raise BaseException('Not found BROC of module %s' % child_broc_file)
+            child_hash_key = Function.GetFileHash(child_broc_file)
+            Log.Log().LevPrint("MSG", "add node %s to BrocTree" % child_node.module.url)
+            tree.AddNode(child_hash_key, child_node)
+            parent.AddChild(child_node)
+            sys.argv = ['PLANISH', child_broc_file]
+            try:
+                Log.Log().LevPrint("MSG", "Run BROC %s" % child_broc_file)
+                execfile(child_broc_file)
+            except BaseException as err:
+                Log.Log().LevPrint("ERROR", str(err))
+                traceback.print_exc()
+            
+        def _download_broc(self, node):
+            """
+            download BROC file from repository
+            Args:
+                node : the BrocNode object
+            Returns:
+                return abs path of BROC file if download success
+                return None if download failed
+            """
+            broc_path = None
+            cmd = None
+            # for svn 
+            # Log.Log().LevPrint("MSG", 'download BROC %s' % node.module.url)
+            if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+                hash_value = Function.CalcMd5(node.module.url)
+                broc_url = os.path.join(node.module.url, 'BROC')
+                broc_path = os.path.join(self._broc_dir, "%s_BROC" % hash_value)
+                if node.module.revision:
+                    broc_url = "%s -r %s" % (broc_url, node.module.revision)
+                cmd = "svn export %s %s" % (broc_url, broc_path)
+            else:
+                # for GIT
+                broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
+                cmd = ""
+                broc_dir = os.path.dirname(broc_path)
+                if not os.path.exists(broc_path):
+                    cmd += "git clone %s %s &&" \
+                          % ("%s.git" % node.module.url, "%s" % broc_dir)
+
+                if node.module.br_name:
+                    cmd += " cd %s && (git checkout %s || (git fetch -all && git checkout %s))" \
+                           % (broc_dir, node.module.br_name, node.module.br_name)
+                elif node.module.tag_name:
+                    cmd += " cd %s && (git checkout %s || (git fetch -all && git checkout %s ))" \
+                           % (broc_dir, node.module.tag_name, node.module.tag_name)
+                else:
+                    Log.Log().LevPrint("ERROR", "couldn't find node(%s) BROC file" \
+                                              % node.module.module_cvspath)
+                    return None
+ 
+            Log.Log().LevPrint("MSG", "Get BROC file: %s" % cmd)
+            ret, msg = Function.RunCommand(cmd) 
+            if ret != 0:
+                Log.Log().LevPrint("ERROR", msg)
+                return None
+
+            return broc_path
+
+
+    # class BrocLoader
+    __instance = None
+    def __init__(self):
+        """ Create singleton instance """
+        # Check whether we already have an instance
+        if BrocLoader.__instance is None:
+            # Create and remember instance
+            BrocLoader.__instance = BrocLoader.__impl()
+
+        # Store instance reference as the only member in the handle
+        self.__dict__['_BrocLoader__instance'] = BrocLoader.__instance
+
+    def __getattr__(self, attr):
+        """ Delegate access to implementation """
+        return getattr(self.__instance, attr)
+
+    def __setattr__(self, attr, value):
+        """ Delegate access to implementation """
+        return setattr(self.__instance, attr, value)

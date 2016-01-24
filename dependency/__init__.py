@@ -21,6 +21,7 @@ from dependency import PlanishUtil
 from dependency import Planish
 from dependency import BrocObjectMaster
 from dependency import BrocObject
+from dependency import BrocTree
 from dependency import BrocConfig
 from dependency import Builder
 from dependency import Syntax

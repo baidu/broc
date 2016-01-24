@@ -32,7 +32,7 @@ from util import Function
 from util import Log
 
 
-class TestBrocTree(unittest.TestCase):
+class TestBrocLoader(unittest.TestCase):
     """
     """
     def test_singleton(self):
@@ -47,14 +47,11 @@ class TestBrocTree(unittest.TestCase):
                                                          postfix[1],
                                                          postfix[2],
                                                          logger)
-        tree = BrocTree.BrocTree()
-        tree.SetRoot(root)
-        tree1 = BrocTree.BrocTree()
-        tree2 = BrocTree.BrocTree()
-        self.assertEqual(tree.Id(), tree1.Id())
-        self.assertEqual(tree.Id(), tree2.Id())
+        loader1 = BrocLoader()
+        loader2 = BrocLoader()
+        self.assertEqual(loader1.Id(), loader2.Id())
 
-    def test_git_module(self):
+    def test_handle_configs(self):
         """
         """
         logger = Log.Log()
@@ -65,14 +62,13 @@ class TestBrocTree(unittest.TestCase):
                                                          postfix[1],
                                                          postfix[2],
                                                          logger)
-        
-        self.assertTrue(root.is_main)
-        self.assertFalse(root.tag_name)
-        self.assertTrue(root.br_name)
-        self.assertEqual(root.name, 'broc')
-        self.assertEqual(root.dep_level, 0)
-        self.assertEqual(root.repo_kind, 2)
-        self.assertEqual(root.br_kind, 3)
+        BrocTree.BrocTree().SetRoot(root)
+        broc_file = os.path.join(root.workspace, root.broc_cvspath)
+        sys.argv = ['PLANISH', os.path.join(root.root_path, 'BROC')]
+        try:
+            execfile(broc_file)
+        except BaseException as err:
+            print(err)
 
 if __name__ == "__main__":
     unittest.main()
