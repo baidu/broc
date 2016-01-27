@@ -450,10 +450,9 @@ def CONFIGS(s):
     """
     gather dependency modules
     """
-    if not sys.argv[0]=='PLANISH':
-        return
-    broc_loader = BrocLoader()
-    broc_loader.handle_configs(s, sys.argv[1])    
+    if sys.argv[0] == 'PLANISH':
+        broc_loader = BrocLoader()
+        broc_loader.handle_configs(s, sys.argv[1])    
 
 def Sources(*ss):
     """
@@ -708,18 +707,21 @@ def UTArgs(v):
     tag.AddV(v)
     return tag
 
-
-def DIRECOTYR(v): 
+def DIRECTORY(v): 
     """
     Add sub directory
     Args:
        v : the name of subdirectory, v is relative path
     """   
-    if sys.argv[0]=='PLANISH':
-        return
-    env = Environment.GetCurrent()
-    env.AppendSubDirectory(os.path.normpath(v))
-
+    if sys.argv[0] == 'PLANISH':
+        parent = sys.argv[1]
+        child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
+        if not os.path.exists(child_broc_file):
+            raise BrocArgumentIllegalError('Not found BROC %s' % child_broc_file)
+        try:
+            execfile(child_broc_file)
+        except BaseException as err:
+            traceback.print_exc()
 
 def PUBLISH(srcs, out_dir):
     """
@@ -947,17 +949,17 @@ class BrocLoader(object):
                           % ("%s.git" % node.module.url, "%s" % broc_dir)
 
                 if node.module.br_name:
-                    cmd += " cd %s && (git checkout %s || (git fetch -all && git checkout %s))" \
+                    cmd += "cd %s && (git checkout %s || (git fetch --all && git checkout %s))" \
                            % (broc_dir, node.module.br_name, node.module.br_name)
                 elif node.module.tag_name:
-                    cmd += " cd %s && (git checkout %s || (git fetch -all && git checkout %s ))" \
+                    cmd += "cd %s && (git checkout %s || (git fetch --all && git checkout %s ))" \
                            % (broc_dir, node.module.tag_name, node.module.tag_name)
                 else:
                     Log.Log().LevPrint("ERROR", "couldn't find node(%s) BROC file" \
                                               % node.module.module_cvspath)
                     return None
  
-            Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
+            Log.Log().LevPrint("MSG", "Getting BROC : %s ..." % cmd)
             ret, msg = Function.RunCommand(cmd) 
             if ret != 0:
                 Log.Log().LevPrint("ERROR", msg)
