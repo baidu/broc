@@ -16,7 +16,7 @@ import os
 import sys
 import tempfile
 import unittest
-import pprint
+import traceback
 
 broc_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..', '..'))
 sys.path.insert(0, broc_path)
@@ -27,7 +27,7 @@ from dependency import PlanishUtil
 from dependency import Environment
 from dependency import BrocModule_pb2 
 from dependency import BrocTree
-from dependency.Syntax import *
+from dependency import Syntax
 from util import Function
 from util import Log
 
@@ -47,8 +47,8 @@ class TestBrocLoader(unittest.TestCase):
                                                          postfix[1],
                                                          postfix[2],
                                                          logger)
-        loader1 = BrocLoader()
-        loader2 = BrocLoader()
+        loader1 = Syntax.BrocLoader()
+        loader2 = Syntax.BrocLoader()
         self.assertEqual(loader1.Id(), loader2.Id())
 
     def test_handle_configs(self):
@@ -62,13 +62,11 @@ class TestBrocLoader(unittest.TestCase):
                                                          postfix[1],
                                                          postfix[2],
                                                          logger)
-        BrocTree.BrocTree().SetRoot(root)
-        broc_file = os.path.join(root.workspace, root.broc_cvspath)
-        sys.argv = ['PLANISH', os.path.join(root.root_path, 'BROC')]
-        try:
-            execfile(broc_file)
-        except BaseException as err:
-            print(err)
+        node = BrocTree.BrocNode(root, None, True)
+        Syntax.BrocLoader().SetRoot(node)
+        Syntax.BrocLoader().LoadBroc()
+        if Syntax.BrocLoader().LackBrocModules():
+            print(Syntax.BrocLoader().LackBrocModules())
 
 if __name__ == "__main__":
     unittest.main()

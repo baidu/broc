@@ -4,10 +4,13 @@ import os
 COMPILER_PATH('/usr/bin')
 
 #add this to deal with dependency conflict
+conflict = True
 CONFIGS("brocbuild/configure@master@branch")
 
-#add this to get dependency conflict
-#CONFIGS("brocbuild/test@master@branch")
+conflict = False
+if conflict:
+    #add this to get dependency conflict
+    CONFIGS("brocbuild/test@master@branch")
 
 #planish dependency
 CONFIGS("brocbuild/log@master@branch")

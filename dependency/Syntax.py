@@ -1,4 +1,3 @@
-  
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -19,6 +18,7 @@ import sys
 import string
 import glob
 import tempfile
+import Queue
 import traceback
 
 broc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -452,7 +452,6 @@ def CONFIGS(s):
     """
     if not sys.argv[0]=='PLANISH':
         return
-    hash_key = Function.GetFileHash(sys.argv[1])
     broc_loader = BrocLoader()
     broc_loader.handle_configs(s, sys.argv[1])    
 
@@ -845,8 +844,11 @@ class BrocLoader(object):
         def __init__(self):
             """
             """
-            self._checked_node = dict()
-            self._broc_dir = tempfile.mkdtemp() # the temporary directory storing all BROC files 
+            self._root = None
+            self._checked_configs = set()          # storing content of tag CONFIGS
+            self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files 
+            self._queue = Queue.Queue()
+            self._lack_broc = set()               # the set of module who lack BROC file 
     
         def Id(self):
             """
@@ -854,45 +856,66 @@ class BrocLoader(object):
             """
             return id(self)
 
-        def handle_configs(self, s, broc_file):
+        def SetRoot(self, root):
+            """
+            Args:
+                root : the BrocNode object
+            """
+            if not self._root:
+                self._root = root
+                BrocTree.BrocTree().SetRoot(root)
+                self._queue.put(root)
+
+        def LackBrocModules(self):
+            """
+            return the set object containing the modules that lack BROC file
+            """
+            return self._lack_broc
+
+
+        def LoadBroc(self):
+            """
+            to run main module BROC file
+            """
+            # to check 
+            while not self._queue.empty():
+                parent = self._queue.get()
+                sys.argv = ['PLANISH', parent]
+                broc_file = self._download_broc(parent)
+                if not broc_file:
+                    self._lack_broc.add(parent.module.origin_config)
+                    continue
+                try:
+                    execfile(broc_file)
+                except BaseException as err:
+                    traceback.print_exc()
+            #print dependent tree
+            BrocTree.BrocTree().Dump()
+
+        def handle_configs(self, s, parent):
             """
             Args:
                 s : xx@xx@xx set at tag CONFIGS 
-                hash_key: the hash key of parent BROC file
+                parent : the BrocNode object
             """
-            hash_key = Function.GetFileHash(broc_file)
+            if s in self._checked_configs:
+                return 
             tree = BrocTree.BrocTree()
-            parent = tree.GetModule(hash_key)
-            if not parent:
-                raise BaseException('Not found BROC of module %s' % broc_file)
-
             repo_domain = BrocConfig.BrocConfig().RepoDomain(parent.module.repo_kind)
             postfix_branch = BrocConfig.BrocConfig().SVNPostfixBranch()
             postfix_tag = BrocConfig.BrocConfig().SVNPostfixTag()
-            #Log.Log().LevPrint("MSG", 'Create child module %s' % s)
             child_module = PlanishUtil.ParseConfig(s, 
                                            parent.module.workspace, 
-                                           parent.module.dep_level, 
+                                           parent.module.dep_level + 1, 
                                            parent.module.repo_kind, 
                                            repo_domain, 
                                            postfix_branch, 
                                            postfix_tag) 
-            
+            #Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
             child_node = BrocTree.BrocNode(child_module, parent, False)
-            child_broc_file = self._download_broc(child_node)
-            if not child_broc_file:
-                raise BaseException('Not found BROC of module %s' % child_broc_file)
-            child_hash_key = Function.GetFileHash(child_broc_file)
-            Log.Log().LevPrint("MSG", "add node %s to BrocTree" % child_node.module.url)
-            tree.AddNode(child_hash_key, child_node)
             parent.AddChild(child_node)
-            sys.argv = ['PLANISH', child_broc_file]
-            try:
-                Log.Log().LevPrint("MSG", "Run BROC %s" % child_broc_file)
-                execfile(child_broc_file)
-            except BaseException as err:
-                Log.Log().LevPrint("ERROR", str(err))
-                traceback.print_exc()
+            self._queue.put(child_node)
+            self._checked_configs.add(s)
             
         def _download_broc(self, node):
             """
@@ -908,7 +931,7 @@ class BrocLoader(object):
             # for svn 
             # Log.Log().LevPrint("MSG", 'download BROC %s' % node.module.url)
             if node.module.repo_kind == BrocModule_pb2.Module.SVN:
-                hash_value = Function.CalcMd5(node.module.url)
+                hash_value = Function.CalcHash(node.module.url)
                 broc_url = os.path.join(node.module.url, 'BROC')
                 broc_path = os.path.join(self._broc_dir, "%s_BROC" % hash_value)
                 if node.module.revision:
@@ -934,14 +957,13 @@ class BrocLoader(object):
                                               % node.module.module_cvspath)
                     return None
  
-            Log.Log().LevPrint("MSG", "Get BROC file: %s" % cmd)
+            Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
             ret, msg = Function.RunCommand(cmd) 
             if ret != 0:
                 Log.Log().LevPrint("ERROR", msg)
                 return None
 
             return broc_path
-
 
     # class BrocLoader
     __instance = None

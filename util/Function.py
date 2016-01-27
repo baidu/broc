@@ -94,9 +94,9 @@ def Mkdir(target_dir):
         return False
 
 
-def CalcMd5(data):
+def CalcHash(data, method='MD5'):
     """
-    calculate the md5 of data
+    calculate hash value of data
     Args: 
         data : the data to calculate
     Returns:
@@ -110,7 +110,7 @@ def CalcMd5(data):
         return None
 
 
-def GetFileHash(path, methord='MD5'):
+def GetFileHash(path, method='MD5'):
     """
     calculate the hash of file
     Args: 
@@ -125,7 +125,7 @@ def GetFileHash(path, methord='MD5'):
         h = open(path, "rb")
         data = h.read()
         h.close()
-        return CalcMd5(data)
+        return CalcHash(data, method)
     except BaseException:
         return None
 

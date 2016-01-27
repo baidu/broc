@@ -28,6 +28,6 @@ from dependency import Syntax
 from dependency import Target
 from dependency import Environment
 from dependency import Source
-from dependency import Loader
+from dependency import CacheLoader
 from dependency import UTMaster
 
