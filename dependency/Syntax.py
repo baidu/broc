@@ -452,7 +452,7 @@ def CONFIGS(s):
     """
     if sys.argv[0] == 'PLANISH':
         broc_loader = BrocLoader()
-        broc_loader.handle_configs(s, sys.argv[1])    
+        broc_loader.handle_configs(s.strip(), sys.argv[1])    
 
 def Sources(*ss):
     """
@@ -717,7 +717,7 @@ def DIRECTORY(v):
         parent = sys.argv[1]
         child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
         if not os.path.exists(child_broc_file):
-            raise BrocArgumentIllegalError('Not found BROC %s' % child_broc_file)
+            raise BrocArgumentIllegalError('Not found BROC in Tag Directory(%s)' % v)
         try:
             execfile(child_broc_file)
         except BaseException as err:
@@ -847,6 +847,7 @@ class BrocLoader(object):
             """
             """
             self._root = None
+            sefl._nodes = dict()                   # module
             self._checked_configs = set()          # storing content of tag CONFIGS
             self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files 
             self._queue = Queue.Queue()
@@ -868,18 +869,34 @@ class BrocLoader(object):
                 BrocTree.BrocTree().SetRoot(root)
                 self._queue.put(root)
 
+        def AddNode(self, node):
+            """
+            add new node
+            Args:
+                node : the object of BrocNode
+            """
+            if node.module.module_cvspath not in self._all_nodes:
+                self._nodes[node.module.module_cvspath] = []
+            
+            self._nodes[node.module.module_cvspath].append(node)
+
+        def AllNode(self):
+            """
+            """
+            return self._nodes
+
         def LackBrocModules(self):
             """
             return the set object containing the modules that lack BROC file
             """
             return self._lack_broc
 
-
-        def LoadBroc(self):
+        def LoadBROC(self):
             """
             to run main module BROC file
             """
-            # to check 
+            # main thread to load BROC
+            # first node is root node representing main module
             while not self._queue.empty():
                 parent = self._queue.get()
                 sys.argv = ['PLANISH', parent]
@@ -891,7 +908,7 @@ class BrocLoader(object):
                     execfile(broc_file)
                 except BaseException as err:
                     traceback.print_exc()
-            #print dependent tree
+            # print dependent tree
             BrocTree.BrocTree().Dump()
 
         def handle_configs(self, s, parent):
@@ -913,9 +930,10 @@ class BrocLoader(object):
                                            repo_domain, 
                                            postfix_branch, 
                                            postfix_tag) 
-            #Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
+            # Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
             child_node = BrocTree.BrocNode(child_module, parent, False)
             parent.AddChild(child_node)
+            tree.AddNode(child_node)
             self._queue.put(child_node)
             self._checked_configs.add(s)
             

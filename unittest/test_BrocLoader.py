@@ -51,7 +51,7 @@ class TestBrocLoader(unittest.TestCase):
         loader2 = Syntax.BrocLoader()
         self.assertEqual(loader1.Id(), loader2.Id())
 
-    def test_handle_configs(self):
+    def test_load_broc(self):
         """
         """
         logger = Log.Log()
@@ -64,7 +64,7 @@ class TestBrocLoader(unittest.TestCase):
                                                          logger)
         node = BrocTree.BrocNode(root, None, True)
         Syntax.BrocLoader().SetRoot(node)
-        Syntax.BrocLoader().LoadBroc()
+        Syntax.BrocLoader().LoadBROC()
         if Syntax.BrocLoader().LackBrocModules():
             print(Syntax.BrocLoader().LackBrocModules())
 

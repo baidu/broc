@@ -66,6 +66,7 @@ import time
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)
 
+from dependency import Syntax
 from dependency import BrocTree
 from dependency import BrocModule_pb2
 from util import Function
@@ -84,8 +85,7 @@ class Planish(object):
             logger : the log facility object
             postfix : the list of postfix [postfix_branche, postfix_tag]
         """
-        self._dep_tree = BrocTree.BrocTree()
-        self._dep_tree.SetRoot(main_module)
+        Syntax.BrocLoader().SetRoot(BrocNode(main_module, None, True)
         self.logger = logger
         self.planished_nodes = dict()  # module cvspath --> BrocNode
 
@@ -101,23 +101,21 @@ class Planish(object):
         Args:
             download_flag : whether download the code of module, if it is set True download code, and vice versa
         Returns:
-            True if planish successfully, otherwise return False
+            return True if planish successfully, otherwise return False
         """
         self.logger.LevPrint('MSG', 'Analyzing dependency ...')
         # create dependent tree
         try:
-            self._dep_tree.ConstructTree()
-        except BrocTree.BrocTreeError as err:
+            Syntax.BrocLoader().LoadBROC()
+        except BaseException as err:
             self.logger.LevPrint('ERROR', '%s' % err)
             return False
         #check graph has circles
-        (ret, msg) = self._dep_tree.HasCircle()
+        (ret, msg) = BrocTree.BrocTree().HasCircle()
         if ret:
             self.logger.LevPrint("ERROR",
                     "There is a circle in dependency graph\nCircle is [%s]" % msg, False)
             return False
-        # dump origin dependency tree
-        self._dep_tree.Dump() 
 
         nodes = self._dep_tree.AllNodes()
         for k, nodes in nodes.iteritems():

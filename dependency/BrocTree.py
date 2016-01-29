@@ -122,21 +122,11 @@ class BrocTree(object):
             """
             """
             self._root = None
-            self._all_nodes = dict() 
 
         def __del__(self):
             """
             """
             pass
-
-        def GetModule(self, hash_key):
-            """
-            return node whose BROC's hash value is hash_key
-            """ 
-            if hash_key in self._all_nodes:
-                return self._all_nodes[hash_key]
-            else:
-                return None
 
         def Id(self):
             """
@@ -162,8 +152,6 @@ class BrocTree(object):
                 self._repo_damain = broc_config.RepoDomain(root.module.repo_kind)
                 self._postfix = [broc_config.SVNPostfixBranch(), broc_config.SVNPostfixTag()]
                 broc_file = os.path.join(root.module.workspace, root.module.broc_cvspath)
-                hash_key = self.GetNodeHash(self._root)
-                self._all_nodes[hash_key] = self._root
 
         def GetNodeHash(self, node):
             """
@@ -179,23 +167,6 @@ class BrocTree(object):
                 key = node.module.module_cvspath + str(node.module.br_kind) + node.module.br_name
 
             return Function.CalcHash(key)
-
-        def AllNodes(self):
-            """
-            return all nodes
-            """
-            return self._all_nodes
-
-        def _add_node(self, node):
-            """
-            add new node
-            Args:
-                node : the object of BrocNode
-            """
-            if node.module.module_cvspath not in self._all_nodes:
-                self._all_nodes[node.module.module_cvspath] = []
-            
-            self._all_nodes[node.module.module_cvspath].append(node)
 
         def SameSvnNode(self, node):
             """
