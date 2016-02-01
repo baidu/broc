@@ -172,14 +172,15 @@ reload it(%s)" % (node.module.origin_config))
                 cmd = "svn checkout %s %s" % (url, node.module.root_path)
             else:
                 # for git
-                #cmd = "cd %s && git fetch --all" % node.module.module_cvspath
                 cmd = "cd %s" % node.module.module_cvspath
                 if node.module.tag_name:
-                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
-% (node.module.tag_name, node.module.tag_name)
+                    tag_name = node.module.tag_name
+                    cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                           % (tag_name, tag_name, tag_name, tag_name)
                 else:
-                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
-% (node.module.br_name, node.module.br_name)
+                    br_name = node.module.br_name
+                    cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                           % (br_name, br_name, br_name, br_name)
 
             self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)

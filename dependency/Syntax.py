@@ -976,11 +976,13 @@ class BrocLoader(object):
                           % ("%s.git" % node.module.url, "%s" % broc_dir)
 
                 if node.module.br_name:
-                    cmd += "cd %s && (git checkout %s || (git fetch --all && git checkout %s))" \
-                           % (broc_dir, node.module.br_name, node.module.br_name)
+                    br_name = node.module.br_name
+                    cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                           % (broc_dir, br_name, br_name, br_name, br_name)
                 elif node.module.tag_name:
-                    cmd += "cd %s && (git checkout %s || (git fetch --all && git checkout %s ))" \
-                           % (broc_dir, node.module.tag_name, node.module.tag_name)
+                    tag_name = node.module.tag_name
+                    cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                           % (broc_dir, tag_name, tag_name, tag_name, tag_name)
                 else:
                     Log.Log().LevPrint("ERROR", "couldn't find node(%s) BROC file" \
                                               % node.module.module_cvspath)
