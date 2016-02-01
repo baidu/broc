@@ -475,7 +475,7 @@ def Sources(*ss):
     all_files = GLOB(" ".join(files)).split(' ')
     for f in all_files:
         if not f.startswith(os.path.join("broc_out", env.ModuleCVSPath())):
-            f = os.path.join(env.ModuleCVSPath(), f)
+            f = os.path.join(os.path.dirname(env.BrocCVSPath()), f)
         src = _CreateSources(f, args)
         tag.AddSV(src)
 
@@ -712,16 +712,25 @@ def DIRECTORY(v):
     Add sub directory
     Args:
        v : the name of subdirectory, v is relative path
-    """   
+    """ 
+    # gather all dependent module  
     if sys.argv[0] == 'PLANISH':
         parent = sys.argv[1]
         child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
         if not os.path.exists(child_broc_file):
-            raise BrocArgumentIllegalError('Not found BROC in Tag Directory(%s)' % v)
+            raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
         try:
             execfile(child_broc_file)
         except BaseException as err:
             traceback.print_exc()
+            raise BrocArgumentIllegalError(err)
+    else: # find all targets to build
+        env = Environment.GetCurrent()
+        child_broc_file = os.path.join(env._module.root_path, v, 'BROC')
+        if not os.path.exists(child_broc_file):
+            raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
+        # Log.Log().LevPrint("INFO", 'add sub directory (%s) for module %s' % (v, env._module.module_cvspath)) 
+        env.AddSubDir(v)
 
 def PUBLISH(srcs, out_dir):
     """
@@ -847,11 +856,11 @@ class BrocLoader(object):
             """
             """
             self._root = None
-            sefl._nodes = dict()                   # module
+            self._nodes = dict()                   # module
             self._checked_configs = set()          # storing content of tag CONFIGS
             self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files 
             self._queue = Queue.Queue()
-            self._lack_broc = set()               # the set of module who lack BROC file 
+            self._lack_broc = set()                # the set of module who lack BROC file 
     
         def Id(self):
             """
@@ -875,12 +884,12 @@ class BrocLoader(object):
             Args:
                 node : the object of BrocNode
             """
-            if node.module.module_cvspath not in self._all_nodes:
+            if node.module.module_cvspath not in self._nodes:
                 self._nodes[node.module.module_cvspath] = []
             
             self._nodes[node.module.module_cvspath].append(node)
 
-        def AllNode(self):
+        def AllNodes(self):
             """
             """
             return self._nodes
@@ -933,7 +942,7 @@ class BrocLoader(object):
             # Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
             child_node = BrocTree.BrocNode(child_module, parent, False)
             parent.AddChild(child_node)
-            tree.AddNode(child_node)
+            self.AddNode(child_node)
             self._queue.put(child_node)
             self._checked_configs.add(s)
             

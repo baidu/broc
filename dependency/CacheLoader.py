@@ -15,6 +15,8 @@ import os
 import sys
 import threading
 import Queue
+import copy
+import traceback
 
 broc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_path)
@@ -31,7 +33,7 @@ class CacheLoader(object):
     def __init__(self, node, module_queue, logger, mode='build', wokers=5):
         """
         Args:
-            env : the Environment of main module
+            node : BrocModule_pb.Module object, the root node representing main module
             module_queue : the queue object storing BrocModule_pb2.Module objectes
             logger : the Log.Log object
             mode : the mode of build, mode can be 'build' or 'release', the default is 'build'
@@ -81,17 +83,55 @@ class CacheLoader(object):
             self._main_env.DisableDebug()
 
         Environment.SetCurrent(self._main_env)
+        sys.argv = ['NOT PLANISH', None]
         try:
             execfile(f)
         except BaseException as ex:
+            traceback.print_exc()
             self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
                                  % (self._main_module.broc_cvspath, ex))
             return False
 
         self._main_env.Action()
-        self._add_env(self._main_module.module_cvspath, self._main_env)
-        
+        self._add_env(self._main_module.broc_cvspath, self._main_env)
+       
+        if not self.InitSubEnvironment(self._main_env):
+            return False
+  
         return True
+
+    def InitSubEnvironment(self, parent):
+        """
+        to init child env object whose comes from DIRECTORY tag
+        Args:
+            parent : the parent environment object 
+        """
+        subdirs = parent.SubDirs()
+        if not subdirs:
+            return True
+
+        for subdir in subdirs:
+            child_broc_cvspath =  os.path.join(parent.Module().module_cvspath, subdir, 'BROC')
+            child_module = copy.deepcopy(parent.Module())
+            child_module.broc_cvspath = child_broc_cvspath
+            child_env = Environment.Environment(child_module)
+            if self._build_mode == "release":
+                child_env.DisableDebug()
+            f = os.path.join(parent.Module().workspace, child_broc_cvspath)
+            Environment.SetCurrent(child_env)
+            sys.argv = ['NOT PLANISH', None]
+            try:
+                execfile(f)
+            except BaseException as ex:
+                traceback.print_exc()
+                self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
+                                     % (self._main_module.broc_cvspath, ex))
+                return False
+
+            child_env.Action()
+            self._add_env(child_broc_cvspath, child_env)
+            parent.AddSubEnv(child_env)
+            return True
 
     def MainEnv(self):
         """
@@ -105,15 +145,15 @@ class CacheLoader(object):
         """
         return self._load_ok
 
-    def _add_env(self, module_cvspath, env):
+    def _add_env(self, broc_cvspath, env):
         """
         add env object
         Args:
-            module_cvspath : the cvs pat of module
+            broc_cvspath : the cvs path of broc file
             env : the Environment object
         """
         self._lock_env_cache.acquire()
-        self._env_cache[module_cvspath] = env
+        self._env_cache[broc_cvspath] = env
         self._lock_env_cache.release()
 
     def _load_all_broc(self):
@@ -149,8 +189,10 @@ class CacheLoader(object):
 
             env.SetCompilerDir(self._main_env.CompilerDir())
             env.Action()
+            self._add_env(module.broc_cvspath, env)
+            if not self.InitSubEnvironment(env):
+                break
 
-            self._add_env(module.module_cvspath, env)
             self._queue.task_done()
 
     def Envs(self):

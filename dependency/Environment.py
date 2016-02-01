@@ -86,6 +86,8 @@ class Environment(object):
 
         self._sources = []
         self._targets = []
+        self._subdirs = set()  # storing the relative path of sub directory 
+        self._subenvs = dict() # sub broc file --> env object
 
     def DisableDebug(self):
         """
@@ -99,11 +101,39 @@ class Environment(object):
         """
         return self._build_mode
 
+    def AddSubDir(self, v):
+        """
+        Add subdirectory v
+        """
+        self._subdirs.add(v)
+        self._subenvs[v] = None
+
+    def AddSubEnv(self, env):
+        """
+        add sub env object to self
+        """
+        if env.Module().broc_cvspath in self._subenvs:
+            pass
+        else:
+            self._subenvs[env.Module().broc_cvspath] = env
+
+    def SubDirs(self):
+        """
+        return the sub directory set
+        """
+        return self._subdirs
+
     def Workspace(self):
         """
         return abs path of workspace
         """
         return self._module.workspace
+
+    def Module(self):
+        """
+        return BrocModule_pb2.Module object that env object representing
+        """
+        return self._module
 
     def ModulePath(self):
         """

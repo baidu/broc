@@ -122,6 +122,7 @@ class BrocTree(object):
             """
             """
             self._root = None
+            self._checked_nodes = list()
 
         def __del__(self):
             """
@@ -218,7 +219,7 @@ class BrocTree(object):
 
         def _has_circle(self, node):
             """
-            depth-First traverse dependency graph. self._checked_node is the list of traversed nodes.
+            depth-First traverse dependency graph. self._checked_nodes is the list of traversed nodes.
             if there is a node which appears twice in the list, the graph must have a dependent circle.
             Args :
                 node : Broc Tree Node
@@ -228,16 +229,16 @@ class BrocTree(object):
             """
             for kid in node.Children():
                 # check is there a node which appears twice
-                if kid.module.module_cvspath in self._checked_node:
+                if kid.module.module_cvspath in self._checked_nodes:
                     # store the node which appears twice, then we can get a path with circle in it.
-                    self._checked_node.append(kid.module.module_cvspath)
+                    self._checked_nodes.append(kid.module.module_cvspath)
                     return True
                 # store the node which has been traversed.
-                self._checked_node.append(kid.module.module_cvspath)
+                self._checked_nodes.append(kid.module.module_cvspath)
                 ret = self._has_circle(kid)
                 if ret:
                     return True
-                self._checked_node.pop()
+                self._checked_nodes.pop()
 
             return False
 
@@ -249,13 +250,13 @@ class BrocTree(object):
                 False : dependency graph doesn't has circles
             """
             root_node = self._root
-            self._checked_node.append(root_node.module.module_cvspath)
+            self._checked_nodes.append(root_node.module.module_cvspath)
             ret = self._has_circle(root_node)
             msg = ""
             if ret:
-                msg = self._checked_node[0]
-                for i in range(1, len(self._checked_node)):
-                    msg = msg + ' -> ' + self._checked_node[i]
+                msg = self._checked_nodes[0]
+                for i in range(1, len(self._checked_nodes)):
+                    msg = msg + ' -> ' + self._checked_nodes[i]
             return ret, msg
 
 
