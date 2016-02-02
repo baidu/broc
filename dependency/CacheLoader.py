@@ -45,7 +45,7 @@ class CacheLoader(object):
         self._build_mode = mode
         self._workers = wokers
         self._lock_env_cache = threading.Lock()
-        self._env_cache = dict() # { module cvs path : Environment }
+        self._env_cache = dict() # { broc cvs path : Environment }
         self._load_done = False
         self._load_ok = True
         self._main_env = None
@@ -60,7 +60,7 @@ class CacheLoader(object):
 
         for i in range(0, self._workers):
             t = threading.Thread(target=self._load_all_broc)
-            t.daemon = True
+            #t.daemon = True
             t.start()
         
         # waiting for all BROC files have been deal
@@ -178,21 +178,26 @@ class CacheLoader(object):
             try:
                 execfile(f)
             except BaseException as ex:
-                self._queue.task_done()
                 traceback.print_exc()
                 self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' % (module.broc_cvspath, ex))
-                self._load_done = True
-                self._load_ok = False
-                # discard all BROC in queue
+                # discard all module in queue
                 while not self._queue.empty():
                     self._queue.get()
                     self._queue.task_done()
+                self._load_done = True
+                self._load_ok = False
+                self._queue.task_done()
                 break
 
             env.SetCompilerDir(self._main_env.CompilerDir())
             env.Action()
             self._add_env(module.broc_cvspath, env)
             if not self.InitSubEnvironment(env):
+                while not self._queue.empty():
+                    self._queue.get()
+                    self._queue.task_done()
+                self._load_done = True
+                self._load_ok = False
                 break
 
             self._queue.task_done()
