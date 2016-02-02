@@ -55,7 +55,6 @@ class CacheLoader(object):
         initialize loading thread, main process waits for all BROC done
         """
         if not self._load_main_broc():
-            self._load_done = False
             self._load_ok = False
             return 
 
@@ -90,6 +89,7 @@ class CacheLoader(object):
             traceback.print_exc()
             self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
                                  % (self._main_module.broc_cvspath, ex))
+            self._load_ok = False
             return False
 
         self._main_env.Action()
@@ -126,6 +126,7 @@ class CacheLoader(object):
                 traceback.print_exc()
                 self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
                                      % (self._main_module.broc_cvspath, ex))
+                self._load_ok = False
                 return False
 
             child_env.Action()
@@ -178,6 +179,7 @@ class CacheLoader(object):
                 execfile(f)
             except BaseException as ex:
                 self._queue.task_done()
+                traceback.print_exc()
                 self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' % (module.broc_cvspath, ex))
                 self._load_done = True
                 self._load_ok = False

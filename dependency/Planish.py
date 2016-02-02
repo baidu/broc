@@ -177,10 +177,13 @@ reload it(%s)" % (node.module.origin_config))
                     tag_name = node.module.tag_name
                     cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
                            % (tag_name, tag_name, tag_name, tag_name)
-                else:
+                elif node.module.br_name:
                     br_name = node.module.br_name
-                    cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
-                           % (br_name, br_name, br_name, br_name)
+                    if br_name != "master":
+                        cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (br_name, br_name, br_name, br_name)
+                    else:
+                        cmd += " && git checkout master"
 
             self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)

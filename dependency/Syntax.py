@@ -676,7 +676,7 @@ def PROTO_LIBRARY(name, files, *args):
     source = set()
     for f in proto_files:
         root, _ = os.path.splitext(f)
-        result_file = os.path.join(os.path.join('broc_out', env.ModuleCVSPath()), \
+        result_file = os.path.join(os.path.join('broc_out', env.BrocCVSDir()), \
                 "%s.pb.cc" % root)
         include.add(os.path.dirname(result_file))
         if os.path.dirname(f):
@@ -969,30 +969,26 @@ class BrocLoader(object):
             else:
                 # for GIT
                 broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
-                cmd = ""
                 broc_dir = os.path.dirname(broc_path)
                 if not os.path.exists(broc_path):
                     cmd += "git clone %s %s &&" \
                           % ("%s.git" % node.module.url, "%s" % broc_dir)
 
-                if node.module.br_name:
-                    br_name = node.module.br_name
-                    cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
-                           % (broc_dir, br_name, br_name, br_name, br_name)
-                elif node.module.tag_name:
-                    tag_name = node.module.tag_name
-                    cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
-                           % (broc_dir, tag_name, tag_name, tag_name, tag_name)
-                else:
-                    Log.Log().LevPrint("ERROR", "couldn't find node(%s) BROC file" \
-                                              % node.module.module_cvspath)
+                    if node.module.br_name and node.module.br_name != 'master':
+                        br_name = node.module.br_name
+                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (broc_dir, br_name, br_name, br_name, br_name)
+                    elif node.module.tag_name:
+                        tag_name = node.module.tag_name
+                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (broc_dir, tag_name, tag_name, tag_name, tag_name)
+
+            if cmd: 
+                Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
+                ret, msg = Function.RunCommand(cmd) 
+                if ret != 0:
+                    Log.Log().LevPrint("ERROR", msg)
                     return None
- 
-            Log.Log().LevPrint("MSG", "Getting BROC : %s ..." % cmd)
-            ret, msg = Function.RunCommand(cmd) 
-            if ret != 0:
-                Log.Log().LevPrint("ERROR", msg)
-                return None
 
             return broc_path
 

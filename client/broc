@@ -214,9 +214,12 @@ def _build(options, do_ut=False):
     for node in nodes:
         queue.put(node.module) 
     loader = CacheLoader.CacheLoader(root_node, queue, logger, options['mode'], 4)
+    Log.Log().LevPrint("MSG", 'Start gathering build targets ...')
     loader.LoadBroc()
     if not loader.LoadOK():
+        Log.Log().LevPrint("MSG", 'Gathering build targets Failed')
         return -1
+    Log.Log().LevPrint("MSG", 'Gathering build targets OK')
     # to find all of targets needed to be built
     envs = loader.Envs()
     for env in envs:
@@ -245,6 +248,7 @@ def _build(options, do_ut=False):
             return 0
         else:
             return -1
+
     task_master = TaskMaster.TaskMaster(options['jobs'], 
                                         cache_master,
                                         modified_targets,

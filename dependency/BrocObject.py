@@ -228,7 +228,7 @@ class BrocObject(object):
             self.build = False
             result['ret'] = True
 
-        result['msg'] = msg
+        result['msg'] = self.build_cmd + '\n' + msg
         return result
 
     def NotifyReverseDeps(self):
