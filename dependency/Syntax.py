@@ -17,9 +17,9 @@ import os
 import sys
 import string
 import glob
+import traceback
 import tempfile
 import Queue
-import traceback
 
 broc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_path)
@@ -100,7 +100,7 @@ def COMPILER_PATH(k):
         k : string object, compiler's directory, for example: if you set k as '/usr/bin',
             we should find 'gcc' and 'g++' in directory /usr/bin
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     env.SetCompilerDir(k)
@@ -113,7 +113,7 @@ def CPPFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     # default build mode is debug, it can be modified by command 'broc' by user
@@ -130,7 +130,7 @@ def CppFlags(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagCppFlags()
@@ -150,7 +150,7 @@ def CFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     # default build mode is debug, it can be modified by command 'broc' by user
@@ -169,7 +169,7 @@ def CFlags(d_flags, r_flags):
        r_flags : release mode preprocess flags
     """
     tag = SyntaxTag.TagCFlags()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagCFlags()
@@ -188,7 +188,7 @@ def CXXFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     
     env = Environment.GetCurrent()
@@ -207,7 +207,7 @@ def CxxFlags(d_flags, r_flags):
        r_flags : release mode preprocess flags
     """
     tag = SyntaxTag.TagCxxFlags()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
@@ -226,7 +226,7 @@ def CONVERT_OUT(s):
     Returns:
         return the relative path of responsed output directory 
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return ""
     env = Environment.GetCurrent()
     _s = os.path.normpath(os.path.join(env.BrocDir(), s))
@@ -248,7 +248,7 @@ def INCLUDE(*ss):
             3. if path is output directory, it must start with 'broc_out/'
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     tag = env.IncludePaths()
@@ -288,7 +288,7 @@ def Include(*ss):
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
     tag = SyntaxTag.TagInclude()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     env = Environment.GetCurrent()
     broc_abs_dir = env.BrocDir()
@@ -330,7 +330,7 @@ def Libs(*ss):
         SyntaxTag.TagLibs() 
     """
     tag = SyntaxTag.TagLibs()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     for s in ss:
         if not isinstance(s, str):
@@ -362,7 +362,7 @@ def LDFLAGS(d_flags, r_flags):
         d_flags : link flags in debug mode
         r_flags : link flags in release mode
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
@@ -379,7 +379,7 @@ def LDFlags(d_flags, r_flags):
         r_flags : link flags in release mode
     """
     tag = SyntaxTag.TagLDFlags()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
@@ -398,7 +398,7 @@ def GLOB(*ss):
     Returns:
         string containing the relative path of files or directories, each path separeated by blank character
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return ""
     env = Environment.GetCurrent()
     strs=[]
@@ -467,7 +467,7 @@ def Sources(*ss):
         TagSources Object
     """
     tag = SyntaxTag.TagSources()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     # FIX ME: you can extend wildcard
     files, args = _ParseNameAndArgs(*ss)
@@ -512,7 +512,7 @@ def APPLICATION(name, sources, *args):
         sources : the SyntaxTag.TagSource object
         args: a variable number of SyntaxTag.TagLDFlags and SyntaxTag.TagLibs 
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     # to check name of result file 
     if not Function.CheckName(name):
@@ -541,7 +541,7 @@ def STATIC_LIBRARY(name, *args):
         name : the name of .a file
         args : the variable number of SyntagTag.TagSources, SyntaxTag.TagLibs object
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     # to check name of result file
     if not Function.CheckName(name):
@@ -575,7 +575,7 @@ def UT_APPLICATION(name, sources, *args):
         sources : the SyntaxTag.TagSource object
         args : a variable number of SyntaxTag.TagLinkLDFlags, SyntaxTag.TagLibs, SyntaxTag.TagUTArgs 
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     # to check name of result file
     if not Function.CheckName(name):
@@ -611,7 +611,7 @@ def ProtoFlags(*ss):
         return a 
     """
     tag = SyntaxTag.TagProtoFlags()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     env = Environment.GetCurrent()
     for s in ss:
@@ -637,7 +637,7 @@ def PROTO_LIBRARY(name, files, *args):
         files: a string sperearated by blank character, representing the relative path of proto files
         args: a variable number of SyntaxTag.TagProtoFlags, SyntaxTag.TagInclude, SyntaxTag.CppFlags, SyntaxTag.CXXFlags, SyntaxTag.TagLibs
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     # check validity of name
     if not Function.CheckName(name):
@@ -702,7 +702,7 @@ def UTArgs(v):
     tag UTArgs
     """
     tag = SyntaxTag.TagUTArgs()
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return tag
     tag.AddV(v)
     return tag
@@ -714,9 +714,15 @@ def DIRECTORY(v):
        v : the name of subdirectory, v is relative path
     """ 
     # gather all dependent module  
+    env = Environment.GetCurrent()
+    child_broc_dir = os.path.abspath(os.path.join(env.ModulePath(), v))
+    if env.ModulePath() not in child_broc_dir:
+            raise BrocArgumentIllegalError("DIRECTORY(%s) is wrong: %s not in %s" % \
+                                          (child_broc_dir, env.ModulePath())
+
+    child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
     if sys.argv[0] == 'PLANISH':
         parent = sys.argv[1]
-        child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
         if not os.path.exists(child_broc_file):
             raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
         try:
@@ -725,8 +731,6 @@ def DIRECTORY(v):
             traceback.print_exc()
             raise BrocArgumentIllegalError(err)
     else: # find all targets to build
-        env = Environment.GetCurrent()
-        child_broc_file = os.path.join(env._module.root_path, v, 'BROC')
         if not os.path.exists(child_broc_file):
             raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
         # Log.Log().LevPrint("INFO", 'add sub directory (%s) for module %s' % (v, env._module.module_cvspath)) 
@@ -740,7 +744,7 @@ def PUBLISH(srcs, out_dir):
         out_dir: the destination directory that must start with $OUT
         if argument is illeagl, raise BrocArgumentIllegalError 
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     if not out_dir.strip().startswith('$OUT'):
@@ -759,7 +763,7 @@ def SVN_PATH():
     """
     return local path of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnPath()
@@ -769,7 +773,7 @@ def SVN_URL():
     """
     return url of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnUrl()
@@ -779,7 +783,7 @@ def SVN_REVISION():
     """
     return revision of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnRevision()
@@ -789,7 +793,7 @@ def SVN_LAST_CHANGED_REV():
     """
     return last changed rev
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.SvnLastChangedRev()
@@ -799,7 +803,7 @@ def GIT_PATH():
     """
     return local path of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitPath()
@@ -809,7 +813,7 @@ def GIT_URL():
     """
     return url of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitUrl()
@@ -819,7 +823,7 @@ def GIT_BRANCH():
     """
     return the branch name of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitBranch()
@@ -829,7 +833,7 @@ def GIT_COMMIT_ID():
     """
     return the commit id of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitCommitID()
@@ -839,7 +843,7 @@ def GIT_TAG():
     """
     return the tag of module
     """
-    if sys.argv[0]=='PLANISH':
+    if sys.argv[0] == 'PLANISH':
         return
     env = Environment.GetCurrent()
     return env.GitTag()
