@@ -17,7 +17,8 @@ import os
 import sys
 import string
 import glob
-import threading
+import traceback
+import tempfile
 import Queue
 
 broc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -27,7 +28,12 @@ from dependency import SyntaxTag
 from dependency import Environment
 from dependency import Source
 from dependency import Target
+from dependency import PlanishUtil
+from dependency import BrocTree
+from dependency import BrocConfig
+from dependency import BrocModule_pb2
 from util import Function
+from util import Log
 
 class NotInSelfModuleError(Exception):
     """
@@ -94,6 +100,8 @@ def COMPILER_PATH(k):
         k : string object, compiler's directory, for example: if you set k as '/usr/bin',
             we should find 'gcc' and 'g++' in directory /usr/bin
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     env.SetCompilerDir(k)
 
@@ -105,6 +113,8 @@ def CPPFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     # default build mode is debug, it can be modified by command 'broc' by user
     if env.BuildMode() == "debug":
@@ -120,6 +130,8 @@ def CppFlags(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagCppFlags()
     # default build mode is debug, it can be modified by command 'broc' by user
@@ -138,6 +150,8 @@ def CFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     # default build mode is debug, it can be modified by command 'broc' by user
     if env.BuildMode() == "debug":
@@ -154,6 +168,9 @@ def CFlags(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
+    tag = SyntaxTag.TagCFlags()
+    if sys.argv[0] == 'PLANISH':
+        return tag
     env = Environment.GetCurrent()
     tag = SyntaxTag.TagCFlags()
     if env.BuildMode() == "debug":
@@ -171,6 +188,9 @@ def CXXFLAGS(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
+    if sys.argv[0] == 'PLANISH':
+        return
+    
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
         env.CxxFlags().AddSV(d_flags)
@@ -186,8 +206,10 @@ def CxxFlags(d_flags, r_flags):
        d_flags : debug mode preprocess flags
        r_flags : release mode preprocess flags
     """
-    env = Environment.GetCurrent()
     tag = SyntaxTag.TagCxxFlags()
+    if sys.argv[0] == 'PLANISH':
+        return tag
+    env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
         tag.AddSV(d_flags)
     else:
@@ -204,6 +226,8 @@ def CONVERT_OUT(s):
     Returns:
         return the relative path of responsed output directory 
     """
+    if sys.argv[0] == 'PLANISH':
+        return ""
     env = Environment.GetCurrent()
     _s = os.path.normpath(os.path.join(env.BrocDir(), s))
     # to check whether _s beneathes directory of module
@@ -224,6 +248,8 @@ def INCLUDE(*ss):
             3. if path is output directory, it must start with 'broc_out/'
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     tag = env.IncludePaths()
     broc_dir = env.BrocDir()
@@ -261,10 +287,12 @@ def Include(*ss):
             3. if path is output directory, it must start with 'broc_out/'
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
     """
+    tag = SyntaxTag.TagInclude()
+    if sys.argv[0] == 'PLANISH':
+        return tag
     env = Environment.GetCurrent()
     broc_abs_dir = env.BrocDir()
     broc_cvs_dir = env.BrocCVSDir()
-    tag = SyntaxTag.TagInclude()
     for s in ss:
         ps = string.split(s)
         for x in ps:
@@ -302,6 +330,8 @@ def Libs(*ss):
         SyntaxTag.TagLibs() 
     """
     tag = SyntaxTag.TagLibs()
+    if sys.argv[0] == 'PLANISH':
+        return tag
     for s in ss:
         if not isinstance(s, str):
             raise BrocArgumentIllegalError("argument %s is illegal in tag Libs" % s)
@@ -332,6 +362,8 @@ def LDFLAGS(d_flags, r_flags):
         d_flags : link flags in debug mode
         r_flags : link flags in release mode
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
         env.LDFlags().AddSV(d_flags)
@@ -346,8 +378,10 @@ def LDFlags(d_flags, r_flags):
         d_flags : link flags in debug mode
         r_flags : link flags in release mode
     """
-    env = Environment.GetCurrent()
     tag = SyntaxTag.TagLDFlags()
+    if sys.argv[0] == 'PLANISH':
+        return tag
+    env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
         tag.AddSV(d_flags)
     else:
@@ -364,6 +398,8 @@ def GLOB(*ss):
     Returns:
         string containing the relative path of files or directories, each path separeated by blank character
     """
+    if sys.argv[0] == 'PLANISH':
+        return ""
     env = Environment.GetCurrent()
     strs=[]
     for s in ss:
@@ -410,12 +446,13 @@ def _ParseNameAndArgs(*ss):
     return (files, args)
 
 
-def CONFIGS(*ss):
+def CONFIGS(s):
     """
     gather dependency modules
     """
-    pass
-
+    if sys.argv[0] == 'PLANISH':
+        broc_loader = BrocLoader()
+        broc_loader.handle_configs(s.strip(), sys.argv[1])    
 
 def Sources(*ss):
     """
@@ -429,14 +466,16 @@ def Sources(*ss):
     Returns:
         TagSources Object
     """
+    tag = SyntaxTag.TagSources()
+    if sys.argv[0] == 'PLANISH':
+        return tag
     # FIX ME: you can extend wildcard
     files, args = _ParseNameAndArgs(*ss)
-    tag = SyntaxTag.TagSources()
     env = Environment.GetCurrent()
     all_files = GLOB(" ".join(files)).split(' ')
     for f in all_files:
         if not f.startswith(os.path.join("broc_out", env.ModuleCVSPath())):
-            f = os.path.join(env.ModuleCVSPath(), f)
+            f = os.path.join(os.path.dirname(env.BrocCVSPath()), f)
         src = _CreateSources(f, args)
         tag.AddSV(src)
 
@@ -473,6 +512,8 @@ def APPLICATION(name, sources, *args):
         sources : the SyntaxTag.TagSource object
         args: a variable number of SyntaxTag.TagLDFlags and SyntaxTag.TagLibs 
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     # to check name of result file 
     if not Function.CheckName(name):
         raise BrocArgumentIllegalError("name(%s) in APPLICATION is illegal" % name)
@@ -500,6 +541,8 @@ def STATIC_LIBRARY(name, *args):
         name : the name of .a file
         args : the variable number of SyntagTag.TagSources, SyntaxTag.TagLibs object
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     # to check name of result file
     if not Function.CheckName(name):
         raise BrocArgumentIllegalError("name(%s) in STATIC_LIBRARY is illegal" % name)
@@ -532,6 +575,8 @@ def UT_APPLICATION(name, sources, *args):
         sources : the SyntaxTag.TagSource object
         args : a variable number of SyntaxTag.TagLinkLDFlags, SyntaxTag.TagLibs, SyntaxTag.TagUTArgs 
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     # to check name of result file
     if not Function.CheckName(name):
         raise BrocArgumentIllegalError("name(%s) in UT_APPLICATION is illegal")
@@ -565,8 +610,10 @@ def ProtoFlags(*ss):
     Returns:
         return a 
     """
-    env = Environment.GetCurrent()
     tag = SyntaxTag.TagProtoFlags()
+    if sys.argv[0] == 'PLANISH':
+        return tag
+    env = Environment.GetCurrent()
     for s in ss:
         ps = s.split()
         for x in ps:
@@ -590,6 +637,8 @@ def PROTO_LIBRARY(name, files, *args):
         files: a string sperearated by blank character, representing the relative path of proto files
         args: a variable number of SyntaxTag.TagProtoFlags, SyntaxTag.TagInclude, SyntaxTag.CppFlags, SyntaxTag.CXXFlags, SyntaxTag.TagLibs
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     # check validity of name
     if not Function.CheckName(name):
         raise BrocArgumentIllegalError("name(%s) PROTO_LIBRARY is illegal" % name)
@@ -627,7 +676,7 @@ def PROTO_LIBRARY(name, files, *args):
     source = set()
     for f in proto_files:
         root, _ = os.path.splitext(f)
-        result_file = os.path.join(os.path.join('broc_out', env.ModuleCVSPath()), \
+        result_file = os.path.join(os.path.join('broc_out', env.BrocCVSDir()), \
                 "%s.pb.cc" % root)
         include.add(os.path.dirname(result_file))
         if os.path.dirname(f):
@@ -653,19 +702,39 @@ def UTArgs(v):
     tag UTArgs
     """
     tag = SyntaxTag.TagUTArgs()
+    if sys.argv[0] == 'PLANISH':
+        return tag
     tag.AddV(v)
     return tag
 
-
-def DIRECOTYR(v): 
+def DIRECTORY(v): 
     """
     Add sub directory
     Args:
        v : the name of subdirectory, v is relative path
-    """   
+    """ 
+    # gather all dependent module  
     env = Environment.GetCurrent()
-    env.AppendSubDirectory(os.path.normpath(v))
+    child_broc_dir = os.path.abspath(os.path.join(env.ModulePath(), v))
+    if env.ModulePath() not in child_broc_dir:
+            raise BrocArgumentIllegalError("DIRECTORY(%s) is wrong: %s not in %s" % \
+                                          (child_broc_dir, env.ModulePath())
 
+    child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
+    if sys.argv[0] == 'PLANISH':
+        parent = sys.argv[1]
+        if not os.path.exists(child_broc_file):
+            raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
+        try:
+            execfile(child_broc_file)
+        except BaseException as err:
+            traceback.print_exc()
+            raise BrocArgumentIllegalError(err)
+    else: # find all targets to build
+        if not os.path.exists(child_broc_file):
+            raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
+        # Log.Log().LevPrint("INFO", 'add sub directory (%s) for module %s' % (v, env._module.module_cvspath)) 
+        env.AddSubDir(v)
 
 def PUBLISH(srcs, out_dir):
     """
@@ -675,6 +744,8 @@ def PUBLISH(srcs, out_dir):
         out_dir: the destination directory that must start with $OUT
         if argument is illeagl, raise BrocArgumentIllegalError 
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     if not out_dir.strip().startswith('$OUT'):
         raise BrocArgumentIllegalError("PUBLISH argument dst(%s) must start with $OUT \
@@ -692,6 +763,8 @@ def SVN_PATH():
     """
     return local path of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.SvnPath()
 
@@ -700,6 +773,8 @@ def SVN_URL():
     """
     return url of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.SvnUrl()
 
@@ -708,6 +783,8 @@ def SVN_REVISION():
     """
     return revision of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.SvnRevision()
 
@@ -716,6 +793,8 @@ def SVN_LAST_CHANGED_REV():
     """
     return last changed rev
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.SvnLastChangedRev()
 
@@ -724,6 +803,8 @@ def GIT_PATH():
     """
     return local path of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.GitPath()
         
@@ -732,6 +813,8 @@ def GIT_URL():
     """
     return url of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.GitUrl()
 
@@ -740,6 +823,8 @@ def GIT_BRANCH():
     """
     return the branch name of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.GitBranch()
 
@@ -748,6 +833,8 @@ def GIT_COMMIT_ID():
     """
     return the commit id of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.GitCommitID()
 
@@ -756,142 +843,175 @@ def GIT_TAG():
     """
     return the tag of module
     """
+    if sys.argv[0] == 'PLANISH':
+        return
     env = Environment.GetCurrent()
     return env.GitTag()
 
-
-class Loader(object):
+class BrocLoader(object):
     """
-    This class parses all BROC file and creates Environment object for each BROC
+    the class loading BROC file
     """
-    def __init__(self, node, module_queue, logger, mode='build', wokers=5):
+    class __impl(object):
         """
-        Args:
-            env : the Environment of main module
-            module_queue : the queue object storing BrocModule_pb2.Module objectes
-            logger : the Log.Log object
-            mode : the mode of build, mode can be 'build' or 'release', the default is 'build'
-            workers: the number of thread object loading BROC 
+        the implementation of singleton interface
         """
-        self._main_module = node
-        self._queue = module_queue
-        self._logger = logger
-        self._build_mode = mode
-        self._workers = wokers
-        self._lock_env_cache = threading.Lock()
-        self._env_cache = dict() # { module cvs path : Environment }
-        self._load_done = False
-        self._load_ok = True
-        self._main_env = None
+        def __init__(self):
+            """
+            """
+            self._root = None
+            self._nodes = dict()                   # module
+            self._checked_configs = set()          # storing content of tag CONFIGS
+            self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files 
+            self._queue = Queue.Queue()
+            self._lack_broc = set()                # the set of module who lack BROC file 
+    
+        def Id(self):
+            """
+            test method, return singleton id
+            """
+            return id(self)
 
-    def LoadBroc(self):
-        """
-        initialize loading thread, main process waits for all BROC done
-        """
-        if not self._load_main_broc():
-            self._load_done = False
-            self._load_ok = False
-            return 
+        def SetRoot(self, root):
+            """
+            Args:
+                root : the BrocNode object
+            """
+            if not self._root:
+                self._root = root
+                BrocTree.BrocTree().SetRoot(root)
+                self._queue.put(root)
 
-        for i in range(0, self._workers):
-            t = threading.Thread(target=self._load_all_broc)
-            t.daemon = True
-            t.start()
-        
-        # waiting for all BROC files have been deal
-        self._queue.join()
-        self._load_done = True
+        def AddNode(self, node):
+            """
+            add new node
+            Args:
+                node : the object of BrocNode
+            """
+            if node.module.module_cvspath not in self._nodes:
+                self._nodes[node.module.module_cvspath] = []
+            
+            self._nodes[node.module.module_cvspath].append(node)
 
-    def _load_main_broc(self):
-        """
-        load main module's BROC file
-        Returns:
-            return False if fail to load BROC file
-            return True if load BROC file successfully
-        """
-        # BROC file
+        def AllNodes(self):
+            """
+            """
+            return self._nodes
 
-        f = os.path.join(self._main_module.root_path, 'BROC')
-        self._main_env = Environment.Environment(self._main_module)
-        if self._build_mode == "release":
-            self._main_env.DisableDebug()
+        def LackBrocModules(self):
+            """
+            return the set object containing the modules that lack BROC file
+            """
+            return self._lack_broc
 
-        Environment.SetCurrent(self._main_env)
-        try:
-            execfile(f)
-        except BaseException as ex:
-            self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' \
-                                 % (self._main_module.broc_cvspath, ex))
-            return False
+        def LoadBROC(self):
+            """
+            to run main module BROC file
+            """
+            # main thread to load BROC
+            # first node is root node representing main module
+            while not self._queue.empty():
+                parent = self._queue.get()
+                sys.argv = ['PLANISH', parent]
+                broc_file = self._download_broc(parent)
+                if not broc_file:
+                    self._lack_broc.add(parent.module.origin_config)
+                    continue
+                try:
+                    execfile(broc_file)
+                except BaseException as err:
+                    traceback.print_exc()
+            # print dependent tree
+            BrocTree.BrocTree().Dump()
 
-        self._main_env.Action()
-        self._add_env(self._main_module.module_cvspath, self._main_env)
-        
-        return True
+        def handle_configs(self, s, parent):
+            """
+            Args:
+                s : xx@xx@xx set at tag CONFIGS 
+                parent : the BrocNode object
+            """
+            if s in self._checked_configs:
+                return 
+            tree = BrocTree.BrocTree()
+            repo_domain = BrocConfig.BrocConfig().RepoDomain(parent.module.repo_kind)
+            postfix_branch = BrocConfig.BrocConfig().SVNPostfixBranch()
+            postfix_tag = BrocConfig.BrocConfig().SVNPostfixTag()
+            child_module = PlanishUtil.ParseConfig(s, 
+                                           parent.module.workspace, 
+                                           parent.module.dep_level + 1, 
+                                           parent.module.repo_kind, 
+                                           repo_domain, 
+                                           postfix_branch, 
+                                           postfix_tag) 
+            # Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
+            child_node = BrocTree.BrocNode(child_module, parent, False)
+            parent.AddChild(child_node)
+            self.AddNode(child_node)
+            self._queue.put(child_node)
+            self._checked_configs.add(s)
+            
+        def _download_broc(self, node):
+            """
+            download BROC file from repository
+            Args:
+                node : the BrocNode object
+            Returns:
+                return abs path of BROC file if download success
+                return None if download failed
+            """
+            broc_path = None
+            cmd = None
+            # for svn 
+            # Log.Log().LevPrint("MSG", 'download BROC %s' % node.module.url)
+            if node.module.repo_kind == BrocModule_pb2.Module.SVN:
+                hash_value = Function.CalcHash(node.module.url)
+                broc_url = os.path.join(node.module.url, 'BROC')
+                broc_path = os.path.join(self._broc_dir, "%s_BROC" % hash_value)
+                if node.module.revision:
+                    broc_url = "%s -r %s" % (broc_url, node.module.revision)
+                cmd = "svn export %s %s" % (broc_url, broc_path)
+            else:
+                # for GIT
+                broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
+                broc_dir = os.path.dirname(broc_path)
+                if not os.path.exists(broc_path):
+                    cmd += "git clone %s %s &&" \
+                          % ("%s.git" % node.module.url, "%s" % broc_dir)
 
-    def MainEnv(self):
-        """
-        return main envirionment object
-        """
-        return self._main_env
+                    if node.module.br_name and node.module.br_name != 'master':
+                        br_name = node.module.br_name
+                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (broc_dir, br_name, br_name, br_name, br_name)
+                    elif node.module.tag_name:
+                        tag_name = node.module.tag_name
+                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (broc_dir, tag_name, tag_name, tag_name, tag_name)
 
-    def LoadOK(self):
-        """
-        whether load all modules ok
-        """
-        return self._load_ok
+            if cmd: 
+                Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
+                ret, msg = Function.RunCommand(cmd) 
+                if ret != 0:
+                    Log.Log().LevPrint("ERROR", msg)
+                    return None
 
-    def _add_env(self, module_cvspath, env):
-        """
-        add env object
-        Args:
-            module_cvspath : the cvs pat of module
-            env : the Environment object
-        """
-        self._lock_env_cache.acquire()
-        self._env_cache[module_cvspath] = env
-        self._lock_env_cache.release()
+            return broc_path
 
-    def _load_all_broc(self):
-        """
-        thread function loading all BROC files, each thread object fetches one module(BrocModule_pb2.Module object) 
-        from queue, runs the BROC file of the module and creates one Environment object
-        if execfile(BROC) throw exception, stop all thread objects
-        """
-        while not self._load_done:
-            module = None
-            try:
-                module = self._queue.get(True, 1)
-            except Queue.Empty:
-                continue
-            # BROC file
-            f = os.path.join(module.root_path, 'BROC')
-            env = Environment.Environment(module)
-            if self._build_mode == "release":
-                env.DisableDebug()
-            Environment.SetCurrent(env)
-            try:
-                execfile(f)
-            except BaseException as ex:
-                self._queue.task_done()
-                self._logger.LevPrint("ERROR", 'parsing %s failed(%s)' % (module.broc_cvspath, ex))
-                self._load_done = True
-                self._load_ok = False
-                # discard all BROC in queue
-                while not self._queue.empty():
-                    self._queue.get()
-                    self._queue.task_done()
-                break
+    # class BrocLoader
+    __instance = None
+    def __init__(self):
+        """ Create singleton instance """
+        # Check whether we already have an instance
+        if BrocLoader.__instance is None:
+            # Create and remember instance
+            BrocLoader.__instance = BrocLoader.__impl()
 
-            env.SetCompilerDir(self._main_env.CompilerDir())
-            env.Action()
+        # Store instance reference as the only member in the handle
+        self.__dict__['_BrocLoader__instance'] = BrocLoader.__instance
 
-            self._add_env(module.module_cvspath, env)
-            self._queue.task_done()
+    def __getattr__(self, attr):
+        """ Delegate access to implementation """
+        return getattr(self.__instance, attr)
 
-    def Envs(self):
-        """
-        return a list containning all environment object
-        """ 
-        return map(lambda x: self._env_cache[x], self._env_cache)
-
+    def __setattr__(self, attr, value):
+        """ Delegate access to implementation """
+        return setattr(self.__instance, attr, value)

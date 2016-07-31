@@ -66,6 +66,7 @@ import time
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, broc_dir)
 
+from dependency import Syntax
 from dependency import BrocTree
 from dependency import BrocModule_pb2
 from util import Function
@@ -84,10 +85,7 @@ class Planish(object):
             logger : the log facility object
             postfix : the list of postfix [postfix_branche, postfix_tag]
         """
-        self._dep_tree = BrocTree.BrocTree(main_module,
-                                           repo_domain,
-                                           logger,
-                                           postfix)
+        Syntax.BrocLoader().SetRoot(BrocTree.BrocNode(main_module, None, True))
         self.logger = logger
         self.planished_nodes = dict()  # module cvspath --> BrocNode
 
@@ -103,25 +101,23 @@ class Planish(object):
         Args:
             download_flag : whether download the code of module, if it is set True download code, and vice versa
         Returns:
-            True if planish successfully, otherwise return False
+            return True if planish successfully, otherwise return False
         """
         self.logger.LevPrint('MSG', 'Analyzing dependency ...')
         # create dependent tree
         try:
-            self._dep_tree.ConstructTree()
-        except BrocTree.BrocTreeError as err:
+            Syntax.BrocLoader().LoadBROC()
+        except BaseException as err:
             self.logger.LevPrint('ERROR', '%s' % err)
             return False
-        #check graph has circles
-        (ret, msg) = self._dep_tree.HasCircle()
+        # check graph has circles
+        (ret, msg) = BrocTree.BrocTree().HasCircle()
         if ret:
             self.logger.LevPrint("ERROR",
                     "There is a circle in dependency graph\nCircle is [%s]" % msg, False)
             return False
-        # dump origin dependency tree
-        self._dep_tree.Dump() 
 
-        nodes = self._dep_tree.AllNodes()
+        nodes = Syntax.BrocLoader().AllNodes()
         for k, nodes in nodes.iteritems():
             for node in nodes: 
                 # jump main module itself
@@ -158,7 +154,7 @@ class Planish(object):
             if node.module.repo_kind == BrocModule_pb2.Module.SVN: 
                 # the infos of local code equal Node's info
                 if os.path.exists(node.module.root_path):
-                    if self._dep_tree.SameSvnNode(node):
+                    if BrocTree.BrocTree().SameSvnNode(node):
                         continue
                     else:
                         dst = "%s-%f" % (node.module.root_path, time.time())
@@ -176,14 +172,18 @@ reload it(%s)" % (node.module.origin_config))
                 cmd = "svn checkout %s %s" % (url, node.module.root_path)
             else:
                 # for git
-                #cmd = "cd %s && git fetch --all" % node.module.module_cvspath
                 cmd = "cd %s" % node.module.module_cvspath
                 if node.module.tag_name:
-                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
-% (node.module.tag_name, node.module.tag_name)
-                else:
-                    cmd += " && (git checkout %s || (git fetch --all && git checkout %s))" \
-% (node.module.br_name, node.module.br_name)
+                    tag_name = node.module.tag_name
+                    cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                           % (tag_name, tag_name, tag_name, tag_name)
+                elif node.module.br_name:
+                    br_name = node.module.br_name
+                    if br_name != "master":
+                        cmd += " && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                               % (br_name, br_name, br_name, br_name)
+                    else:
+                        cmd += " && git checkout master"
 
             self.logger.LevPrint("MSG", "%s" % cmd)
             ret, msg = Function.RunCommand(cmd)
@@ -242,8 +242,8 @@ reload it(%s)" % (node.module.origin_config))
         """
         save the infos of dependent modules that have planished into file
         """
-        config_file = os.path.join(self._dep_tree.Root().module.workspace, 
-                                   self._dep_tree.Root().module.module_cvspath,
+        config_file = os.path.join(BrocTree.BrocTree().Root().module.workspace, 
+                                   BrocTree.BrocTree().Root().module.module_cvspath,
                                    ".BROC.PLANISHED.DEPS")
         config_list = []
         for k in self.planished_nodes:
@@ -251,7 +251,7 @@ reload it(%s)" % (node.module.origin_config))
         try:
             with open(config_file, 'w') as f:
                 f.write("=========BROC PLANISNHED DEPENDENCY==========\n")
-                f.write(self._dep_tree.Root().module.root_path + "\n\t")
+                f.write(BrocTree.BrocTree().Root().module.root_path + "\n\t")
                 f.write("\n\t".join(config_list))
         except IOError as err:
             self.logger.LevPrint('ERROR', 'save planished dependency failed(%s)' % err)

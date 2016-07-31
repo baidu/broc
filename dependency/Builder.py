@@ -75,7 +75,6 @@ class ObjBuilder(Builder):
         self._opts = None
         self._infile = infile
         self._header_cmd = None
-        self._header_files = set()
         if includes:
             self._includes += "\t".join(map(lambda x: "-I%s \\\n" % os.path.normpath(x), includes))
         if opts: 
@@ -91,11 +90,12 @@ class ObjBuilder(Builder):
         """
         calculate the header files that source file dependends
         Returns:
-            { ret : True | False, msg : 'error message' }
+            { ret : True | False, headers : set(), msg : 'error message' }
             calculate successfully ret is True; otherwise ret is False and msg contains error message
         """
         result = dict()
         result['ret'] = False
+        result['headers'] = set()
         result['msg'] = ''
         retcode, msg = Function.RunCommand(self._header_cmd, ignore_stderr_when_ok=True)
         if retcode != 0:
@@ -106,9 +106,9 @@ class ObjBuilder(Builder):
         for f in files:
             if f.endswith(".h"):
                 if self.workspace in f:
-                    self._header_files.add(f[len(self.workspace)+1:])
+                    result['headers'].add(f[len(self.workspace)+1:])
                 else:
-                    self._header_files.add(f)
+                    result['headers'].add(f)
         result['ret'] = True
         return result
 
@@ -117,15 +117,6 @@ class ObjBuilder(Builder):
         return cmd for caculating header files
         """
         return self._header_cmd
-
-    def GetHeaderFiles(self):
-        """
-        return the header files
-        Returns:
-            return a list containing header files
-        """
-        return self._header_files
-
 
 class LibBuilder(Builder):
     """

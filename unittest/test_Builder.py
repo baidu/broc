@@ -118,7 +118,7 @@ int main()\n\
 }\n")
         ret = builder.CalcHeaderFiles()
         self.assertEqual(True, ret['ret'])
-        self.assertEqual(sorted(["hello.h", 'world.h']), sorted(builder.GetHeaderFiles()))
+        self.assertEqual(sorted(["hello.h", 'world.h']), sorted(ret['headers']))
 
         Function.DelFiles('get_header_files.cpp')
         Function.DelFiles('hello.h')

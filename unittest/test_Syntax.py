@@ -38,6 +38,7 @@ class TestSyntax(unittest.TestCase):
         """
         init
         """
+        sys.argv = ['NOT PLANISH']
         module = BrocModule_pb2.Module()
         module.name = 'broc'
         module.module_cvspath = 'baidu/broc'
@@ -48,15 +49,13 @@ class TestSyntax(unittest.TestCase):
         module.last_changed_rev = "1236"
         module.dep_level = 0
         #get home dir
-        (ret, msg) = Function.RunCommand("cd ~ && pwd", False)
-        if msg.endswith("\n"):
-            msg = msg[:-1]
-        module.workspace = '%s/unittest_broc/workspace' % msg
-        module.root_path = '%s/unittest_broc/workspace/baidu/broc' % msg
+        home = os.environ['HOME']
+        module.workspace = '%s/unittest_broc/workspace' % home
+        module.root_path = '%s/unittest_broc/workspace/baidu/broc' % home
         module.url = 'https://github.com/baidu/broc'
         module.br_kind = BrocModule_pb2.Module.BRANCH
         module.br_name = 'trunk'
-        module.commit_id = '5d9819900c2781873aa0ffce285d5d3e75b072a8'
+        #module.commit_id = '5d9819900c2781873aa0ffce285d5d3e75b072a8'
         self._module = module
         Function.RunCommand("mkdir -p %s" % module.root_path, ignore_stderr_when_ok = True)
         Function.RunCommand("touch %s/hello.cpp" % module.root_path, ignore_stderr_when_ok = True)

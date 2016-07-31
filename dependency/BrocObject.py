@@ -54,7 +54,8 @@ class BrocObject(object):
                     self.modify_time = os.stat(self.pathname.st_mtime) 
             except BaseException:
                 pass
-        self.build = True             # build flag, if build is True, the BrocObject need to compiled
+        self.build = True              # build flag, if build is True, the BrocObject need to compiled
+        self.modified = False          # to mark whether the file has been modified since last build
 
     def __eq__(self, other):
         """
@@ -179,6 +180,12 @@ class BrocObject(object):
         '''
         return self.build
 
+    def Modified(self):
+        '''
+        return modified flag
+        '''
+        return self.modified
+
     def IsBuilt(self):
         """
         check whether BrocObject has been built already
@@ -217,12 +224,11 @@ class BrocObject(object):
         ret, msg = Function.RunCommand(self.build_cmd, ignore_stderr_when_ok = False)
         if ret != 0:
             result['ret'] = False
-            result['msg'] = "%s\n%s" % (str(self.build_cmd), msg)
         else:
             self.build = False
             result['ret'] = True
-            #TODO handle decode type of msg
-            result['msg'] = msg
+
+        result['msg'] = self.build_cmd + '\n' + msg
         return result
 
     def NotifyReverseDeps(self):
@@ -230,8 +236,7 @@ class BrocObject(object):
         to notify all reversed dependent BrocObject objects to build
         """
         for obj in self.reverse_deps:
-            #Log.Log().LevPrint("MSG", "%s nofity reverse cache dep(%s) build" \
-#% (self.pathname, obj.Pathname()))
+            #Log.Log().LevPrint("MSG", "%s nofity reverse cache dep(%s) build" % (self.pathname, obj.Pathname()))
             obj.EnableBuild()
 
     def IsChanged(self, target=None):
@@ -271,7 +276,7 @@ class BrocObject(object):
                 ret = True
             return ret
 
-    def IsSelfChanged(self):
+    def IsModified(self):
         '''
         to check whether object self changed
         Returns:
@@ -318,6 +323,7 @@ class BrocObject(object):
             return 
 
         if self.modify_time == modify_time:
+            self.modified = False
             self.build = False
             return 
         
@@ -326,6 +332,7 @@ class BrocObject(object):
         _hash = Function.GetFileHash(self.pathname)
         # Log.Log().LevPrint("MSG", "update %s hash id(%s) %s --> %s" % (self.pathname, id(self), self.hash, _hash))
         self.hash = _hash 
+        self.modified = False
         self.build = False
 
     def DisableBuild(self):
@@ -333,6 +340,12 @@ class BrocObject(object):
         disable build flag
         """
         self.build = False
+
+    def DisableModified(self):
+        """
+        disable modify flag
+        """
+        self.modified = False
 
 
 class HeaderCache(BrocObject):
@@ -390,7 +403,7 @@ class SourceCache(BrocObject):
 
         return False
 
-    def IsSelfChanged(self):
+    def IsModified(self):
         '''
         to check whether source file and obj file changed
         Returns:
@@ -399,13 +412,13 @@ class SourceCache(BrocObject):
             -1: the source file is missing
         '''
         # check source file itself
-        ret = self.src_obj.IsSelfChanged()
+        ret = self.src_obj.IsModified()
         # source file changed or missed
         if ret != 0:
             return ret
         # source file not change, to check object file
         else:
-            ret = BrocObject.IsSelfChanged(self)
+            ret = BrocObject.IsModified(self)
             return 0 if ret == 0 else 1
 
     def Update(self):

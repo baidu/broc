@@ -78,6 +78,7 @@ class Source(object):
 
         # builder
         self.builder = None 
+        self.headers = set()                      # the head files
 
     def __eq__(self, v):
         """
@@ -90,6 +91,24 @@ class Source(object):
         return build cmd
         """
         return self.builder.GetBuildCmd()
+
+    def GetHeaderCmd(self):
+        """
+        return cmd for caulating head files
+        """
+        return self.builder.GetHeaderCmd()
+
+    def GetHeaderFiles(self):
+        """
+        return the list of head files
+        """
+        return self.headers
+
+    def SetHeaderFiles(self, headers):
+        """
+        set headers files
+        """
+        self.headers = headers
 
     def Compiler(self):
         """
@@ -178,6 +197,23 @@ class Source(object):
         if not cflags_flag:
             self.cflags = self.env.CFlags().V()
 
+    def CalcHeaderFiles(self):
+        """
+        calculate head file 
+        Returns:
+            True if caculate successfully
+            False if failed to caculate
+        """
+        ret = True
+        res = self.builder.CalcHeaderFiles()
+        if not res['ret']:
+            ret = False
+        else:
+            self.headers = res['headers']
+            
+        return ret
+
+
 class CSource(Source):
     """
     C Source Code
@@ -206,11 +242,7 @@ class CSource(Source):
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CC(), self.env.Workspace())
 
-    def CalcHeaderFiles(self):
-        """
-        calculate head file 
-        """
-        self.builder.CalcHeaderFiles()
+
 
 class CXXSource(Source):
     """
@@ -239,8 +271,3 @@ class CXXSource(Source):
         options.extend(self.cppflags + self.cxxflags)
         self.builder = Builder.ObjBuilder(self.outfile, self.infile, self.includes, 
                                           options, self.env.CXX(), self.env.Workspace())
-    def CalcHeaderFiles(self):
-        """
-        calculate head file 
-        """
-        self.builder.CalcHeaderFiles()
