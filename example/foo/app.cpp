@@ -18,6 +18,7 @@
 
 int main()
 {
+    printf("bye~");
     printf("Hello world!\n");
     return 0;
 }
