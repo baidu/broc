@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ########################################################################
-# 
+#
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
-# 
+#
 ########################################################################
- 
+
 """
 File: Loader.py
 Author: zhousongsong(zhousongsong@baidu.com)
@@ -37,7 +37,7 @@ class CacheLoader(object):
             module_queue : the queue object storing BrocModule_pb2.Module objectes
             logger : the Log.Log object
             mode : the mode of build, mode can be 'build' or 'release', the default is 'build'
-            workers: the number of thread object loading BROC 
+            workers: the number of thread object loading BROC
         """
         self._main_module = node
         self._queue = module_queue
@@ -56,13 +56,13 @@ class CacheLoader(object):
         """
         if not self._load_main_broc():
             self._load_ok = False
-            return 
+            return
 
         for i in range(0, self._workers):
             t = threading.Thread(target=self._load_all_broc)
             #t.daemon = True
             t.start()
-        
+
         # waiting for all BROC files have been deal
         self._queue.join()
         self._load_done = True
@@ -76,7 +76,7 @@ class CacheLoader(object):
         """
         # BROC file
 
-        f = os.path.join(self._main_module.root_path, 'BROC')
+        f = os.path.join(self._main_module.root_path, self._main_module.module_cvspath, 'BROC')
         self._main_env = Environment.Environment(self._main_module)
         if self._build_mode == "release":
             self._main_env.DisableDebug()
@@ -94,17 +94,17 @@ class CacheLoader(object):
 
         self._main_env.Action()
         self._add_env(self._main_module.broc_cvspath, self._main_env)
-       
+
         if not self.InitSubEnvironment(self._main_env):
             return False
-  
+
         return True
 
     def InitSubEnvironment(self, parent):
         """
         to init child env object whose comes from DIRECTORY tag
         Args:
-            parent : the parent environment object 
+            parent : the parent environment object
         """
         subdirs = parent.SubDirs()
         if not subdirs:
@@ -159,7 +159,7 @@ class CacheLoader(object):
 
     def _load_all_broc(self):
         """
-        thread function loading all BROC files, each thread object fetches one module(BrocModule_pb2.Module object) 
+        thread function loading all BROC files, each thread object fetches one module(BrocModule_pb2.Module object)
         from queue, runs the BROC file of the module and creates one Environment object
         if execfile(BROC) throw exception, stop all thread objects
         """
@@ -205,6 +205,6 @@ class CacheLoader(object):
     def Envs(self):
         """
         return a list containning all environment object
-        """ 
+        """
         return map(lambda x: self._env_cache[x], self._env_cache)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 
 ################################################################################
 #
@@ -30,7 +30,7 @@ class TaskWorker(threading.Thread):
         Args:
             master : the TaskMaster object
             all_log : show all build log
-            logger : the Log.Log() object 
+            logger : the Log.Log() object
         """
         threading.Thread.__init__(self)
         self._master = master
@@ -40,9 +40,47 @@ class TaskWorker(threading.Thread):
 
     def Stop(self):
         """
-        to stop build thread 
+        to stop build thread
         """
         self._running = False
+
+    def GetCompileCmd(self, workspace, cvspath):
+        """
+        Get compile command.
+        If there is Makefile, compile command is 'make clean && make'
+        Else if there is build.sh, compile command is 'sh build.sh'
+        Else it will be ignored.
+        """
+        if os.path.exists(os.path.join(workspace, cvspath, 'Makefile')):
+            return 'cd %s && make clean && make' % os.path.join(workspace, cvspath)
+        elif os.path.exists(os.path.join(workspace, cvspath, 'build.sh')):
+            return 'cd %s && sh build.sh' % os.path.join(workspace, cvspath)
+        else:
+            return ''
+
+    def CompileModule(self, task):
+        """
+        Compile a dependency module.
+        """
+        if os.path.exists(os.path.join(task.module.workspace, task.module.module_cvspath, '.BUILDED_TAG')):
+            self._logger.LevPrint("MSG", "%s has built before." % task.module.module_cvspath)
+            return 0
+        compile_cmd = self.GetCompileCmd(task.module.workspace, task.module.module_cvspath)
+        if compile_cmd == '':
+            self._logger.LevPrint("INFO", "Can't find Makefile or build.sh in %s, don't build it." % task.module.module_cvspath)
+            return 0
+        else:
+            self._logger.LevPrint("MSG", \
+                    "Start to build %s. Build command is %s" % (task.module.module_cvspath, compile_cmd))
+            ret, msg = Function.RunCommand(compile_cmd)
+            if ret != 0:
+                self._logger.LevPrint("ERROR", "Compile %s failed : %s. Command is %s" % (task.module.module_cvspath, msg, compile_cmd))
+            else:
+                self._logger.LevPrint("MSG", "Compile %s success." % task.module.module_cvspath)
+                cmd = 'touch %s' % (os.path.join(task.module.workspace, task.module.module_cvspath, '.BUILDED_TAG'))
+                Function.RunCommand(cmd)
+            return ret
+        return 0
 
     def run(self):
         """
@@ -53,43 +91,19 @@ class TaskWorker(threading.Thread):
             if isinstance(task, int) and task == -1:
                 # master encounter error, break
                 break
- 
+
             if not task:
                 #TODO no task to deal, sleep for a while
                 continue
             response = dict()
             response['result'] = True
-            response['object'] = task
-            # task whose type is LibCache and build cmd is empty, the lib is specified in Libs
-            if task.TYPE == BrocObject.BrocObjectType.BROC_LIB and task.BuildCmd() is None:
-                self._master.UpdateCache(task.Pathname())
-                self._master.AddResponse(response)
-                self._master.TaskDone()
-                continue
-            else:
-                result = task.DoBuild() 
-
+            response['module_cvspath'] = task.module.module_cvspath
+            ret = self.CompileModule(task)
             self._master.TaskDone()
-            if not result['ret']:
+            if ret != 0:
                 response['result'] = False
                 self._master.AddResponse(response)
-                self._logger.LevPrint("ERROR", "%s" % result['msg'])
                 self._master.DisableBuildOK()
                 self._master.Stop()
                 break
-            else:
-                info = ''
-                if self._all_log:
-                    info += "%s\n" % task.BuildCmd()
-                info += "compile %s" % (task.Pathname())
-                log_level = "MSG"
-                if len(result['msg']) > 0:
-                    log_level = "WARNING"
-                else:
-                    info += " [OK]"
-                self._logger.LevPrint(log_level, info)
-                if result['msg']:
-                    self._logger.LevPrint(log_level, result['msg'])
-                self._master.UpdateCache(task.Pathname())
-                self._master.AddResponse(response)
-
+            self._master.AddResponse(response)

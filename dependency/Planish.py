@@ -13,16 +13,16 @@
 
     ==================SVN EXAMPLE=========================
     CONFIGS("app/foo/sky@trunk")
-    CONFIGS("app/foo/sky@trunk@12345") 
+    CONFIGS("app/foo/sky@trunk@12345")
     CONFIGS("app/foo/sky@trunk@12346")
-    
+
     CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH")
     CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12345")
     CONFIGS("app/foo/sky@sky_1-0-0-0_BRANCH@12346")
 
     CONFIGS("app/foo/sky@sky_1-0-0-1_BRANCH")
     CONFIGS("app/foo/sky@sky_1-0-0-1_BRANCH@1234")
-    
+
     CONFIGS("app/foo/sky@sky_1-0-0-0_PD_BL")
     CONFIGS("app/foo/sky@sky_1-0-0-1_PD_BL")
 
@@ -35,7 +35,7 @@
 
     CONFIGS("sky@v1.0.0@tag")
     CONFIGS("sky@v1.1.0@tag")
-    
+
     SVN Dependency conficting examples
     ==================================
     1. two different branches
@@ -71,7 +71,7 @@ from dependency import BrocTree
 from dependency import BrocModule_pb2
 from util import Function
 
- 
+
 class Planish(object):
     """
     class for planishing dependent modules
@@ -119,7 +119,7 @@ class Planish(object):
 
         nodes = Syntax.BrocLoader().AllNodes()
         for k, nodes in nodes.iteritems():
-            for node in nodes: 
+            for node in nodes:
                 # jump main module itself
                 if node.module.is_main:
                     continue
@@ -151,7 +151,7 @@ class Planish(object):
             download all modules successfully return True, otherwise return False
         """
         for k, node in self.planished_nodes.iteritems():
-            if node.module.repo_kind == BrocModule_pb2.Module.SVN: 
+            if node.module.repo_kind == BrocModule_pb2.Module.SVN:
                 # the infos of local code equal Node's info
                 if os.path.exists(node.module.root_path):
                     if BrocTree.BrocTree().SameSvnNode(node):
@@ -194,7 +194,7 @@ reload it(%s)" % (node.module.origin_config))
 
     def _filter_dep_nodes(self, reserved, coming):
         """
-        choose one module from the reserved and the coming node 
+        choose one module from the reserved and the coming node
         1. level one module's priority is higher than other levels' modules
         2. modules with same branch can be compared
         3. modules with different branches couldn't be compared
@@ -242,7 +242,7 @@ reload it(%s)" % (node.module.origin_config))
         """
         save the infos of dependent modules that have planished into file
         """
-        config_file = os.path.join(BrocTree.BrocTree().Root().module.workspace, 
+        config_file = os.path.join(BrocTree.BrocTree().Root().module.workspace,
                                    BrocTree.BrocTree().Root().module.module_cvspath,
                                    ".BROC.PLANISHED.DEPS")
         config_list = []
@@ -251,7 +251,7 @@ reload it(%s)" % (node.module.origin_config))
         try:
             with open(config_file, 'w') as f:
                 f.write("=========BROC PLANISNHED DEPENDENCY==========\n")
-                f.write(BrocTree.BrocTree().Root().module.root_path + "\n\t")
+                f.write(BrocTree.BrocTree().Root().module.module_cvspath + "\n\t")
                 f.write("\n\t".join(config_list))
         except IOError as err:
             self.logger.LevPrint('ERROR', 'save planished dependency failed(%s)' % err)
