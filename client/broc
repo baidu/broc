@@ -198,17 +198,8 @@ def _build(options, do_ut=False):
         logger.LevPrint("ERROR", "Analyzing dependency failed")
         return -1
 
-    # load build cache
-    cache_file = os.path.join("broc_out", 
-                              "broc_cache", 
-                              root_node.module_cvspath.replace("/", "_"),
-                              "broc.cache")
-    cache_master = BrocObjectMaster.BrocObjectMaster(cache_file, root_node.root_path, logger)
-    cache_master.LoadCache()
-    # start cache master
-    cache_master.start()
-
-    # load the code of all module, and create a environment object for each module
+    #build dependency
+    logger.LevPrint("MSG", "Start to build dependency ...")
     nodes = planish.PlanishedNodes()
     queue = Queue.Queue()
     task_master = TaskMaster.TaskMaster(options['jobs'], 

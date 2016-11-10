@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 ################################################################################
 #
@@ -60,7 +60,7 @@ def Help(bin_name, subcommand=None):
         Log.colorprint("DEFAULT",
             "\t--jobs=num\t\t: Set the number of build threads",
             False)
-        Log.colorprint("DEFAULT", "\t --all-log\t\t: Show all build log infomation", False)
+        Log.colorprint("DEFAULT", "\t--all-log\t\t: Show all build log infomation", False)
         return 0
 
     if subcommand == "show-deps":
@@ -87,7 +87,7 @@ def Help(bin_name, subcommand=None):
         Log.colorprint("DEFAULT", "help: Print the for commands", False)
         Log.colorprint("DEFAULT", "Usage: %s help <subcommand>" % (bin_name), False)
         return 0
-    
+
     Log.colorprint("DEFAULT", "%s unknow commmand" % subcommand, False)
     return 0
 
@@ -126,7 +126,7 @@ def OptionBuild(argv):
         Log.colorprint("RED", "invalid arguments %s\nType '%s help' for usage" % \
                 (str(args), os.path.basename(sys.argv[0])), False)
         return None
-    
+
     for opt, arg in opts:
         if opt == "--all-log":
             options["all_log"] = True
