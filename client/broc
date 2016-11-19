@@ -198,88 +198,24 @@ def _build(options, do_ut=False):
         logger.LevPrint("ERROR", "Analyzing dependency failed")
         return -1
 
-    # load build cache
-    cache_file = os.path.join("broc_out", 
-                              "broc_cache", 
-                              root_node.module_cvspath.replace("/", "_"),
-                              "broc.cache")
-    cache_master = BrocObjectMaster.BrocObjectMaster(cache_file, root_node.root_path, logger)
-    cache_master.LoadCache()
-    # start cache master
-    cache_master.start()
-
-    # load the code of all module, and create a environment object for each module
+    #build dependency
+    logger.LevPrint("MSG", "Start to build dependency ...")
     nodes = planish.PlanishedNodes()
     queue = Queue.Queue()
-    for node in nodes:
-        queue.put(node.module) 
-    loader = CacheLoader.CacheLoader(root_node, queue, logger, options['mode'], 4)
-    Log.Log().LevPrint("MSG", 'Start gathering build targets ...')
-    loader.LoadBroc()
-    if not loader.LoadOK():
-        Log.Log().LevPrint("MSG", 'Gathering build targets Failed')
-        return -1
-    Log.Log().LevPrint("MSG", 'Gathering build targets OK')
-    # to find all of targets needed to be built
-    envs = loader.Envs()
-    for env in envs:
-        for target in env.Targets():
-            cache_master.CheckCache(target)
-    cache_master.WaitCheckDone()
-    # save the dependency relation of targets into file
-    cache_master.Dump()
-    # to get all of targets needed to be built
-    modified_targets = cache_master.GetChangedCache()
-    # if no targets need to build, exit
-    if not modified_targets:
-        logger.LevPrint("MSG", "all targets have been built, no more need to build")
-        # to create output link
-        _mkdir_output(root_node, logger)
-        # Handle TAG PUBLISH
-        if not _do_publish(envs, logger):
-            return -1
-
-        # no ut to handle
-        if not do_ut:
-            return 0
-
-        # to handle ut
-        if _do_ut(loader.MainEnv(), logger):
-            return 0
-        else:
-            return -1
-
     task_master = TaskMaster.TaskMaster(options['jobs'], 
-                                        cache_master,
-                                        modified_targets,
+                                        nodes,
                                         options['all_log'],
                                         logger)
     # run build thread to build
     task_master.Start()
     task_master.Wait()
-    cache_master.Stop()
     if not task_master.BuildOK():
-        logger.LevPrint("ERROR", "build failed")
+        logger.LevPrint("ERROR", "build dependency failed")
         return -1
     
-    # create output link
-    _mkdir_output(root_node, logger)
-
-    # to handle PUBLISH
-    if not _do_publish(envs, logger):
-        return -1
-
-    logger.LevPrint("MSG", "build ok")
-    # no ut to handle 
-    if not do_ut:
-        return 0
-
-    # to handle ut
-    if _do_ut(loader.MainEnv(), logger):
-        return 0
-    else:
-        return -1
-
+    logger.LevPrint("MSG", "build dependency ok")
+    
+    return 0
 
 def _test(options):
     """

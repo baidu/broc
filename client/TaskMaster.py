@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 
 ################################################################################
 #
@@ -26,18 +26,17 @@ class TaskMaster(object):
     TaskMaster object is a thread object master
     dispatching build task
     """
-    def __init__(self, num, cache_master, changed_list, all_log, logger):
+    def __init__(self, num, module_list, all_log, logger):
         """
         Args:
             num : the number of build threads
             cache_master : the BrocObjectMaster object
-            changed_list : the changed file list of BrocObject
+            module_list : the
             all_log : show all build log
             logger : the Log.Log() object
         """
         self._logger = logger
-        self._cache_master = cache_master
-        self._changed_list = changed_list 
+        self._module_list = module_list
         self._queue = Queue.Queue()             # request queue
         self._response_queue = Queue.Queue()    # response queue
         self._running = True
@@ -48,7 +47,7 @@ class TaskMaster(object):
 
     def DisableBuildOK(self):
         """
-        set build flag as False means fail to build 
+        set build flag as False means fail to build
         """
         self._build_ok = False
 
@@ -60,28 +59,28 @@ class TaskMaster(object):
 
     def Start(self):
         """
-        run build thread 
+        run build thread
         """
         self._logger.LevPrint("MSG", "%d threads to build ..." % len(self._workers))
 
         all_tasks = 0
         add_tasks = 0
-        degree = dict()              #key is file path,value is number of deps in changed list
-        changed_dict = dict()        #key is file path,value is BrocObject
+        degree = dict()            #key is module_cvspath, value is number of deps in module_list
+        module_dict = dict()       #key is module_cvspath, value is BrocNode
+        redep_dict = dict()        #key is module_cvspath, value is list of module's cvspath which depends this module
         #get degree of module
-        for broc_object in self._changed_list:
-            degree[broc_object.Pathname()] = 0
-            changed_dict[broc_object.Pathname()] = broc_object
-
-        for broc_object in self._changed_list:
-            for redeps in broc_object.reverse_deps:
-                if redeps.Pathname() in degree:
-                    degree[redeps.Pathname()] += 1
-        #add no deps object
-        for file_path in degree:
+        for broc_object in self._module_list:
+            degree[broc_object.module.module_cvspath] = len(broc_object.Children())
+            module_dict[broc_object.module.module_cvspath] = broc_object
+            if broc_object.module.module_cvspath not in redep_dict:
+                redep_dict[broc_object.module.module_cvspath] = list()
+            for modules in broc_object.Children():
+                if modules.module.module_cvspath not in redep_dict:
+                    redep_dict[modules.module.module_cvspath] = list()
+                redep_dict[modules.module.module_cvspath].append(broc_object.module.module_cvspath)
+        for broc_object in self._module_list:
             all_tasks += 1
-            broc_object = changed_dict[file_path]
-            if degree[file_path] == 0:
+            if degree[broc_object.module.module_cvspath] == 0:
                 self.AddTask(broc_object)
                 add_tasks += 1
 
@@ -92,15 +91,15 @@ class TaskMaster(object):
             response = self.FetchResponse()
             if response == -1 or not response['result']:
                 break
-            now = response['object']
-            for redeps in now.reverse_deps:
-                if redeps.Pathname() in degree:
-                    degree[redeps.Pathname()] -= 1
-                    if degree[redeps.Pathname()] == 0:
-                        self.AddTask(redeps)
+            now = response['module_cvspath']
+            for redeps in redep_dict[now]:
+                if redeps in degree:
+                    degree[redeps] -= 1
+                    if degree[redeps] == 0:
+                        self.AddTask(module_dict[redeps])
                         add_tasks = add_tasks + 1
         self.Wait()
-    
+
     def Wait(self):
         """
         wait all tasks have been done
@@ -167,8 +166,8 @@ class TaskMaster(object):
         except Queue.Empty:
             pass
 
-        return task 
-    
+        return task
+
     def FetchResponse(self):
         """
         fetch a build response
@@ -184,7 +183,7 @@ class TaskMaster(object):
 
     def UpdateCache(self, pathname):
         """
-        update cache 
+        update cache
         Args:
             pathname : the cvs path of cache
         """

@@ -38,8 +38,8 @@ from util import Log
 class NotInSelfModuleError(Exception):
     """
     In Broc file, if files or directories users specify don't belongs to module itself
-    raise NotInSelfModuleError 
-    """ 
+    raise NotInSelfModuleError
+    """
     def __init__(self, _input, _dir):
         """
         Args:
@@ -64,7 +64,7 @@ class BrocArgumentIllegalError(Exception):
         """
         Args:
             msg : error info
-        """ 
+        """
         Exception.__init__(self)
         self._msg = msg
 
@@ -82,7 +82,7 @@ class BrocProtoError(Exception):
         """
         Args:
             msg : error info
-        """ 
+        """
         Exception.__init__(self)
         self._msg = msg
 
@@ -140,11 +140,11 @@ def CppFlags(d_flags, r_flags):
     else:
         tag.AddSV(r_flags)
     return tag
-    
+
 
 def CFLAGS(d_flags, r_flags):
     """
-    set the global compile options for c files, 
+    set the global compile options for c files,
     this influences the all of c files in module
     Args:
        d_flags : debug mode preprocess flags
@@ -162,7 +162,7 @@ def CFLAGS(d_flags, r_flags):
 
 def CFlags(d_flags, r_flags):
     """
-    set the local compile options for c files, 
+    set the local compile options for c files,
     this influences the all of c files in target tag
     Args:
        d_flags : debug mode preprocess flags
@@ -182,7 +182,7 @@ def CFlags(d_flags, r_flags):
 
 def CXXFLAGS(d_flags, r_flags):
     """
-    set the global compile options for c++ files, 
+    set the global compile options for c++ files,
     this influences the all of cxx files in module
     Args:
        d_flags : debug mode preprocess flags
@@ -190,7 +190,7 @@ def CXXFLAGS(d_flags, r_flags):
     """
     if sys.argv[0] == 'PLANISH':
         return
-    
+
     env = Environment.GetCurrent()
     if env.BuildMode() == "debug":
         env.CxxFlags().AddSV(d_flags)
@@ -200,7 +200,7 @@ def CXXFLAGS(d_flags, r_flags):
 
 def CxxFlags(d_flags, r_flags):
     """
-    set the local compile option for cxx files, 
+    set the local compile option for cxx files,
     this influences the all of cxx files in target tag
     Args:
        d_flags : debug mode preprocess flags
@@ -224,7 +224,7 @@ def CONVERT_OUT(s):
     Args:
         s : a relative directory beneathed the module
     Returns:
-        return the relative path of responsed output directory 
+        return the relative path of responsed output directory
     """
     if sys.argv[0] == 'PLANISH':
         return ""
@@ -241,9 +241,9 @@ def INCLUDE(*ss):
     set the global head file search path
     Default head files search path includes $WORKSPACE and $OUT_ROOT
     Args:
-       ss : a variable number of string objects 
+       ss : a variable number of string objects
             ss may contain multiple string objects, each object can contain multiple paths
-            1. if path does not beneath module, in other words, if user want to specified other modules' path,  should start with $WORKSPACE, 
+            1. if path does not beneath module, in other words, if user want to specified other modules' path,  should start with $WORKSPACE,
             2. if path couldn't be founed in module itself and path does not start with $WORKSPACE rasie NotInSelfModuleError
             3. if path is output directory, it must start with 'broc_out/'
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
@@ -257,7 +257,7 @@ def INCLUDE(*ss):
         ps = s.split()
         for x in ps:
             if x.startswith("$WORKSPACE"):
-                tag.AddSV(x.replace("$WORKSPACE/", '')) 
+                tag.AddSV(x.replace("$WORKSPACE/", ''))
                 continue
             elif x.startswith("broc_out/") or os.path.isabs(x):
                 tag.AddSV(x)
@@ -268,21 +268,21 @@ def INCLUDE(*ss):
             elif x.startswith("$OUT"):
                 out = os.path.join('broc_out', env.ModuleCVSPath(), 'output')
                 tag.AddSV(x.replace("$OUT", out))
-            else:     
+            else:
                 _x = os.path.normpath(os.path.join(broc_dir, x))
                 if env.ModulePath() not in _x:
                     raise NotInSelfModuleError(_x, env.ModulePath())
                 else:
                     tag.AddSV(_x)
-    
+
 
 def Include(*ss):
     """
     set the local file search path
     Args:
-       ss : a variable number of string objects 
+       ss : a variable number of string objects
             ss may contain multiple string objects, each object can contain multiple paths
-            1. if path does not beneath module, in other words, if user want to specified other modules' path,  should start with $WORKSPACE, 
+            1. if path does not beneath module, in other words, if user want to specified other modules' path,  should start with $WORKSPACE,
             2. if path couldn't be founed in module itself and path does not start with $WORKSPACE rasie NotInSelfModuleError
             3. if path is output directory, it must start with 'broc_out/'
             for example: ss can be "./include ./include/foo", "$WORKSPACE/include", "broc_out/test/include"
@@ -297,7 +297,7 @@ def Include(*ss):
         ps = string.split(s)
         for x in ps:
             if x.startswith("$WORKSPACE"):
-                tag.AddSV(x.replace("$WORKSPACE/", "")) 
+                tag.AddSV(x.replace("$WORKSPACE/", ""))
                 continue
             elif x.startswith('broc_out') or os.path.isabs(x):
                 tag.AddSV(x)
@@ -325,9 +325,9 @@ def Libs(*ss):
     each lib's path should start with $OUT_ROOT
     for example Libs("$ROOT_OUT/test/output/lib/libutil.a", "$ROOT_OUT/foo/output/lib/libcommon.a")
     Args:
-        ss : a variable number of string objects 
+        ss : a variable number of string objects
     Returns:
-        SyntaxTag.TagLibs() 
+        SyntaxTag.TagLibs()
     """
     tag = SyntaxTag.TagLibs()
     if sys.argv[0] == 'PLANISH':
@@ -357,7 +357,7 @@ def Libs(*ss):
 
 def LDFLAGS(d_flags, r_flags):
     """
-    add global link flags 
+    add global link flags
     Args:
         d_flags : link flags in debug mode
         r_flags : link flags in release mode
@@ -391,8 +391,8 @@ def LDFlags(d_flags, r_flags):
 
 def GLOB(*ss):
     """
-    gather all files belonging to module, if argument specified in ss does not beneath 
-    the directory of module, raise BrocArgumentIllegalError 
+    gather all files belonging to module, if argument specified in ss does not beneath
+    the directory of module, raise BrocArgumentIllegalError
     Args:
         ss : a variable number of string objects, support regrex
     Returns:
@@ -429,7 +429,7 @@ def GLOB(*ss):
 
 def _ParseNameAndArgs(*ss):
     """
-    parse a variable number of arguments, all string arguments in ss will be regarded as source file, 
+    parse a variable number of arguments, all string arguments in ss will be regarded as source file,
     and the rest of arguments will be regarded as compile options
     Args:
         ss : a variable number of arguments
@@ -452,7 +452,7 @@ def CONFIGS(s):
     """
     if sys.argv[0] == 'PLANISH':
         broc_loader = BrocLoader()
-        broc_loader.handle_configs(s.strip(), sys.argv[1])    
+        broc_loader.handle_configs(s.strip(), sys.argv[1])
 
 def Sources(*ss):
     """
@@ -460,8 +460,8 @@ def Sources(*ss):
     all source file should beneathes the directory of module, if not will raise NotInSelfModuleError
     avoid containing wildcard in ss, so you can use GLOB gathering files firstly, and take the result of GLOB as ss
     Args:
-        ss : a variable number of artuments, all string arguments in ss will be regarded as 
-             source file, the file can be .c, .cpp and so on, and the reset arguments are 
+        ss : a variable number of artuments, all string arguments in ss will be regarded as
+             source file, the file can be .c, .cpp and so on, and the reset arguments are
              regarded as compile flags
     Returns:
         TagSources Object
@@ -502,7 +502,7 @@ def _CreateSources(_file, *args):
         raise BrocArgumentIllegalError("don't support file(%s) whose ext is(%s)" % (_file, ext))
     env.AppendSource(src)
     return src
-        
+
 
 def APPLICATION(name, sources, *args):
     """
@@ -510,14 +510,14 @@ def APPLICATION(name, sources, *args):
     Args:
         name : the name of target
         sources : the SyntaxTag.TagSource object
-        args: a variable number of SyntaxTag.TagLDFlags and SyntaxTag.TagLibs 
+        args: a variable number of SyntaxTag.TagLDFlags and SyntaxTag.TagLibs
     """
     if sys.argv[0] == 'PLANISH':
         return
-    # to check name of result file 
+    # to check name of result file
     if not Function.CheckName(name):
         raise BrocArgumentIllegalError("name(%s) in APPLICATION is illegal" % name)
-    
+
     tag_links = SyntaxTag.TagLDFlags()
     tag_libs = SyntaxTag.TagLibs()
     for arg in args:
@@ -527,7 +527,7 @@ def APPLICATION(name, sources, *args):
             tag_libs.AddSVs(arg.V())
         else:
             raise BrocArgumentIllegalError("In APPLICATION(%s) don't support %s" % (name, arg))
-        
+
     env = Environment.GetCurrent()
     app = Target.Application(name, env, sources, tag_links, tag_libs)
     if not env.AppendTarget(app):
@@ -565,7 +565,7 @@ def STATIC_LIBRARY(name, *args):
     else:
         # .a file has been built already, just copy it from code directory to output directory
         lib.DoCopy()
-    
+
 
 def UT_APPLICATION(name, sources, *args):
     """
@@ -573,7 +573,7 @@ def UT_APPLICATION(name, sources, *args):
     Args:
         name : the name of target
         sources : the SyntaxTag.TagSource object
-        args : a variable number of SyntaxTag.TagLinkLDFlags, SyntaxTag.TagLibs, SyntaxTag.TagUTArgs 
+        args : a variable number of SyntaxTag.TagLinkLDFlags, SyntaxTag.TagLibs, SyntaxTag.TagUTArgs
     """
     if sys.argv[0] == 'PLANISH':
         return
@@ -603,12 +603,12 @@ def ProtoFlags(*ss):
     """
     add the command options for protoc
     Args:
-       ss : a variable number of string objects 
+       ss : a variable number of string objects
             ss may contain multiple string objects, each object can contain multiple options
             one option may be:
             1. option may contains $WORKSPACE, $OUT Macros value
     Returns:
-        return a 
+        return a
     """
     tag = SyntaxTag.TagProtoFlags()
     if sys.argv[0] == 'PLANISH':
@@ -618,12 +618,12 @@ def ProtoFlags(*ss):
         ps = s.split()
         for x in ps:
             if "$WORKSPACE" in x:
-                tag.AddSV(x.replace("$WORKSPACE/", '')) 
+                tag.AddSV(x.replace("$WORKSPACE/", ''))
             elif "$OUT" in x:
                 tag.AddSV(x.replace("$OUT", env.OutputPath()))
             elif "$OUT_ROOT" in x:
                 tag.AddSV(x.replace("$OUT_ROOT", env.OutputRoot()))
-            else: 
+            else:
                 tag.AddSV(x)
     return tag
 
@@ -650,7 +650,7 @@ def PROTO_LIBRARY(name, files, *args):
         abs_path = os.path.normpath(os.path.join(env.BrocDir(), _file))
         if not env.ModulePath() in abs_path:
             raise NotInSelfModuleError(abs_path, env.ModulePath())
-     
+
     # to check args
     tag_protoflags = SyntaxTag.TagProtoFlags()
     tag_cppflags = SyntaxTag.TagCppFlags()
@@ -671,7 +671,7 @@ def PROTO_LIBRARY(name, files, *args):
         else:
             raise BrocArgumentIllegalError("don't support tag(%s) in PROTO_LIBRARY in %s" \
                                              % (str(arg), env.BrocPath()))
-   
+
     include = set()
     source = set()
     for f in proto_files:
@@ -707,18 +707,18 @@ def UTArgs(v):
     tag.AddV(v)
     return tag
 
-def DIRECTORY(v): 
+def DIRECTORY(v):
     """
     Add sub directory
     Args:
        v : the name of subdirectory, v is relative path
-    """ 
-    # gather all dependent module  
+    """
+    # gather all dependent module
     env = Environment.GetCurrent()
     child_broc_dir = os.path.abspath(os.path.join(env.ModulePath(), v))
     if env.ModulePath() not in child_broc_dir:
             raise BrocArgumentIllegalError("DIRECTORY(%s) is wrong: %s not in %s" % \
-                                          (child_broc_dir, env.ModulePath())
+                                          (child_broc_dir, env.ModulePath()))
 
     child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
     if sys.argv[0] == 'PLANISH':
@@ -733,7 +733,7 @@ def DIRECTORY(v):
     else: # find all targets to build
         if not os.path.exists(child_broc_file):
             raise BrocArgumentIllegalError('Not found %s in Tag Directory(%s)' % (child_broc_file, v))
-        # Log.Log().LevPrint("INFO", 'add sub directory (%s) for module %s' % (v, env._module.module_cvspath)) 
+        # Log.Log().LevPrint("INFO", 'add sub directory (%s) for module %s' % (v, env._module.module_cvspath))
         env.AddSubDir(v)
 
 def PUBLISH(srcs, out_dir):
@@ -742,7 +742,7 @@ def PUBLISH(srcs, out_dir):
     Args:
         srcs: the files needed to move should belongs to the module
         out_dir: the destination directory that must start with $OUT
-        if argument is illeagl, raise BrocArgumentIllegalError 
+        if argument is illeagl, raise BrocArgumentIllegalError
     """
     if sys.argv[0] == 'PLANISH':
         return
@@ -807,8 +807,8 @@ def GIT_PATH():
         return
     env = Environment.GetCurrent()
     return env.GitPath()
-        
-    
+
+
 def GIT_URL():
     """
     return url of module
@@ -862,10 +862,10 @@ class BrocLoader(object):
             self._root = None
             self._nodes = dict()                   # module
             self._checked_configs = set()          # storing content of tag CONFIGS
-            self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files 
+            self._broc_dir = tempfile.mkdtemp()    # the temporary directory storing all BROC files
             self._queue = Queue.Queue()
-            self._lack_broc = set()                # the set of module who lack BROC file 
-    
+            self._lack_broc = set()                # the set of module who lack BROC file
+
         def Id(self):
             """
             test method, return singleton id
@@ -890,7 +890,7 @@ class BrocLoader(object):
             """
             if node.module.module_cvspath not in self._nodes:
                 self._nodes[node.module.module_cvspath] = []
-            
+
             self._nodes[node.module.module_cvspath].append(node)
 
         def AllNodes(self):
@@ -927,29 +927,29 @@ class BrocLoader(object):
         def handle_configs(self, s, parent):
             """
             Args:
-                s : xx@xx@xx set at tag CONFIGS 
+                s : xx@xx@xx set at tag CONFIGS
                 parent : the BrocNode object
             """
             if s in self._checked_configs:
-                return 
+                return
             tree = BrocTree.BrocTree()
             repo_domain = BrocConfig.BrocConfig().RepoDomain(parent.module.repo_kind)
             postfix_branch = BrocConfig.BrocConfig().SVNPostfixBranch()
             postfix_tag = BrocConfig.BrocConfig().SVNPostfixTag()
-            child_module = PlanishUtil.ParseConfig(s, 
-                                           parent.module.workspace, 
-                                           parent.module.dep_level + 1, 
-                                           parent.module.repo_kind, 
-                                           repo_domain, 
-                                           postfix_branch, 
-                                           postfix_tag) 
-            # Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level)) 
+            child_module = PlanishUtil.ParseConfig(s,
+                                           parent.module.workspace,
+                                           parent.module.dep_level + 1,
+                                           parent.module.repo_kind,
+                                           repo_domain,
+                                           postfix_branch,
+                                           postfix_tag)
+            # Log.Log().LevPrint("MSG", 'create node(%s), level %d' % (s, child_module.dep_level))
             child_node = BrocTree.BrocNode(child_module, parent, False)
             parent.AddChild(child_node)
             self.AddNode(child_node)
             self._queue.put(child_node)
             self._checked_configs.add(s)
-            
+
         def _download_broc(self, node):
             """
             download BROC file from repository
@@ -959,9 +959,9 @@ class BrocLoader(object):
                 return abs path of BROC file if download success
                 return None if download failed
             """
-            broc_path = None
-            cmd = None
-            # for svn 
+            broc_path = ''
+            cmd = ''
+            # for svn
             # Log.Log().LevPrint("MSG", 'download BROC %s' % node.module.url)
             if node.module.repo_kind == BrocModule_pb2.Module.SVN:
                 hash_value = Function.CalcHash(node.module.url)
@@ -975,21 +975,21 @@ class BrocLoader(object):
                 broc_path = os.path.join(node.module.workspace, node.module.module_cvspath, 'BROC')
                 broc_dir = os.path.dirname(broc_path)
                 if not os.path.exists(broc_path):
-                    cmd += "git clone %s %s &&" \
+                    cmd += "git clone %s %s" \
                           % ("%s.git" % node.module.url, "%s" % broc_dir)
 
                     if node.module.br_name and node.module.br_name != 'master':
                         br_name = node.module.br_name
-                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                        cmd += " && cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
                                % (broc_dir, br_name, br_name, br_name, br_name)
                     elif node.module.tag_name:
                         tag_name = node.module.tag_name
-                        cmd += "cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
+                        cmd += " && cd %s && (git checkout %s || (git fetch origin %s:%s && git checkout %s))" \
                                % (broc_dir, tag_name, tag_name, tag_name, tag_name)
 
-            if cmd: 
+            if cmd:
                 Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
-                ret, msg = Function.RunCommand(cmd) 
+                ret, msg = Function.RunCommand(cmd)
                 if ret != 0:
                     Log.Log().LevPrint("ERROR", msg)
                     return None
