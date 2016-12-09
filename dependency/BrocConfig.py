@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 ################################################################################
 #
@@ -38,7 +38,7 @@ class BrocConfigError(Exception):
 
 class BrocConfig(object):
     """
-    this class manages the .broc.rc in $HOME 
+    this class manages the .broc.rc in $HOME
     """
     class __impl(object):
         """Implementation of singleton interface"""
@@ -55,8 +55,8 @@ class BrocConfig(object):
             """
             """
             return "svn repo domain: %s\ngit repo domain: %s\n \
-svn     postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain, 
-                                                   self._git_repo_domain, 
+svn     postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
+                                                   self._git_repo_domain,
                                                    self._svn_postfix_branch,
                                                    self._svn_postfix_tag)
 
@@ -88,18 +88,18 @@ svn     postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
                     cfgfile = open(self._file, 'r')
                     conf = ConfigParser.ConfigParser()
                     conf.read(self._file)
-                    self._svn_repo_domain = conf.get('repo', 'svn_repo_domain') 
-                    self._git_repo_domain = conf.get('repo', 'git_repo_domain') 
+                    self._svn_repo_domain = conf.get('repo', 'svn_repo_domain')
+                    self._git_repo_domain = conf.get('repo', 'git_repo_domain')
                     self._svn_postfix_branch = conf.get('repo', 'svn_postfix_branch')
                     self._svn_postfix_tag = conf.get('repo', 'svn_postfix_tag')
             except ConfigParser.Error as e:
                 raise BrocConfigError(str(e))
-            
+
         def RepoDomain(self, repo_type):
             """
             return repository domain
             Args:
-                repo_type : BrocMode_pb2.Module.EnumRepo 
+                repo_type : BrocMode_pb2.Module.EnumRepo
             """
             if repo_type == BrocModule_pb2.Module.SVN:
                 return self._svn_repo_domain
@@ -120,7 +120,7 @@ svn     postfix branch: %s\nsvn postfix tag: %s"% (self._svn_repo_domain,
 
         def Dump(self):
             """
-            dump broc config  
+            dump broc config
             """
             print("-- svn domain : %s" % self._svn_repo_domain)
             print("-- git domain : %s" % self._git_repo_domain)

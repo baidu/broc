@@ -67,7 +67,7 @@ class TaskWorker(threading.Thread):
             return 0
         compile_cmd = self.GetCompileCmd(task.module.workspace, task.module.module_cvspath)
         if compile_cmd == '':
-            self._logger.LevPrint("INFO", "Can't find Makefile or build.sh in %s, don't build it." % task.module.module_cvspath)
+            self._logger.LevPrint("INFO", "Can't find Makefile or build.sh in %s, will not build %s." % (task.module.module_cvspath, task.module.module_cvspath))
             return 0
         else:
             self._logger.LevPrint("MSG", \
