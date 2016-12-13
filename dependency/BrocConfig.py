@@ -45,7 +45,10 @@ class BrocConfig(object):
         def __init__(self):
             """
             """
-            self._file = os.path.join(os.environ['HOME'], '.broc.rc')
+            if os.path.exists(".broc.rc"):
+                self._file = os.path.join(os.getcwd(), '.broc.rc')
+            else:
+                self._file = os.path.join(os.environ['HOME'], '.broc.rc')
             self._svn_repo_domain = 'https://svn.github.com'
             self._git_repo_domain = 'https://github.com'
             self._svn_postfix_branch = "BRANCH"
