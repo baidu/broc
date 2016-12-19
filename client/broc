@@ -336,8 +336,7 @@ def _init_config(logger):
         if cvspath == '':
             next_cvspath = os.path.basename(git_url)
         else:
-            next_cvspath = os.path.join(os.path.basename(git_url), cvspath)
-        print next_cvspath, cwd, cvspath
+            next_cvspath = os.path.join(os.path.basename(git_url), cvspath) 
         if cwd.find(next_cvspath) == -1:
             break
         cvspath = next_cvspath
