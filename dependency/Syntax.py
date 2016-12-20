@@ -916,7 +916,7 @@ class BrocLoader(object):
                 broc_file = self._download_broc(parent)
                 if not broc_file:
                     self._lack_broc.add(parent.module.origin_config)
-                    continue
+                    sys.exit(1)
                 try:
                     execfile(broc_file)
                 except BaseException as err:
@@ -988,10 +988,10 @@ class BrocLoader(object):
                                % (broc_dir, tag_name, tag_name, tag_name, tag_name)
 
             if cmd:
-                Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % cmd)
+                Log.Log().LevPrint("MSG", "Getting BROC(%s) ..." % node.module.module_cvspath)
                 ret, msg = Function.RunCommand(cmd)
                 if ret != 0:
-                    Log.Log().LevPrint("ERROR", msg)
+                    Log.Log().LevPrint("ERROR", "Cann't get Broc of %s" % node.module.module_cvspath)
                     return None
 
             return broc_path

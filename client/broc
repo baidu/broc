@@ -24,6 +24,7 @@ import Scratch
 import TaskMaster
 broc_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 sys.path.insert(0, broc_dir)
+import ConfigParser
 
 from util import Log
 from util import RepoUtil
@@ -315,7 +316,42 @@ def _clean(pathname):
     logger.LevPrint('MSG', 'clean %s ..' % bc_out)
     Function.DelFiles(bc_out)
     return 0
+
+
+def _init_config(logger):
+    """
+    init .broc.rc (git_repo_domain) from local path
+    """
+    if not RepoUtil.IsUnderGitControl("."):
+        logger.LevPrint('ERROR', "Present path is not under GIT control")
+        return -1
     
+    git_url = RepoUtil.GetGitUrl(".", logger)
+    if git_url is None:
+        return -1
+    cvspath = ''
+    cwd = os.getcwd()
+
+    while True:
+        if cvspath == '':
+            next_cvspath = os.path.basename(git_url)
+        else:
+            next_cvspath = os.path.join(os.path.basename(git_url), cvspath) 
+        if cwd.find(next_cvspath) == -1:
+            break
+        cvspath = next_cvspath
+        git_url = os.path.dirname(git_url)
+    with open('.broc.rc', 'w') as cfgfile:
+        conf = ConfigParser.ConfigParser()
+        conf.add_section('repo')
+        conf.set('repo', 'svn_repo_domain', "https://svn.github.com")
+        conf.set('repo', 'git_repo_domain', git_url)
+        conf.set('repo', 'svn_postfix_branch', 'BRANCH')
+        conf.set('repo', 'svn_postfix_tag', 'PD_BL')
+        conf.write(cfgfile)
+
+    return 0
+
 
 def main():
     """
@@ -352,6 +388,9 @@ def main():
         config = _load_config(Log.Log())
         config.Dump()
         return 0
+
+    if sys.argv[1] == "init":
+        return _init_config(Log.Log())
 
     if sys.argv[1] == "help" or sys.argv[1]:
         if sys.argv[1] == "help" and len(sys.argv) >= 3:
