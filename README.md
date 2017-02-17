@@ -31,5 +31,5 @@ https://github.com/baidu/broc/wiki/broc-manual
 请联系broc@baidu.com
 
 #欢迎加入
-如果你热爱开源，对我们感兴趣，我们来聊聊吧 broc@baidu.com
+如果你热爱开源，对我们感兴趣，我们来聊聊吧 buildcloud@baidu.com
 
