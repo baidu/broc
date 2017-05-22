@@ -38,6 +38,25 @@ from dependency import UTMaster
 from dependency import BrocConfig
 
 
+def _load_config(logger):
+    """
+    load config file of broc, the default config is located at ~/.broc.rc
+    Args:
+        logger : the Log.Log object
+    Returns:
+        return BrocConfig object if load conifg file ok,
+        return None if      failed to load config file 
+    """
+    # load config of broc
+    broc_config = BrocConfig.BrocConfig()
+    try:
+        broc_config.load()
+    except BrocConfigError as err:
+        logger.LevPrint('ERROR', str(err))
+        return None
+    return broc_config
+
+
 def _init_repo(broc_config, pathname, logger):
     """
     to get repo infos of pathname
@@ -171,11 +190,8 @@ def _build(options, do_ut=False):
     """
     # load broc config 
     logger = Log.Log()
-    broc_config = None
-    try:
-        broc_config  = BrocConfig.BrocConfig()
-    except BrocConfigError as err:
-        logger.LevPrint('ERROR', str(err))
+    broc_config = _load_config(logger)
+    if not broc_config:
         return -1
 
     # init repo infos
@@ -348,7 +364,9 @@ def _clean(pathname):
     # find ./ -name *.[o,a]
     # load broc config 
     logger = Log.Log()
-    broc_config  = BrocConfig.BrocConfig()
+    broc_config = _load_config(logger)
+    if not broc_config:
+        return -1
 
     # init repo infos
     ret, repo = _init_repo(broc_config, pathname, logger)
