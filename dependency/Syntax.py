@@ -720,7 +720,7 @@ def DIRECTORY(v):
             raise BrocArgumentIllegalError("DIRECTORY(%s) is wrong: %s not in %s" % \
                                           (child_broc_dir, env.ModulePath()))
 
-    child_broc_file = os.path.join(parent.module.root_path, v, 'BROC')
+    child_broc_file = os.path.join(env.Module().root_path, v, 'BROC')
     if sys.argv[0] == 'PLANISH':
         parent = sys.argv[1]
         if not os.path.exists(child_broc_file):
